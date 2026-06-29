@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/stat_card.dart';
+import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../menu/models/menu_model.dart';
 import '../../menu/providers/menu_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/company_model.dart';
 import '../providers/company_provider.dart';
 import 'company_form_screen.dart';
@@ -18,7 +24,7 @@ class CompanyListScreen extends StatefulWidget {
 class _CompanyListScreenState extends State<CompanyListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   // Pagination State
   int _currentPage = 1;
   int _rowsPerPage = 8;
@@ -110,6 +116,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   Widget build(BuildContext context) {
     final companyProvider = context.watch<CompanyProvider>();
     final menuProvider = context.read<MenuProvider>();
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     // Check permissions
     final allowedMenu = menuProvider.myMenus.firstWhere(
@@ -127,17 +134,17 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     final canEdit = allowedMenu.permissions.contains('EDIT');
 
     // 1. Filter companies
-    final filteredCompanies = companyProvider.companies.where((comp) {
+    final filteredCompanies = companyProvider.companies.where((company) {
       if (_searchQuery.isEmpty) return true;
-      return comp.id.toString() == _searchQuery ||
-          comp.name.toLowerCase().contains(_searchQuery);
+      return company.id.toString() == _searchQuery ||
+          company.name.toLowerCase().contains(_searchQuery);
     }).toList();
 
     // 2. Paginate
     final totalCompanies = filteredCompanies.length;
     final totalPages = (totalCompanies / _rowsPerPage).ceil();
     final safeTotalPages = totalPages == 0 ? 1 : totalPages;
-    
+
     if (_currentPage > safeTotalPages) {
       _currentPage = safeTotalPages;
     }
@@ -149,184 +156,272 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       endIndex > totalCompanies ? totalCompanies : endIndex,
     );
 
+    // Calculate metrics
+    final activeCompaniesCount = companyProvider.companies.where((c) => c.isActive).length;
+    final totalCompaniesCount = companyProvider.companies.length;
+
     return DashboardShell(
-      title: 'Gestión de Empresas',
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+      title: 'Empresas',
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search & Add Bar
+            // Breadcrumbs
+            Row(
+              children: [
+                Text('Admin', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
+                Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
+                Text('Empresas', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Header Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Gestión de Empresas',
+                  style: GoogleFonts.outfit(
+                    color: themeColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (canEdit)
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _navigateToForm(),
+                      icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                      label: Text(
+                        context.tr('new_button'),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Stat Cards Row
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por ID o nombre...',
-                        hintStyle: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.35),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: Colors.white.withOpacity(0.4),
-                          size: 20,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.close_rounded,
-                                    color: Colors.white.withOpacity(0.5), size: 18),
-                                onPressed: () => _searchController.clear(),
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
+                  child: StatCard(
+                    label: 'Empresas Activas',
+                    value: activeCompaniesCount.toString(),
+                    icon: Icons.business_outlined,
                   ),
                 ),
-                if (canEdit) ...[
-                  const SizedBox(width: 14),
-                  ElevatedButton.icon(
-                    onPressed: () => _navigateToForm(),
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    label: Text(
-                      'Nueva Empresa',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    label: 'Empresas Totales',
+                    value: totalCompaniesCount.toString(),
+                    icon: Icons.corporate_fare_outlined,
                   ),
-                ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    label: 'Estado General',
+                    value: 'Activo',
+                    icon: Icons.check_circle_outline_rounded,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Main Table Container
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: companyProvider.isLoading && companyProvider.companies.isEmpty
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF6C63FF),
+            // Table Matrix Container
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search Header inside card
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por ID o nombre...',
+                          hintStyle: GoogleFonts.inter(
+                            color: Colors.white.withOpacity(0.35),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: Colors.white.withOpacity(0.4),
+                            size: 20,
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.close_rounded,
+                                      color: Colors.white.withOpacity(0.5), size: 18),
+                                  onPressed: () => _searchController.clear(),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                      )
-                    : companyProvider.errorMessage != null && companyProvider.companies.isEmpty
-                        ? _buildErrorWidget(companyProvider)
-                        : filteredCompanies.isEmpty
-                            ? _buildEmptyWidget()
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: LayoutBuilder(
+                      ),
+                    ),
+                  ),
+                  Divider(color: Colors.white.withOpacity(0.05), height: 1),
+
+                  companyProvider.isLoading && companyProvider.companies.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40.0),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      : companyProvider.errorMessage != null && companyProvider.companies.isEmpty
+                          ? _buildErrorWidget(companyProvider)
+                          : filteredCompanies.isEmpty
+                              ? _buildEmptyWidget()
+                              : Column(
+                                  children: [
+                                    LayoutBuilder(
                                       builder: (context, constraints) {
                                         return SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                minWidth: constraints.maxWidth,
+                                          scrollDirection: Axis.horizontal,
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              minWidth: constraints.maxWidth,
+                                            ),
+                                            child: Theme(
+                                              data: Theme.of(context).copyWith(
+                                                dividerColor: themeColors.borderColor,
                                               ),
-                                              child: Theme(
-                                                data: Theme.of(context).copyWith(
-                                                  dividerColor: Colors.white.withOpacity(0.05),
+                                              child: DataTable(
+                                                headingRowColor: WidgetStateProperty.all(
+                                                  themeColors.textPrimary.withOpacity(0.03),
                                                 ),
-                                                child: DataTable(
-                                                  headingRowColor: MaterialStateProperty.all(
-                                                    Colors.white.withOpacity(0.03),
-                                                  ),
-                                                  headingTextStyle: GoogleFonts.inter(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                  ),
-                                                  dataTextStyle: GoogleFonts.inter(
-                                                    color: Colors.white.withOpacity(0.85),
-                                                    fontSize: 13,
-                                                  ),
-                                                  horizontalMargin: 20,
-                                                  columnSpacing: 45,
-                                                  columns: [
-                                                    const DataColumn(label: Text('ID')),
-                                                    const DataColumn(label: Text('Nombre de la Empresa')),
-                                                    const DataColumn(label: Text('Estado')),
-                                                    const DataColumn(label: Text('Creado el')),
-                                                    if (canEdit) const DataColumn(label: Text('Acciones')),
-                                                  ],
-                                                  rows: paginatedCompanies.map((company) {
-                                                    return DataRow(
-                                                      cells: [
-                                                        DataCell(Text(company.id.toString())),
-                                                        DataCell(Text(company.name)),
-                                                        DataCell(_buildStatusBadge(company.isActive)),
-                                                        DataCell(Text(_formatDate(company.createAt))),
-                                                        if (canEdit) DataCell(_buildActionsCell(company)),
-                                                      ],
-                                                    );
-                                                  }).toList(),
+                                                headingTextStyle: GoogleFonts.inter(
+                                                  color: themeColors.textPrimary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
                                                 ),
+                                                dataTextStyle: GoogleFonts.inter(
+                                                  color: themeColors.textPrimary.withOpacity(0.85),
+                                                  fontSize: 13,
+                                                ),
+                                                horizontalMargin: 20,
+                                                columnSpacing: 40,
+                                                columns: [
+                                                  const DataColumn(label: Text('ID')),
+                                                  const DataColumn(label: Text('Nombre de la Empresa')),
+                                                  const DataColumn(label: Text('Estado')),
+                                                  DataColumn(label: Text(context.tr('created_by'))),
+                                                  DataColumn(label: Text(context.tr('created_at'))),
+                                                  if (canEdit) const DataColumn(label: Text('Acciones')),
+                                                ],
+                                                rows: paginatedCompanies.map((company) {
+                                                  return DataRow(
+                                                    cells: [
+                                                      DataCell(Text(company.id.toString().padLeft(3, '0'))),
+                                                      DataCell(Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          CircleAvatar(
+                                                            radius: 12,
+                                                            backgroundColor: company.isActive
+                                                                ? const Color(0xFF6C63FF).withOpacity(0.2)
+                                                                : Colors.white.withOpacity(0.1),
+                                                            child: Text(
+                                                              company.name.isNotEmpty ? company.name[0].toUpperCase() : '',
+                                                              style: GoogleFonts.outfit(
+                                                                color: company.isActive
+                                                                    ? const Color(0xFF4ECDC4)
+                                                                    : Colors.white60,
+                                                                fontWeight: FontWeight.bold,
+                                                                fontSize: 11,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 10),
+                                                          Text(company.name),
+                                                        ],
+                                                      )),
+                                                      DataCell(StatusBadge(label: company.isActive ? 'Activo' : 'Inactivo', isActive: company.isActive)),
+                                                      DataCell(Text(company.createByName ?? company.createBy?.toString() ?? '-')),
+                                                      DataCell(Text(_formatDate(company.createAt))),
+                                                      if (canEdit) DataCell(_buildActionsCell(company)),
+                                                    ],
+                                                  );
+                                                }).toList(),
                                               ),
                                             ),
                                           ),
                                         );
                                       },
                                     ),
-                                  ),
-                                  _buildPaginationFooter(
-                                    totalItems: totalCompanies,
-                                    totalPages: safeTotalPages,
-                                  ),
-                                ],
-                              ),
+                                    _buildPaginationFooter(
+                                      totalItems: totalCompanies,
+                                      totalPages: safeTotalPages,
+                                    ),
+                                  ],
+                                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 24),
 
-  Widget _buildStatusBadge(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: (isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B))
-            .withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: (isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B))
-              .withOpacity(0.3),
-        ),
-      ),
-      child: Text(
-        isActive ? 'Activo' : 'Inactivo',
-        style: GoogleFonts.inter(
-          color: isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
+            // Bottom informational cards row
+            Row(
+              children: [
+                Expanded(
+                  child: InfoCard(
+                    title: 'Sobre las Empresas',
+                    content: 'Las empresas estructuran el acceso multicliente en la base de datos. Cada usuario puede estar asociado a una o más empresas para delimitar su espacio de trabajo y visualización.',
+                    icon: Icons.corporate_fare_rounded,
+                    iconColor: const Color(0xFF4ECDC4),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: InfoCard(
+                    title: 'Aislamiento de Datos',
+                    content: 'Cualquier catálogo u operación realizada en el inventario o configuración general está estrictamente filtrada por el identificador de la empresa activa del usuario.',
+                    icon: Icons.lock_outline_rounded,
+                    iconColor: const Color(0xFF6C63FF),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -337,12 +432,12 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined, color: Color(0xFF6C63FF), size: 18),
+          icon: const Icon(Icons.edit_outlined, color: AppColors.accent, size: 18),
           tooltip: 'Editar',
           onPressed: () => _navigateToForm(company: company),
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF6B6B), size: 18),
+          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
           tooltip: 'Eliminar',
           onPressed: () => _showDeleteDialog(company),
         ),

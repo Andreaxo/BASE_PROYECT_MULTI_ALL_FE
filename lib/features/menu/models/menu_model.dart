@@ -2,21 +2,35 @@ class MenuModel {
   final int id;
   final String label;
   final String labelEn;
+  final String labelFr;
   final String route;
   final String icon;
   final bool isActive;
   final int sortOrder;
   final int? parentId;
+  final int? createBy;
+  final String? createAt;
+  final String? createByName;
+  final int? updateBy;
+  final String? updateAt;
+  final String? updateByName;
 
   MenuModel({
     required this.id,
     required this.label,
     required this.labelEn,
+    required this.labelFr,
     required this.route,
     required this.icon,
     required this.isActive,
     required this.sortOrder,
     this.parentId,
+    this.createBy,
+    this.createAt,
+    this.createByName,
+    this.updateBy,
+    this.updateAt,
+    this.updateByName,
   });
 
   factory MenuModel.fromJson(Map<String, dynamic> json) {
@@ -24,11 +38,18 @@ class MenuModel {
       id: json['id'] as int,
       label: json['label'] as String,
       labelEn: json['label_en'] as String,
+      labelFr: (json['label_fr'] as String?) ?? '',
       route: json['route'] as String,
       icon: (json['icon'] as String?) ?? '',
       isActive: json['is_active'] as bool,
       sortOrder: json['sort_order'] as int,
       parentId: json['parent_id'] as int?,
+      createBy: json['create_by'] as int?,
+      createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
+      updateBy: json['update_by'] as int?,
+      updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
     );
   }
 }
@@ -37,6 +58,7 @@ class AllowedMenu {
   final int id;
   final String label;
   final String labelEn;
+  final String labelFr;
   final String route;
   final String icon;
   final int sortOrder;
@@ -48,6 +70,7 @@ class AllowedMenu {
     required this.id,
     required this.label,
     required this.labelEn,
+    this.labelFr = '',
     required this.route,
     required this.icon,
     required this.sortOrder,
@@ -67,6 +90,7 @@ class AllowedMenu {
       id: json['id'] as int,
       label: json['label'] as String,
       labelEn: json['label_en'] as String,
+      labelFr: (json['label_fr'] as String?) ?? '',
       route: json['route'] as String,
       icon: (json['icon'] as String?) ?? '',
       sortOrder: json['sort_order'] as int,
@@ -80,6 +104,7 @@ class AllowedMenu {
 class CreateMenuRequest {
   final String label;
   final String labelEn;
+  final String labelFr;
   final String route;
   final String icon;
   final int sortOrder;
@@ -88,6 +113,7 @@ class CreateMenuRequest {
   CreateMenuRequest({
     required this.label,
     required this.labelEn,
+    required this.labelFr,
     required this.route,
     this.icon = '',
     this.sortOrder = 0,
@@ -97,6 +123,7 @@ class CreateMenuRequest {
   Map<String, dynamic> toJson() => {
         'label': label,
         'label_en': labelEn,
+        'label_fr': labelFr,
         'route': route,
         'icon': icon,
         'sort_order': sortOrder,
@@ -107,6 +134,7 @@ class CreateMenuRequest {
 class UpdateMenuRequest {
   final String? label;
   final String? labelEn;
+  final String? labelFr;
   final String? route;
   final String? icon;
   final bool? isActive;
@@ -116,6 +144,7 @@ class UpdateMenuRequest {
   UpdateMenuRequest({
     this.label,
     this.labelEn,
+    this.labelFr,
     this.route,
     this.icon,
     this.isActive,
@@ -127,6 +156,7 @@ class UpdateMenuRequest {
     final map = <String, dynamic>{};
     if (label != null) map['label'] = label;
     if (labelEn != null) map['label_en'] = labelEn;
+    if (labelFr != null) map['label_fr'] = labelFr;
     if (route != null) map['route'] = route;
     if (icon != null) map['icon'] = icon;
     if (isActive != null) map['is_active'] = isActive;

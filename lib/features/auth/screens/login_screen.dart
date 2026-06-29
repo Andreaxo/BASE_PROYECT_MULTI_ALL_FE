@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 
 /// Modern login screen with gradient background and glassmorphism card.
@@ -76,9 +77,9 @@ class _LoginScreenState extends State<LoginScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0F0C29),
-              Color(0xFF302B63),
-              Color(0xFF24243E),
+              AppColors.bgGradStart,
+              AppColors.bgGradMid,
+              AppColors.bgGradEnd,
             ],
           ),
         ),
@@ -119,15 +120,15 @@ class _LoginScreenState extends State<LoginScreen>
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [
-                                  Color(0xFF6C63FF),
-                                  Color(0xFF4ECDC4),
+                                  AppColors.primary,
+                                  AppColors.accent,
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
                                   color:
-                                      const Color(0xFF6C63FF).withOpacity(0.4),
+                                      AppColors.primary.withOpacity(0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 6),
                                 ),
@@ -173,10 +174,10 @@ class _LoginScreenState extends State<LoginScreen>
                                     horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color:
-                                      const Color(0xFFFF6B6B).withOpacity(0.15),
+                                      AppColors.error.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: const Color(0xFFFF6B6B)
+                                    color: AppColors.error
                                         .withOpacity(0.3),
                                   ),
                                 ),
@@ -260,10 +261,10 @@ class _LoginScreenState extends State<LoginScreen>
                                   onPressed:
                                       auth.isLoading ? null : _handleLogin,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6C63FF),
+                                    backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
                                     disabledBackgroundColor:
-                                        const Color(0xFF6C63FF)
+                                        AppColors.primary
                                             .withOpacity(0.5),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
@@ -341,17 +342,17 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
-        errorStyle: GoogleFonts.inter(color: const Color(0xFFFF6B6B)),
+        errorStyle: GoogleFonts.inter(color: AppColors.error),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),

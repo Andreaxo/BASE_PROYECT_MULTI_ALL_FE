@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/stat_card.dart';
+import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../menu/providers/menu_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/article_model.dart';
 import '../providers/article_provider.dart';
 import 'article_form_screen.dart';
@@ -17,7 +23,7 @@ class ArticleListScreen extends StatefulWidget {
 class _ArticleListScreenState extends State<ArticleListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   // Pagination State
   int _currentPage = 1;
   int _rowsPerPage = 8;
@@ -52,14 +58,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         backgroundColor: const Color(0xFF1E1E2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'Eliminar Artículo',
+          context.tr('delete_article_title'),
           style: GoogleFonts.outfit(
             color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
-          '¿Estás seguro de que deseas eliminar el artículo "${article.name}" (ID: ${article.id})?',
+          context.tr('delete_article_confirm')
+              .replaceAll('{name}', article.name)
+              .replaceAll('{id}', article.id.toString()),
           style: GoogleFonts.inter(
             color: Colors.white.withOpacity(0.7),
           ),
@@ -110,10 +118,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   Widget build(BuildContext context) {
     final articleProvider = context.watch<ArticleProvider>();
     final menuProvider = context.watch<MenuProvider>();
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     final allowedMenu = menuProvider.findAllowedMenu('/items');
     final canView = allowedMenu != null;
+    final canCreate = allowedMenu?.permissions.contains('CREATE') ?? false;
     final canEdit = allowedMenu?.permissions.contains('EDIT') ?? false;
+    final canDelete = allowedMenu?.permissions.contains('DELETE') ?? false;
 
     // Filter articles based on search
     final filteredArticles = articleProvider.articles.where((art) {
@@ -126,6 +137,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     // Pagination calculations
     final totalRows = filteredArticles.length;
     final totalPages = (totalRows / _rowsPerPage).ceil();
+    final safeTotalPages = totalPages == 0 ? 1 : totalPages;
     final startIndex = (_currentPage - 1) * _rowsPerPage;
     final endIndex = startIndex + _rowsPerPage;
     final paginatedArticles = filteredArticles.sublist(
@@ -133,69 +145,65 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
       endIndex > totalRows ? totalRows : endIndex,
     );
 
+    // Calculate metrics
+    final totalCount = articleProvider.articles.length;
+    final uniqueCategoriesCount = articleProvider.articles
+        .map((art) => art.category?.id)
+        .where((id) => id != null)
+        .toSet()
+        .length;
+
     return DashboardShell(
-      title: 'Artículos de Inventario',
+      title: context.tr('article_list_title'),
       child: !canView
           ? _buildAccessDeniedWidget()
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and Create Button
+                  // Breadcrumbs
+                  Row(
+                    children: [
+                      Text('Inventario', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
+                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
+                      Text('Artículos', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Header Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Catálogo de Artículos',
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Gestiona los artículos de tu catálogo y sus asociaciones de categoría.',
-                            style: GoogleFonts.inter(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        context.tr('article_list_title'),
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      if (canEdit)
+                      if (canCreate)
                         Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
                             ),
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF6C63FF).withOpacity(0.2),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
                           child: ElevatedButton.icon(
                             onPressed: () => _navigateToForm(),
                             icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
                             label: Text(
                               'Nuevo Artículo',
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -206,183 +214,214 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Search Field Card
-                  Card(
-                    color: const Color(0xFF131129),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: Colors.white.withOpacity(0.05),
-                        width: 1,
+                  // Stat cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatCard(
+                          label: 'Artículos de Inventario',
+                          value: totalCount.toString(),
+                          icon: Icons.inventory_2_rounded,
+                        ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: StatCard(
+                          label: 'Categorías Vinculadas',
+                          value: uniqueCategoriesCount.toString(),
+                          icon: Icons.category_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Table matrix card
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                style: GoogleFonts.inter(color: Colors.white),
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.4)),
-                                  hintText: 'Buscar artículo por nombre, categoría o ID...',
-                                  hintStyle: GoogleFonts.inter(color: Colors.white.withOpacity(0.3)),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Search field header
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withOpacity(0.08)),
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: context.tr('article_search_hint'),
+                                hintStyle: GoogleFonts.inter(
+                                  color: Colors.white.withOpacity(0.35),
                                 ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.white.withOpacity(0.4),
+                                  size: 20,
+                                ),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: Icon(Icons.close_rounded,
+                                            color: Colors.white.withOpacity(0.5), size: 18),
+                                        onPressed: () => _searchController.clear(),
+                                      )
+                                    : null,
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        Divider(color: Colors.white.withOpacity(0.05), height: 1),
+
+                        articleProvider.isLoading && articleProvider.articles.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(40.0),
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              )
+                            : articleProvider.errorMessage != null && articleProvider.articles.isEmpty
+                                ? _buildErrorWidget(articleProvider)
+                                : filteredArticles.isEmpty
+                                    ? _buildEmptyWidget()
+                                    : Column(
+                                        children: [
+                                          LayoutBuilder(
+                                            builder: (context, constraints) {
+                                              return SingleChildScrollView(
+                                                scrollDirection: Axis.horizontal,
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    minWidth: constraints.maxWidth,
+                                                  ),
+                                                  child: Theme(
+                                                    data: Theme.of(context).copyWith(
+                                                      dividerColor: themeColors.borderColor,
+                                                    ),
+                                                    child: DataTable(
+                                                      headingRowColor: WidgetStateProperty.all(
+                                                        themeColors.textPrimary.withOpacity(0.03),
+                                                      ),
+                                                      headingTextStyle: GoogleFonts.inter(
+                                                        color: themeColors.textPrimary,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
+                                                      dataTextStyle: GoogleFonts.inter(
+                                                        color: themeColors.textPrimary.withOpacity(0.85),
+                                                        fontSize: 13,
+                                                      ),
+                                                      horizontalMargin: 20,
+                                                      columnSpacing: 40,
+                                                      columns: [
+                                                        const DataColumn(label: Text('ID')),
+                                                        DataColumn(label: Text(context.tr('name'))),
+                                                        DataColumn(label: Text(context.tr('category'))),
+                                                        DataColumn(label: Text(context.tr('created_by'))),
+                                                        DataColumn(label: Text(context.tr('created_at'))),
+                                                        if (canEdit || canDelete) DataColumn(label: Text(context.tr('actions'))),
+                                                      ],
+                                                      rows: paginatedArticles.map((art) {
+                                                        return DataRow(
+                                                          cells: [
+                                                            DataCell(Text(art.id.toString().padLeft(3, '0'))),
+                                                            DataCell(Row(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                CircleAvatar(
+                                                                  radius: 12,
+                                                                  backgroundColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                                                                  child: Text(
+                                                                    art.name.isNotEmpty ? art.name[0].toUpperCase() : '',
+                                                                    style: GoogleFonts.outfit(
+                                                                      color: const Color(0xFF4ECDC4),
+                                                                      fontWeight: FontWeight.bold,
+                                                                      fontSize: 11,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(width: 10),
+                                                                Text(art.name),
+                                                              ],
+                                                            )),
+                                                            DataCell(
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                                decoration: BoxDecoration(
+                                                                  color: const Color(0xFF6C63FF).withOpacity(0.1),
+                                                                  borderRadius: BorderRadius.circular(20),
+                                                                  border: Border.all(
+                                                                    color: const Color(0xFF6C63FF).withOpacity(0.3),
+                                                                  ),
+                                                                ),
+                                                                child: Text(
+                                                                  art.category?.name ?? context.tr('no_category_assigned'),
+                                                                  style: GoogleFonts.inter(
+                                                                    color: const Color(0xFF4ECDC4),
+                                                                    fontSize: 12,
+                                                                    fontWeight: FontWeight.bold,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            DataCell(Text(art.createByName ?? art.createBy?.toString() ?? '-')),
+                                                            DataCell(Text(_formatDate(art.createAt))),
+                                                            if (canEdit || canDelete) DataCell(_buildActionsCell(art, canEdit, canDelete)),
+                                                          ],
+                                                        );
+                                                      }).toList(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          _buildPaginationFooter(
+                                            totalItems: totalRows,
+                                            totalPages: safeTotalPages,
+                                          ),
+                                        ],
+                                      ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Main Data Table Card (Stretched)
-                  Expanded(
-                    child: articleProvider.isLoading
-                        ? const Center(child: CircularProgressIndicator(color: Color(0xFF6C63FF)))
-                        : totalRows == 0
-                            ? _buildEmptyStateWidget()
-                            : Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF131129),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.05),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                      child: LayoutBuilder(
-                                        builder: (context, constraints) {
-                                          return SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.vertical,
-                                              child: ConstrainedBox(
-                                                constraints: BoxConstraints(
-                                                  minWidth: constraints.maxWidth,
-                                                ),
-                                                child: DataTable(
-                                                  headingRowColor: WidgetStateProperty.all(
-                                                    Colors.white.withOpacity(0.02),
-                                                  ),
-                                                  dataRowHeight: 65,
-                                                  columns: [
-                                                    DataColumn(
-                                                      label: Text(
-                                                        'ID',
-                                                        style: GoogleFonts.inter(
-                                                          color: const Color(0xFF4ECDC4),
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    DataColumn(
-                                                      label: Text(
-                                                        'Nombre',
-                                                        style: GoogleFonts.inter(
-                                                          color: const Color(0xFF4ECDC4),
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    DataColumn(
-                                                      label: Text(
-                                                        'Categoría',
-                                                        style: GoogleFonts.inter(
-                                                          color: const Color(0xFF4ECDC4),
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    if (canEdit)
-                                                      DataColumn(
-                                                        label: Text(
-                                                          'Acciones',
-                                                          style: GoogleFonts.inter(
-                                                            color: const Color(0xFF4ECDC4),
-                                                            fontWeight: FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                  ],
-                                                  rows: paginatedArticles.map((art) {
-                                                    return DataRow(
-                                                      cells: [
-                                                        DataCell(Text('#${art.id}', style: GoogleFonts.inter(color: Colors.white54))),
-                                                        DataCell(Text(
-                                                          art.name,
-                                                          style: GoogleFonts.inter(
-                                                            color: Colors.white,
-                                                            fontWeight: FontWeight.w500,
-                                                          ),
-                                                        )),
-                                                        DataCell(
-                                                          Container(
-                                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                            decoration: BoxDecoration(
-                                                              color: const Color(0xFF6C63FF).withOpacity(0.1),
-                                                              borderRadius: BorderRadius.circular(20),
-                                                              border: Border.all(
-                                                                color: const Color(0xFF6C63FF).withOpacity(0.3),
-                                                              ),
-                                                            ),
-                                                            child: Text(
-                                                              art.category?.name ?? 'Sin Categoría',
-                                                              style: GoogleFonts.inter(
-                                                                color: const Color(0xFF4ECDC4),
-                                                                fontSize: 12,
-                                                                fontWeight: FontWeight.bold,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        if (canEdit)
-                                                          DataCell(
-                                                            Row(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              children: [
-                                                                IconButton(
-                                                                  icon: const Icon(Icons.edit_rounded, color: Color(0xFF6C63FF), size: 20),
-                                                                  tooltip: 'Editar',
-                                                                  onPressed: () => _navigateToForm(article: art),
-                                                                ),
-                                                                IconButton(
-                                                                  icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF6B6B), size: 20),
-                                                                  tooltip: 'Eliminar',
-                                                                  onPressed: () => _showDeleteDialog(art),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    
-                                    // Pagination Footer
-                                    if (totalPages > 1) _buildPaginationFooter(totalPages),
-                                  ],
-                                ),
-                              ),
+                  // Bottom Info Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InfoCard(
+                          title: 'Control de Inventario',
+                          content: 'Administre el catálogo general de los productos disponibles. Asocie cada artículo a una categoría específica para facilitar la navegación y ordenamiento.',
+                          icon: Icons.inventory_outlined,
+                          iconColor: const Color(0xFF4ECDC4),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: InfoCard(
+                          title: 'Trazabilidad por Empresa',
+                          content: 'Al igual que las categorías, cada artículo creado se encuentra registrado y aislado bajo la empresa del usuario que lo creó, asegurando el resguardo de información.',
+                          icon: Icons.shield_outlined,
+                          iconColor: const Color(0xFF6C63FF),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -390,59 +429,161 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
   }
 
-  Widget _buildPaginationFooter(int totalPages) {
+  Widget _buildActionsCell(Article article, bool canEdit, bool canDelete) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (canEdit)
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppColors.accent, size: 18),
+            tooltip: 'Editar',
+            onPressed: () => _navigateToForm(article: article),
+          ),
+        if (canDelete)
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
+            tooltip: 'Eliminar',
+            onPressed: () => _showDeleteDialog(article),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPaginationFooter({
+    required int totalItems,
+    required int totalPages,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.01),
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+        color: Colors.white.withOpacity(0.015),
+        border: Border(
+          top: BorderSide(color: Colors.white.withOpacity(0.05)),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Página $_currentPage de $totalPages',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+            '${context.tr('total')}: $totalItems ${context.tr('article_list_title').toLowerCase()}',
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+            ),
           ),
           Row(
             children: [
+              Text(
+                '${context.tr('rows_per_page')}: ',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 12,
+                ),
+              ),
+              DropdownButton<int>(
+                value: _rowsPerPage,
+                dropdownColor: const Color(0xFF1E1E2E),
+                underline: const SizedBox.shrink(),
+                iconEnabledColor: Colors.white38,
+                style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                items: [5, 8, 10, 15].map((size) {
+                  return DropdownMenuItem<int>(
+                    value: size,
+                    child: Text('  $size  '),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _rowsPerPage = val;
+                      _currentPage = 1;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(width: 14),
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70, size: 16),
+                icon: const Icon(Icons.chevron_left_rounded),
+                color: Colors.white70,
+                disabledColor: Colors.white.withOpacity(0.15),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
               ),
-              const SizedBox(width: 8),
+              Text(
+                '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               IconButton(
-                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                icon: const Icon(Icons.chevron_right_rounded),
+                color: Colors.white70,
+                disabledColor: Colors.white.withOpacity(0.15),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyStateWidget() {
+  Widget _buildEmptyWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: Colors.white.withOpacity(0.15),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              context.tr('no_results'),
+              style: GoogleFonts.inter(
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget(ArticleProvider provider) {
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.inventory_rounded, size: 64, color: Colors.white.withOpacity(0.2)),
-          const SizedBox(height: 16),
-          Text(
-            'No se encontraron artículos',
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+          Icon(
+            Icons.error_outline_rounded,
+            size: 40,
+            color: const Color(0xFFFF6B6B).withOpacity(0.7),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
           Text(
-            _searchQuery.isNotEmpty
-                ? 'Prueba modificando los filtros de búsqueda'
-                : 'Empieza por crear un nuevo artículo de inventario.',
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+            provider.errorMessage!,
+            style: GoogleFonts.inter(
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton(
+            onPressed: () => provider.loadArticles(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6C63FF),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(context.tr('retry'), style: GoogleFonts.inter(color: Colors.white)),
           ),
         ],
       ),
@@ -468,5 +609,15 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '-';
+    try {
+      final dateTime = DateTime.parse(dateStr).toLocal();
+      return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
+    } catch (_) {
+      return dateStr.split('T')[0];
+    }
   }
 }

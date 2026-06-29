@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/stat_card.dart';
+import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/status_badge.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/menu_model.dart';
 import '../providers/menu_provider.dart';
 import 'menu_form_screen.dart';
@@ -114,6 +120,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
         return Icons.admin_panel_settings_rounded;
       case 'menu_rounded':
         return Icons.menu_rounded;
+      case 'inventory_2_rounded':
+        return Icons.inventory_2_rounded;
+      case 'category_rounded':
+        return Icons.category_rounded;
+      case 'inventory_rounded':
+        return Icons.inventory_rounded;
       default:
         return Icons.grid_view_rounded;
     }
@@ -122,6 +134,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
   @override
   Widget build(BuildContext context) {
     final menuProvider = context.watch<MenuProvider>();
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     // Check permissions
     final allowedMenu = menuProvider.myMenus.firstWhere(
@@ -163,197 +176,254 @@ class _MenuListScreenState extends State<MenuListScreen> {
       endIndex > totalMenus ? totalMenus : endIndex,
     );
 
+    // Calculate metrics
+    final activeMenusCount = menuProvider.menus.where((m) => m.isActive).length;
+    final totalMenusCount = menuProvider.menus.length;
+
     return DashboardShell(
-      title: 'Gestión de Menús',
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+      title: 'Menús',
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search & Add Bar
+            // Breadcrumbs
+            Row(
+              children: [
+                Text('Admin', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
+                Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
+                Text('Menús', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Header Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Gestión de Menús',
+                  style: GoogleFonts.outfit(
+                    color: themeColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (canEdit)
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _navigateToForm(),
+                      icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                      label: Text(
+                        context.tr('new_button'),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Stat Cards Row
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por ID, label, inglés o ruta...',
-                        hintStyle: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.35),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: Colors.white.withOpacity(0.4),
-                          size: 20,
-                        ),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(Icons.close_rounded,
-                                    color: Colors.white.withOpacity(0.5), size: 18),
-                                onPressed: () => _searchController.clear(),
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
+                  child: StatCard(
+                    label: 'Menús Activos',
+                    value: activeMenusCount.toString(),
+                    icon: Icons.menu_open_rounded,
                   ),
                 ),
-                if (canEdit) ...[
-                  const SizedBox(width: 14),
-                  ElevatedButton.icon(
-                    onPressed: () => _navigateToForm(),
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    label: Text(
-                      'Nuevo Menú',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6C63FF),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    label: 'Menús Totales',
+                    value: totalMenusCount.toString(),
+                    icon: Icons.list_alt_rounded,
                   ),
-                ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StatCard(
+                    label: 'Sincronización',
+                    value: 'Completa',
+                    icon: Icons.sync_rounded,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Main Table Container
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: menuProvider.isLoading && menuProvider.menus.isEmpty
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF6C63FF),
+            // Table Matrix Container
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Search Header inside card
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por ID, etiqueta o ruta...',
+                          hintStyle: GoogleFonts.inter(
+                            color: Colors.white.withOpacity(0.35),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: Colors.white.withOpacity(0.4),
+                            size: 20,
+                          ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(Icons.close_rounded,
+                                      color: Colors.white.withOpacity(0.5), size: 18),
+                                  onPressed: () => _searchController.clear(),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                      )
-                    : menuProvider.errorMessage != null && menuProvider.menus.isEmpty
-                        ? _buildErrorWidget(menuProvider)
-                        : filteredMenus.isEmpty
-                            ? _buildEmptyWidget()
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: LayoutBuilder(
+                      ),
+                    ),
+                  ),
+                  Divider(color: Colors.white.withOpacity(0.05), height: 1),
+
+                  menuProvider.isLoading && menuProvider.menus.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40.0),
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        )
+                      : menuProvider.errorMessage != null && menuProvider.menus.isEmpty
+                          ? _buildErrorWidget(menuProvider)
+                          : filteredMenus.isEmpty
+                              ? _buildEmptyWidget()
+                              : Column(
+                                  children: [
+                                    LayoutBuilder(
                                       builder: (context, constraints) {
                                         return SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                minWidth: constraints.maxWidth,
+                                          scrollDirection: Axis.horizontal,
+                                          child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                              minWidth: constraints.maxWidth,
+                                            ),
+                                            child: Theme(
+                                              data: Theme.of(context).copyWith(
+                                                dividerColor: themeColors.borderColor,
                                               ),
-                                              child: Theme(
-                                                data: Theme.of(context).copyWith(
-                                                  dividerColor: Colors.white.withOpacity(0.05),
+                                              child: DataTable(
+                                                headingRowColor: WidgetStateProperty.all(
+                                                  themeColors.textPrimary.withOpacity(0.03),
                                                 ),
-                                                child: DataTable(
-                                                  headingRowColor: MaterialStateProperty.all(
-                                                    Colors.white.withOpacity(0.03),
-                                                  ),
-                                                  headingTextStyle: GoogleFonts.inter(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
-                                                  ),
-                                                  dataTextStyle: GoogleFonts.inter(
-                                                    color: Colors.white.withOpacity(0.85),
-                                                    fontSize: 13,
-                                                  ),
-                                                  horizontalMargin: 20,
-                                                  columnSpacing: 40,
-                                                  columns: [
-                                                    const DataColumn(label: Text('ID')),
-                                                    const DataColumn(label: Text('Ícono')),
-                                                    const DataColumn(label: Text('Etiqueta (ES)')),
-                                                    const DataColumn(label: Text('Etiqueta (EN)')),
-                                                    const DataColumn(label: Text('Ruta de Enlace')),
-                                                    const DataColumn(label: Text('Orden')),
-                                                    const DataColumn(label: Text('Estado')),
-                                                    if (canEdit) const DataColumn(label: Text('Acciones')),
-                                                  ],
-                                                  rows: paginatedMenus.map((menu) {
-                                                    return DataRow(
-                                                      cells: [
-                                                        DataCell(Text(menu.id.toString())),
-                                                        DataCell(Icon(
-                                                          _getIconData(menu.icon),
-                                                          color: const Color(0xFF4ECDC4),
-                                                          size: 18,
-                                                        )),
-                                                        DataCell(Text(menu.label)),
-                                                        DataCell(Text(menu.labelEn)),
-                                                        DataCell(Text(
-                                                          menu.route,
-                                                          style: GoogleFonts.inter(color: const Color(0xFF6C63FF)),
-                                                        )),
-                                                        DataCell(Text(menu.sortOrder.toString())),
-                                                        DataCell(_buildStatusBadge(menu.isActive)),
-                                                        if (canEdit) DataCell(_buildActionsCell(menu)),
-                                                      ],
-                                                    );
-                                                  }).toList(),
+                                                headingTextStyle: GoogleFonts.inter(
+                                                  color: themeColors.textPrimary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
                                                 ),
+                                                dataTextStyle: GoogleFonts.inter(
+                                                  color: themeColors.textPrimary.withOpacity(0.85),
+                                                  fontSize: 13,
+                                                ),
+                                                horizontalMargin: 20,
+                                                columnSpacing: 40,
+                                                columns: [
+                                                  const DataColumn(label: Text('ID')),
+                                                  const DataColumn(label: Text('Etiqueta (ES)')),
+                                                  const DataColumn(label: Text('Etiqueta (EN)')),
+                                                  const DataColumn(label: Text('Ruta de Acceso')),
+                                                  const DataColumn(label: Text('Ícono')),
+                                                  const DataColumn(label: Text('Orden')),
+                                                  const DataColumn(label: Text('Estado')),
+                                                  if (canEdit) const DataColumn(label: Text('Acciones')),
+                                                ],
+                                                rows: paginatedMenus.map((menu) {
+                                                  return DataRow(
+                                                    cells: [
+                                                      DataCell(Text(menu.id.toString().padLeft(3, '0'))),
+                                                      DataCell(Text(menu.label)),
+                                                      DataCell(Text(menu.labelEn)),
+                                                      DataCell(Text(menu.route)),
+                                                      DataCell(Icon(_getIconData(menu.icon), color: const Color(0xFF4ECDC4), size: 18)),
+                                                      DataCell(Text(menu.sortOrder.toString())),
+                                                      DataCell(StatusBadge(label: menu.isActive ? 'Activo' : 'Inactivo', isActive: menu.isActive)),
+                                                      if (canEdit) DataCell(_buildActionsCell(menu)),
+                                                    ],
+                                                  );
+                                                }).toList(),
                                               ),
                                             ),
                                           ),
                                         );
                                       },
                                     ),
-                                  ),
-                                  _buildPaginationFooter(
-                                    totalItems: totalMenus,
-                                    totalPages: safeTotalPages,
-                                  ),
-                                ],
-                              ),
+                                    _buildPaginationFooter(
+                                      totalItems: totalMenus,
+                                      totalPages: safeTotalPages,
+                                    ),
+                                  ],
+                                ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 24),
 
-  Widget _buildStatusBadge(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: (isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B))
-            .withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: (isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B))
-              .withOpacity(0.3),
-        ),
-      ),
-      child: Text(
-        isActive ? 'Activo' : 'Inactivo',
-        style: GoogleFonts.inter(
-          color: isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
+            // Bottom informational cards row
+            Row(
+              children: [
+                Expanded(
+                  child: InfoCard(
+                    title: 'Navegación Dinámica',
+                    content: 'El menú lateral se construye en tiempo real a partir del árbol de menús permitidos según el rol asignado al usuario. Esto permite restringir accesos desde la interfaz.',
+                    icon: Icons.alt_route_rounded,
+                    iconColor: const Color(0xFF4ECDC4),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: InfoCard(
+                    title: 'Asociación de Jerarquías',
+                    content: 'Los menús que poseen un parent ID actúan como submódulos o carpetas colapsables (como Inventario). Al definir un rol, se asocian permisos específicos por módulo.',
+                    icon: Icons.account_tree_outlined,
+                    iconColor: const Color(0xFF6C63FF),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -364,12 +434,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined, color: Color(0xFF6C63FF), size: 18),
+          icon: const Icon(Icons.edit_outlined, color: AppColors.accent, size: 18),
           tooltip: 'Editar',
           onPressed: () => _navigateToForm(menu: menu),
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF6B6B), size: 18),
+          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
           tooltip: 'Eliminar',
           onPressed: () => _showDeleteDialog(menu),
         ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../localization/app_localizations.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/menu/models/menu_model.dart';
 import '../../features/menu/providers/menu_provider.dart';
@@ -56,8 +59,8 @@ class _DashboardShellState extends State<DashboardShell> {
     }
   }
 
-  Widget _buildMenuItem(AllowedMenu item, String? currentRoute, String langCode) {
-    final label = langCode == 'es' ? item.label : item.labelEn;
+  Widget _buildMenuItem(AllowedMenu item, String? currentRoute, String langCode, AppThemeColors themeColors) {
+    final label = langCode == 'es' ? item.label : (langCode == 'fr' ? item.labelFr : item.labelEn);
 
     if (item.submenus.isNotEmpty) {
       final isAnySubSelected = item.submenus.any((sub) => currentRoute == sub.route);
@@ -65,38 +68,38 @@ class _DashboardShellState extends State<DashboardShell> {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: isAnySubSelected ? Colors.white.withOpacity(0.02) : Colors.transparent,
+          color: isAnySubSelected ? themeColors.textPrimary.withOpacity(0.02) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isAnySubSelected ? Colors.white.withOpacity(0.05) : Colors.transparent,
+            color: isAnySubSelected ? themeColors.borderColor : Colors.transparent,
             width: 1,
           ),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(
             dividerColor: Colors.transparent,
-            unselectedWidgetColor: Colors.white30,
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF4ECDC4),
+            unselectedWidgetColor: themeColors.textSecondary,
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.accent,
             ),
           ),
           child: ExpansionTile(
             initiallyExpanded: isAnySubSelected,
             leading: Icon(
               _getIconData(item.icon),
-              color: isAnySubSelected ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.5),
+              color: isAnySubSelected ? AppColors.accent : themeColors.textSecondary,
               size: 20,
             ),
             title: Text(
               label,
               style: GoogleFonts.inter(
-                color: isAnySubSelected ? Colors.white : Colors.white.withOpacity(0.7),
+                color: isAnySubSelected ? themeColors.textPrimary : themeColors.textSecondary,
                 fontWeight: isAnySubSelected ? FontWeight.w600 : FontWeight.normal,
                 fontSize: 14,
               ),
             ),
             childrenPadding: const EdgeInsets.only(left: 12, bottom: 8),
-            children: item.submenus.map((sub) => _buildSubMenuItem(sub, currentRoute, langCode)).toList(),
+            children: item.submenus.map((sub) => _buildSubMenuItem(sub, currentRoute, langCode, themeColors)).toList(),
           ),
         ),
       );
@@ -115,12 +118,12 @@ class _DashboardShellState extends State<DashboardShell> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFF6C63FF).withOpacity(0.15)
+                  ? AppColors.primary.withOpacity(0.15)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? const Color(0xFF6C63FF).withOpacity(0.3)
+                    ? AppColors.primary.withOpacity(0.3)
                     : Colors.transparent,
                 width: 1,
               ),
@@ -130,8 +133,8 @@ class _DashboardShellState extends State<DashboardShell> {
                 Icon(
                   _getIconData(item.icon),
                   color: isSelected
-                      ? const Color(0xFF4ECDC4)
-                      : Colors.white.withOpacity(0.5),
+                      ? AppColors.accent
+                      : themeColors.textSecondary,
                   size: 20,
                 ),
                 const SizedBox(width: 14),
@@ -139,7 +142,7 @@ class _DashboardShellState extends State<DashboardShell> {
                   child: Text(
                     label,
                     style: GoogleFonts.inter(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+                      color: isSelected ? themeColors.textPrimary : themeColors.textSecondary,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       fontSize: 14,
                     ),
@@ -150,7 +153,7 @@ class _DashboardShellState extends State<DashboardShell> {
                     width: 6,
                     height: 6,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF4ECDC4),
+                      color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -162,9 +165,9 @@ class _DashboardShellState extends State<DashboardShell> {
     }
   }
 
-  Widget _buildSubMenuItem(AllowedMenu sub, String? currentRoute, String langCode) {
+  Widget _buildSubMenuItem(AllowedMenu sub, String? currentRoute, String langCode, AppThemeColors themeColors) {
     final isSelected = currentRoute == sub.route;
-    final label = langCode == 'es' ? sub.label : sub.labelEn;
+    final label = langCode == 'es' ? sub.label : (langCode == 'fr' ? sub.labelFr : sub.labelEn);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
@@ -179,7 +182,7 @@ class _DashboardShellState extends State<DashboardShell> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF6C63FF).withOpacity(0.1)
+                ? AppColors.primary.withOpacity(0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -188,8 +191,8 @@ class _DashboardShellState extends State<DashboardShell> {
               Icon(
                 _getIconData(sub.icon),
                 color: isSelected
-                    ? const Color(0xFF4ECDC4)
-                    : Colors.white.withOpacity(0.4),
+                    ? AppColors.accent
+                    : themeColors.textSecondary.withOpacity(0.8),
                 size: 16,
               ),
               const SizedBox(width: 12),
@@ -197,7 +200,7 @@ class _DashboardShellState extends State<DashboardShell> {
                 child: Text(
                   label,
                   style: GoogleFonts.inter(
-                    color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+                    color: isSelected ? themeColors.textPrimary : themeColors.textSecondary,
                     fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                     fontSize: 13,
                   ),
@@ -208,7 +211,7 @@ class _DashboardShellState extends State<DashboardShell> {
                   width: 5,
                   height: 5,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF4ECDC4),
+                    color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -227,6 +230,8 @@ class _DashboardShellState extends State<DashboardShell> {
     final menuProvider = context.watch<MenuProvider>();
     final authProvider = context.watch<AuthProvider>();
     final languageProvider = context.watch<LanguageProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     final menus = menuProvider.myMenus;
 
@@ -234,9 +239,9 @@ class _DashboardShellState extends State<DashboardShell> {
       return Container(
         width: 260,
         decoration: BoxDecoration(
-          color: const Color(0xFF131129),
+          color: themeColors.sidebarBg,
           border: Border(
-            right: BorderSide(color: Colors.white.withOpacity(0.06), width: 1.5),
+            right: BorderSide(color: themeColors.borderColor, width: 1.5),
           ),
         ),
         child: Column(
@@ -250,7 +255,7 @@ class _DashboardShellState extends State<DashboardShell> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                        colors: [AppColors.primary, AppColors.accent],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -266,7 +271,7 @@ class _DashboardShellState extends State<DashboardShell> {
                           style: GoogleFonts.outfit(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: themeColors.textPrimary,
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -274,7 +279,7 @@ class _DashboardShellState extends State<DashboardShell> {
                           'Multicliente Base',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.5),
+                            color: themeColors.textSecondary,
                           ),
                         ),
                       ],
@@ -283,7 +288,7 @@ class _DashboardShellState extends State<DashboardShell> {
                 ],
               ),
             ),
-            const Divider(color: Colors.white10, height: 1),
+            Divider(color: themeColors.borderColor, height: 1),
             const SizedBox(height: 16),
 
             // Navigation Items (Hierarchical mapping)
@@ -291,30 +296,30 @@ class _DashboardShellState extends State<DashboardShell> {
               child: menuProvider.isLoading && menus.isEmpty
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6C63FF),
+                        color: AppColors.primary,
                       ),
                     )
                   : SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Column(
-                        children: menus.map((item) => _buildMenuItem(item, currentRoute, languageProvider.currentLanguageCode)).toList(),
+                        children: menus.map((item) => _buildMenuItem(item, currentRoute, languageProvider.currentLanguageCode, themeColors)).toList(),
                       ),
                     ),
             ),
 
             // Profile info at bottom
-            const Divider(color: Colors.white10, height: 1),
+            Divider(color: themeColors.borderColor, height: 1),
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
                     child: Text(
                       authProvider.userName.isNotEmpty ? authProvider.userName[0].toUpperCase() : 'U',
                       style: GoogleFonts.outfit(
-                        color: const Color(0xFF4ECDC4),
+                        color: AppColors.accent,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -329,7 +334,7 @@ class _DashboardShellState extends State<DashboardShell> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: themeColors.textPrimary,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -337,7 +342,7 @@ class _DashboardShellState extends State<DashboardShell> {
                         Text(
                           authProvider.roleCode.toUpperCase(),
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF4ECDC4),
+                            color: AppColors.accent,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -354,15 +359,15 @@ class _DashboardShellState extends State<DashboardShell> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0C29),
+      backgroundColor: themeColors.gradientBg.first,
       drawer: isMobile ? Drawer(child: buildSidebarContent()) : null,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF131129).withOpacity(0.8),
+        backgroundColor: themeColors.sidebarBg.withOpacity(0.8),
         elevation: 0,
         leading: isMobile
             ? Builder(
                 builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                  icon: Icon(Icons.menu_rounded, color: themeColors.textPrimary),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               )
@@ -372,7 +377,7 @@ class _DashboardShellState extends State<DashboardShell> {
           style: GoogleFonts.outfit(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: themeColors.textPrimary,
           ),
         ),
         actions: [
@@ -383,16 +388,16 @@ class _DashboardShellState extends State<DashboardShell> {
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: themeColors.textPrimary.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: themeColors.borderColor),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: authProvider.activeCompany?.id,
-                    dropdownColor: const Color(0xFF1E1E2E),
-                    icon: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 18),
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    dropdownColor: themeColors.cardBackground,
+                    icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary, size: 18),
+                    style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                     onChanged: (val) async {
                       if (val != null) {
                         final nextComp = authProvider.userCompanies.firstWhere((c) => c.id == val);
@@ -425,9 +430,9 @@ class _DashboardShellState extends State<DashboardShell> {
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: themeColors.textPrimary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: themeColors.borderColor),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -451,10 +456,20 @@ class _DashboardShellState extends State<DashboardShell> {
               ),
             ),
           ),
-          
+
+          // Theme mode switcher
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: themeProvider.isDarkMode ? Colors.amberAccent : Colors.amber,
+            ),
+            tooltip: themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
+            onPressed: () => themeProvider.toggleTheme(),
+          ),
+
           // Logout button
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Color(0xFFFF6B6B)),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.error),
             tooltip: context.tr('logout'),
             onPressed: () async {
               menuProvider.clearMyMenus();
@@ -472,14 +487,11 @@ class _DashboardShellState extends State<DashboardShell> {
           if (!isMobile) buildSidebarContent(),
           Expanded(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF0F0C29),
-                    Color(0xFF1A1A2E),
-                  ],
+                  colors: themeColors.gradientBg,
                 ),
               ),
               child: widget.child,
@@ -506,6 +518,8 @@ class GestureButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
@@ -513,13 +527,13 @@ class GestureButton extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
+          color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : Colors.white70,
+            color: isSelected ? Colors.white : themeColors.textPrimary.withOpacity(0.7),
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

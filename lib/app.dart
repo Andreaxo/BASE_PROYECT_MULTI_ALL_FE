@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'core/localization/app_localizations.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/company/screens/company_list_screen.dart';
 import 'features/inventory/screens/article_list_screen.dart';
@@ -19,6 +21,7 @@ class MulticlienteApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageProvider = context.watch<LanguageProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp(
       locale: languageProvider.locale,
@@ -35,21 +38,9 @@ class MulticlienteApp extends StatelessWidget {
       ],
       title: 'Multicliente App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF6C63FF),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6C63FF),
-          secondary: Color(0xFF4ECDC4),
-          surface: Color(0xFF1E1E2E),
-          background: Color(0xFF0F0C29),
-          error: Color(0xFFFF6B6B),
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0F0C29),
-        textTheme: GoogleFonts.interTextTheme(
-          ThemeData.dark().textTheme,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
       initialRoute: isLoggedIn ? '/users' : '/login',
       routes: {
         '/login': (context) => const LoginScreen(),

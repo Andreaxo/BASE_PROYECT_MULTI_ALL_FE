@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/services/auth_storage.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/company/providers/company_provider.dart';
 import 'features/inventory/providers/article_provider.dart';
@@ -23,6 +24,9 @@ void main() async {
       providers: [
         ChangeNotifierProvider(
           create: (_) => LanguageProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider()..checkAuthStatus(),

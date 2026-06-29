@@ -4,6 +4,12 @@ class Role {
   final String code;
   final bool isActive;
   final List<RolePermission> permissions;
+  final int? createBy;
+  final String? createAt;
+  final String? createByName;
+  final int? updateBy;
+  final String? updateAt;
+  final String? updateByName;
 
   Role({
     required this.id,
@@ -11,6 +17,12 @@ class Role {
     required this.code,
     required this.isActive,
     this.permissions = const [],
+    this.createBy,
+    this.createAt,
+    this.createByName,
+    this.updateBy,
+    this.updateAt,
+    this.updateByName,
   });
 
   factory Role.fromJson(Map<String, dynamic> json) {
@@ -28,6 +40,12 @@ class Role {
       code: json['code'] as String,
       isActive: json['is_active'] as bool,
       permissions: permsList,
+      createBy: json['create_by'] as int?,
+      createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
+      updateBy: json['update_by'] as int?,
+      updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
     );
   }
 }

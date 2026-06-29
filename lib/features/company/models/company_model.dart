@@ -4,6 +4,10 @@ class Company {
   final bool isActive;
   final int? createBy;
   final String? createAt;
+  final String? createByName;
+  final int? updateBy;
+  final String? updateAt;
+  final String? updateByName;
 
   Company({
     required this.id,
@@ -11,6 +15,10 @@ class Company {
     required this.isActive,
     this.createBy,
     this.createAt,
+    this.createByName,
+    this.updateBy,
+    this.updateAt,
+    this.updateByName,
   });
 
   factory Company.fromJson(Map<String, dynamic> json) {
@@ -20,6 +28,10 @@ class Company {
       isActive: json['is_active'] as bool,
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
+      updateBy: json['update_by'] as int?,
+      updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
     );
   }
 }

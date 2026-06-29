@@ -3,14 +3,24 @@ class Category {
   final int companyId;
   final String name;
   final bool isActive;
+  final int? createBy;
   final String? createAt;
+  final String? createByName;
+  final int? updateBy;
+  final String? updateAt;
+  final String? updateByName;
 
   Category({
     required this.id,
     required this.companyId,
     required this.name,
     required this.isActive,
+    this.createBy,
     this.createAt,
+    this.createByName,
+    this.updateBy,
+    this.updateAt,
+    this.updateByName,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
@@ -19,7 +29,12 @@ class Category {
       companyId: json['company_id'] as int,
       name: json['name'] as String,
       isActive: json['is_active'] as bool,
-      createAt: json['create_at'] as String?,
+      createBy: json['create_by'] as int?,
+      createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
+      updateBy: json['update_by'] as int?,
+      updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
     );
   }
 }

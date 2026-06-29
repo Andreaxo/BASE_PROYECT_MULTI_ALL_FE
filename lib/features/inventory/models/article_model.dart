@@ -6,7 +6,12 @@ class Article {
   final int categoryId;
   final Category? category;
   final String name;
+  final int? createBy;
   final String? createAt;
+  final String? createByName;
+  final int? updateBy;
+  final String? updateAt;
+  final String? updateByName;
 
   Article({
     required this.id,
@@ -14,7 +19,12 @@ class Article {
     required this.categoryId,
     this.category,
     required this.name,
+    this.createBy,
     this.createAt,
+    this.createByName,
+    this.updateBy,
+    this.updateAt,
+    this.updateByName,
   });
 
   factory Article.fromJson(Map<String, dynamic> json) {
@@ -26,7 +36,12 @@ class Article {
           ? Category.fromJson(json['category'] as Map<String, dynamic>)
           : null,
       name: json['name'] as String,
-      createAt: json['create_at'] as String?,
+      createBy: json['create_by'] as int?,
+      createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
+      updateBy: json['update_by'] as int?,
+      updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
     );
   }
 }

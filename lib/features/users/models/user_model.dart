@@ -7,8 +7,10 @@ class User {
   final bool isActive;
   final int? createBy;
   final String? createAt;
+  final String? createByName;
   final int? updateBy;
   final String? updateAt;
+  final String? updateByName;
   final int? roleId;
   final String roleCode;
   final List<UserCompanyInfo> companies;
@@ -21,8 +23,10 @@ class User {
     required this.isActive,
     this.createBy,
     this.createAt,
+    this.createByName,
     this.updateBy,
     this.updateAt,
+    this.updateByName,
     this.roleId,
     required this.roleCode,
     this.companies = const [],
@@ -45,8 +49,10 @@ class User {
       isActive: json['is_active'] as bool,
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
+      createByName: json['create_by_name']?.toString(),
       updateBy: json['update_by'] as int?,
       updateAt: json['update_at']?.toString(),
+      updateByName: json['update_by_name']?.toString(),
       roleId: json['role_id'] as int?,
       roleCode: (json['role_code'] as String?) ?? '',
       companies: companiesList,

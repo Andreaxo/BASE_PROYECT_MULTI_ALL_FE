@@ -86,6 +86,7 @@ class AuthStorage {
   }
 
   static const String _localeKey = 'locale';
+  static const String _themeModeKey = 'is_dark_theme';
 
   /// Save selected locale
   static Future<void> saveLocale(String localeCode) async {
@@ -97,5 +98,17 @@ class AuthStorage {
   static Future<String> getLocale() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_localeKey) ?? 'es';
+  }
+
+  /// Save theme preference (true for dark, false for light)
+  static Future<void> saveThemeMode(bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_themeModeKey, isDark);
+  }
+
+  /// Get saved theme preference (defaults to dark mode = true)
+  static Future<bool> isDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_themeModeKey) ?? true;
   }
 }
