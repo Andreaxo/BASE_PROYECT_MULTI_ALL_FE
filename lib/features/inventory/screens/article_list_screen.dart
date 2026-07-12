@@ -9,8 +9,11 @@ import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../models/article_model.dart';
 import '../providers/article_provider.dart';
+import '../../../core/utils/export_helper.dart';
+import 'package:multicliente_app/core/widgets/header_filter.dart';
 import 'article_form_screen.dart';
 
 class ArticleListScreen extends StatefulWidget {
@@ -23,6 +26,13 @@ class ArticleListScreen extends StatefulWidget {
 class _ArticleListScreenState extends State<ArticleListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // Column Filters
+  String _idFilter = '';
+  String _nameFilter = '';
+  String _categoryFilter = '';
+  String _createByFilter = '';
+  String _createAtFilter = '';
 
   // Pagination State
   int _currentPage = 1;
@@ -83,7 +93,23 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<ArticleProvider>().deleteArticle(article.id);
+              final provider = context.read<ArticleProvider>();
+              final success = await provider.deleteArticle(article.id);
+              if (mounted) {
+                if (success) {
+                  CustomAlert.show(
+                    context,
+                    message: 'Artículo eliminado correctamente',
+                    isSuccess: true,
+                  );
+                } else {
+                  CustomAlert.show(
+                    context,
+                    message: provider.errorMessage ?? 'Error al eliminar artículo',
+                    isSuccess: false,
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B6B),
@@ -111,6 +137,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
     if (result == true && mounted) {
       context.read<ArticleProvider>().loadArticles();
+      CustomAlert.show(
+        context,
+        message: 'Artículo guardado correctamente',
+        isSuccess: true,
+      );
     }
   }
 
@@ -126,12 +157,29 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     final canEdit = allowedMenu?.permissions.contains('EDIT') ?? false;
     final canDelete = allowedMenu?.permissions.contains('DELETE') ?? false;
 
-    // Filter articles based on search
+    // Filter articles based on search and column filters
     final filteredArticles = articleProvider.articles.where((art) {
-      final matchesSearch = art.name.toLowerCase().contains(_searchQuery) ||
-          art.id.toString().contains(_searchQuery) ||
-          (art.category?.name ?? '').toLowerCase().contains(_searchQuery);
-      return matchesSearch;
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final matchesSearch = art.name.toLowerCase().contains(query) ||
+            art.id.toString().contains(query) ||
+            (art.category?.name ?? '').toLowerCase().contains(query);
+        if (!matchesSearch) return false;
+      }
+      
+      if (_idFilter.isNotEmpty && !art.id.toString().contains(_idFilter)) return false;
+      if (_nameFilter.isNotEmpty && !art.name.toLowerCase().contains(_nameFilter.toLowerCase())) return false;
+      if (_categoryFilter.isNotEmpty && !(art.category?.name ?? '').toLowerCase().contains(_categoryFilter.toLowerCase())) return false;
+      if (_createByFilter.isNotEmpty) {
+        final creator = (art.createByName ?? art.createBy?.toString() ?? '-').toLowerCase();
+        if (!creator.contains(_createByFilter.toLowerCase())) return false;
+      }
+      if (_createAtFilter.isNotEmpty) {
+        final dateStr = _formatDate(art.createAt).toLowerCase();
+        if (!dateStr.contains(_createAtFilter.toLowerCase())) return false;
+      }
+      
+      return true;
     }).toList();
 
     // Pagination calculations
@@ -196,7 +244,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                             onPressed: () => _navigateToForm(),
                             icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
                             label: Text(
-                              'Nuevo Artículo',
+                              context.tr('add_article'),
                               style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -237,50 +285,75 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   const SizedBox(height: 24),
 
                   // Table matrix card
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
+                  Card(
+                    color: themeColors.cardBackground,
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Theme.of(context).dividerColor),
+                      side: BorderSide(color: themeColors.borderColor),
                     ),
-                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Search field header
                         Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withOpacity(0.08)),
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: context.tr('article_search_hint'),
-                                hintStyle: GoogleFonts.inter(
-                                  color: Colors.white.withOpacity(0.35),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: themeColors.textPrimary.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: themeColors.borderColor),
+                                  ),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 14),
+                                    decoration: InputDecoration(
+                                      hintText: context.tr('search_article_hint') ?? 'Buscar...',
+                                      hintStyle: GoogleFonts.inter(
+                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                      ),
+                                      prefixIcon: Icon(
+                                        Icons.search_rounded,
+                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                        size: 20,
+                                      ),
+                                      suffixIcon: _searchQuery.isNotEmpty
+                                          ? IconButton(
+                                              icon: Icon(Icons.close_rounded,
+                                                  color: themeColors.textSecondary.withOpacity(0.5), size: 18),
+                                              onPressed: () => _searchController.clear(),
+                                            )
+                                          : null,
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                                    ),
+                                  ),
                                 ),
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  color: Colors.white.withOpacity(0.4),
-                                  size: 20,
-                                ),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: Icon(Icons.close_rounded,
-                                            color: Colors.white.withOpacity(0.5), size: 18),
-                                        onPressed: () => _searchController.clear(),
-                                      )
-                                    : null,
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 14),
                               ),
-                            ),
+                              const SizedBox(width: 12),
+                              _buildExportButton(
+                                label: 'Excel',
+                                icon: Icons.table_chart_rounded,
+                                color: const Color(0xFF107C41),
+                                onPressed: () => _exportData(format: 'excel', data: filteredArticles),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: 'PDF',
+                                icon: Icons.picture_as_pdf_rounded,
+                                color: const Color(0xFFE02424),
+                                onPressed: () => _exportData(format: 'pdf', data: filteredArticles),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: context.tr('print'),
+                                icon: Icons.print_rounded,
+                                color: AppColors.primary,
+                                onPressed: () => _exportData(format: 'print', data: filteredArticles),
+                              ),
+                            ],
                           ),
                         ),
                         Divider(color: Colors.white.withOpacity(0.05), height: 1),
@@ -327,13 +400,14 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                       ),
                                                       horizontalMargin: 20,
                                                       columnSpacing: 40,
+                                                      headingRowHeight: 64.0,
                                                       columns: [
-                                                        const DataColumn(label: Text('ID')),
-                                                        DataColumn(label: Text(context.tr('name'))),
-                                                        DataColumn(label: Text(context.tr('category'))),
-                                                        DataColumn(label: Text(context.tr('created_by'))),
-                                                        DataColumn(label: Text(context.tr('created_at'))),
-                                                        if (canEdit || canDelete) DataColumn(label: Text(context.tr('actions'))),
+                                                        DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))))),
+                                                        DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('name'), (val) => setState(() => _nameFilter = val))))),
+                                                        DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('category'), (val) => setState(() => _categoryFilter = val))))),
+                                                        DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))))),
+                                                        DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))))),
+                                                        if (canEdit || canDelete) DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('actions'))))),
                                                       ],
                                                       rows: paginatedArticles.map((art) {
                                                         return DataRow(
@@ -453,12 +527,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     required int totalItems,
     required int totalPages,
   }) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.015),
+        color: themeColors.textPrimary.withOpacity(0.01),
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.05)),
+          top: BorderSide(color: themeColors.borderColor),
         ),
       ),
       child: Row(
@@ -467,7 +542,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           Text(
             '${context.tr('total')}: $totalItems ${context.tr('article_list_title').toLowerCase()}',
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.5),
+              color: themeColors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -476,16 +551,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               Text(
                 '${context.tr('rows_per_page')}: ',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.4),
+                  color: themeColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
               DropdownButton<int>(
                 value: _rowsPerPage,
-                dropdownColor: const Color(0xFF1E1E2E),
+                dropdownColor: themeColors.cardBackground,
                 underline: const SizedBox.shrink(),
-                iconEnabledColor: Colors.white38,
-                style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                iconEnabledColor: themeColors.textSecondary,
+                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 12),
                 items: [5, 8, 10, 15].map((size) {
                   return DropdownMenuItem<int>(
                     value: size,
@@ -504,8 +579,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               const SizedBox(width: 14),
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
-                color: Colors.white70,
-                disabledColor: Colors.white.withOpacity(0.15),
+                color: themeColors.textPrimary,
+                disabledColor: themeColors.textSecondary.withOpacity(0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -513,15 +588,15 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               Text(
                 '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.8),
+                  color: themeColors.textPrimary,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
-                color: Colors.white70,
-                disabledColor: Colors.white.withOpacity(0.15),
+                color: themeColors.textPrimary,
+                disabledColor: themeColors.textSecondary.withOpacity(0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -618,6 +693,79 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
       return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
     } catch (_) {
       return dateStr.split('T')[0];
+    }
+  }
+
+  Widget _buildExportButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withOpacity(0.15),
+        foregroundColor: color,
+        side: BorderSide(color: color.withOpacity(0.4)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _buildHeaderFilter(String title, ValueChanged<String> onChanged) {
+    return HeaderFilter(
+      title: title,
+      onChanged: (val) {
+        onChanged(val);
+        setState(() {
+          _currentPage = 1;
+        });
+      },
+    );
+  }
+
+  void _exportData({required String format, required List<Article> data}) async {
+    final headers = ['ID', 'Nombre del Artículo', 'Categoría', 'Creado por', 'Creado el'];
+    final rows = data.map((a) => [
+      a.id.toString().padLeft(3, '0'),
+      a.name,
+      a.category?.name ?? 'Sin Categoría',
+      a.createByName ?? a.createBy?.toString() ?? '-',
+      _formatDate(a.createAt),
+    ]).toList();
+
+    try {
+      if (format == 'excel') {
+        await ExportHelper.exportToExcel(
+          headers: headers,
+          rows: rows,
+          filename: 'reporte_articulos_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        CustomAlert.show(
+          context,
+          message: context.tr('export_excel_success'),
+          isSuccess: true,
+        );
+      } else {
+        final now = DateTime.now();
+        final dateStr = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+        await ExportHelper.exportToPdfAndPrint(
+          title: 'Reporte de Artículos - $dateStr',
+          headers: headers,
+          rows: rows,
+        );
+      }
+    } catch (e) {
+      CustomAlert.show(
+        context,
+        message: '${context.tr('error_occurred')}: $e',
+        isSuccess: false,
+      );
     }
   }
 }

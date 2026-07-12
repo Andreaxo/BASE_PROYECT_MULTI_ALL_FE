@@ -11,6 +11,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../company/providers/company_provider.dart';
 import '../../role/providers/role_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 
@@ -31,6 +32,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
   late TextEditingController _lastNameController;
   late bool _isActive;
   bool _obscurePassword = true;
+  bool _activatePasswordInput = false;
 
   int? _selectedRoleId;
   final Set<int> _selectedCompanyIds = {};
@@ -77,7 +79,9 @@ class _UserFormScreenState extends State<UserFormScreen> {
         widget.user!.id,
         UpdateUserRequest(
           email: _emailController.text.trim(),
-          password: _passwordController.text.isNotEmpty ? _passwordController.text : null,
+          password: (_activatePasswordInput && _passwordController.text.isNotEmpty)
+              ? _passwordController.text
+              : null,
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
           isActive: _isActive,
@@ -102,13 +106,10 @@ class _UserFormScreenState extends State<UserFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = userProvider.errorMessage ?? context.tr('error_occurred');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error, style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      CustomAlert.show(
+        context,
+        message: error,
+        isSuccess: false,
       );
     }
   }
@@ -289,27 +290,50 @@ class _UserFormScreenState extends State<UserFormScreen> {
                               ),
                               const SizedBox(height: 20),
 
-                              _buildLabel(context.tr('password')),
-                              const SizedBox(height: 8),
-                              CustomTextField(
-                                controller: _passwordController,
-                                hint: isEditing ? 'Dejar en blanco para no cambiar' : 'Mínimo 6 caracteres',
-                                icon: Icons.lock_outline_rounded,
-                                obscureText: _obscurePassword,
-                                validator: (v) {
-                                  if (!isEditing && (v == null || v.isEmpty)) return 'La contraseña es requerida';
-                                  if (v != null && v.isNotEmpty && v.length < 6) return 'Debe tener al menos 6 caracteres';
-                                  return null;
-                                },
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                                    color: Colors.white30,
-                                    size: 20,
+                              if (isEditing && !_activatePasswordInput) ...[
+                                _buildLabel(context.tr('password')),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () => setState(() => _activatePasswordInput = true),
+                                    icon: const Icon(Icons.lock_reset_rounded, size: 18),
+                                    label: const Text('Cambiar Contraseña'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary.withOpacity(0.15),
+                                      foregroundColor: AppColors.accent,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                                      ),
+                                    ),
                                   ),
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
-                              ),
+                              ] else ...[
+                                _buildLabel(context.tr('password')),
+                                const SizedBox(height: 8),
+                                CustomTextField(
+                                  controller: _passwordController,
+                                  hint: isEditing ? 'Nueva contraseña (mínimo 6 caracteres)' : 'Mínimo 6 caracteres',
+                                  icon: Icons.lock_outline_rounded,
+                                  obscureText: _obscurePassword,
+                                  validator: (v) {
+                                    if (!isEditing && (v == null || v.isEmpty)) return 'La contraseña es requerida';
+                                    if (isEditing && _activatePasswordInput && (v == null || v.isEmpty)) return 'La contraseña es requerida';
+                                    if (v != null && v.isNotEmpty && v.length < 6) return 'Debe tener al menos 6 caracteres';
+                                    return null;
+                                  },
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                      color: themeColors.textSecondary.withOpacity(0.5),
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -328,9 +352,9 @@ class _UserFormScreenState extends State<UserFormScreen> {
                     final rightColumn = Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(color: themeColors.borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +362,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                           Text(
                             'Roles y Empresas',
                             style: GoogleFonts.outfit(
-                              color: Colors.white,
+                              color: themeColors.textPrimary,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -350,17 +374,17 @@ class _UserFormScreenState extends State<UserFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
+                              color: themeColors.textPrimary.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              border: Border.all(color: themeColors.borderColor),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<int>(
                                 value: _selectedRoleId,
-                                hint: Text('Selecciona un Rol', style: GoogleFonts.inter(color: Colors.white30, fontSize: 14)),
-                                dropdownColor: const Color(0xFF1E1E2E),
-                                icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                                style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+                                hint: Text('Selecciona un Rol', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 14)),
+                                dropdownColor: themeColors.cardBackground,
+                                icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary),
+                                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 15),
                                 isExpanded: true,
                                 onChanged: (val) {
                                   setState(() => _selectedRoleId = val);
@@ -368,7 +392,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                 items: roleProvider.roles.map((r) {
                                   return DropdownMenuItem<int>(
                                     value: r.id,
-                                    child: Text(r.name),
+                                    child: Text(r.name, style: GoogleFonts.inter(color: themeColors.textPrimary)),
                                   );
                                 }).toList(),
                               ),
@@ -390,19 +414,19 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                       padding: const EdgeInsets.all(24.0),
                                       child: Text(
                                         'No hay empresas registradas.',
-                                        style: GoogleFonts.inter(color: Colors.white30),
+                                        style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5)),
                                       ),
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.02),
+                                        color: themeColors.textPrimary.withOpacity(0.02),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.white.withOpacity(0.05)),
+                                        border: Border.all(color: themeColors.borderColor),
                                       ),
                                       height: 200,
                                       child: ListView.separated(
                                         itemCount: companyProvider.companies.length,
-                                        separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.03), height: 1),
+                                        separatorBuilder: (_, __) => Divider(color: themeColors.borderColor, height: 1),
                                         itemBuilder: (context, index) {
                                           final company = companyProvider.companies[index];
                                           final isChecked = _selectedCompanyIds.contains(company.id);
@@ -411,9 +435,10 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                             value: isChecked,
                                             title: Text(
                                               company.name,
-                                              style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+                                              style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 14),
                                             ),
                                             activeColor: AppColors.primary,
+                                            checkColor: Colors.black,
                                             controlAffinity: ListTileControlAffinity.leading,
                                             onChanged: (val) {
                                               setState(() {

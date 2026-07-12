@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../../core/config/api_config.dart';
+import '../../../core/services/upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../models/company_model.dart';
 import '../providers/company_provider.dart';
 
@@ -23,6 +27,8 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late bool _isActive;
+  String _photoUrl = '';
+  bool _isUploading = false;
 
   bool get isEditing => widget.company != null;
 
@@ -31,12 +37,57 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.company?.name ?? '');
     _isActive = widget.company?.isActive ?? true;
+    _photoUrl = widget.company?.photoUrl ?? '';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAndUploadLogo() async {
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        final fileBytes = result.files.single.bytes!;
+        final fileName = result.files.single.name;
+
+        final uploadedUrl = await UploadApiService.uploadImage(fileBytes, fileName);
+        setState(() {
+          _photoUrl = uploadedUrl;
+        });
+
+        if (mounted) {
+          CustomAlert.show(
+            context,
+            message: 'Logo de empresa subido correctamente',
+            isSuccess: true,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomAlert.show(
+          context,
+          message: e.toString().replaceAll('Exception: ', ''),
+          isSuccess: false,
+        );
+      }
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
 
   Future<void> _handleSave() async {
@@ -51,12 +102,14 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
         UpdateCompanyRequest(
           name: _nameController.text.trim(),
           isActive: _isActive,
+          photoUrl: _photoUrl,
         ),
       );
     } else {
       success = await companyProvider.createCompany(
         CreateCompanyRequest(
           name: _nameController.text.trim(),
+          photoUrl: _photoUrl,
         ),
       );
     }
@@ -65,13 +118,10 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = companyProvider.errorMessage ?? 'Ocurrió un error';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error, style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      CustomAlert.show(
+        context,
+        message: error,
+        isSuccess: false,
       );
     }
   }
@@ -185,21 +235,59 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                           Center(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                InkWell(
+                                  onTap: _isUploading ? null : _pickAndUploadLogo,
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Container(
+                                    width: 90,
+                                    height: 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: AppColors.primary.withOpacity(0.5),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: _photoUrl.isNotEmpty
+                                          ? Image.network(
+                                              '${ApiConfig.serverUrl}$_photoUrl',
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => Icon(
+                                                isEditing ? Icons.domain_verification_rounded : Icons.domain_add_rounded,
+                                                color: AppColors.accent,
+                                                size: 32,
+                                              ),
+                                            )
+                                          : Icon(
+                                              isEditing ? Icons.domain_verification_rounded : Icons.domain_add_rounded,
+                                              color: Colors.white70,
+                                              size: 32,
+                                            ),
+                                    ),
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: Icon(
-                                isEditing ? Icons.domain_verification_rounded : Icons.domain_add_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
+                                if (_isUploading)
+                                  Container(
+                                    width: 90,
+                                    height: 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 24),

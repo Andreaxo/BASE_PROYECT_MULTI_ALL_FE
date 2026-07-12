@@ -8,8 +8,11 @@ import '../../../core/widgets/stat_card.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
+import '../../../core/utils/export_helper.dart';
+import 'package:multicliente_app/core/widgets/header_filter.dart';
 import 'user_form_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -22,6 +25,14 @@ class UserListScreen extends StatefulWidget {
 class _UserListScreenState extends State<UserListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // Column Filters
+  String _idFilter = '';
+  String _nameFilter = '';
+  String _emailFilter = '';
+  String _statusFilter = '';
+  String _createByFilter = '';
+  String _createAtFilter = '';
 
   // Pagination State
   int _currentPage = 1;
@@ -80,7 +91,23 @@ class _UserListScreenState extends State<UserListScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<UserProvider>().deleteUser(user.id);
+              final provider = context.read<UserProvider>();
+              final success = await provider.deleteUser(user.id);
+              if (mounted) {
+                if (success) {
+                  CustomAlert.show(
+                    context,
+                    message: 'Usuario eliminado correctamente',
+                    isSuccess: true,
+                  );
+                } else {
+                  CustomAlert.show(
+                    context,
+                    message: provider.errorMessage ?? 'Error al eliminar usuario',
+                    isSuccess: false,
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B6B),
@@ -107,6 +134,11 @@ class _UserListScreenState extends State<UserListScreen> {
     );
     if (result == true && mounted) {
       context.read<UserProvider>().loadUsers();
+      CustomAlert.show(
+        context,
+        message: 'Usuario guardado correctamente',
+        isSuccess: true,
+      );
     }
   }
 
@@ -115,13 +147,34 @@ class _UserListScreenState extends State<UserListScreen> {
     final userProvider = context.watch<UserProvider>();
     final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
-    // 1. Filter users based on query
+    // 1. Filter users based on query and column filters
     final filteredUsers = userProvider.users.where((user) {
-      if (_searchQuery.isEmpty) return true;
-      return user.id.toString() == _searchQuery ||
-          user.firstName.toLowerCase().contains(_searchQuery) ||
-          user.lastName.toLowerCase().contains(_searchQuery) ||
-          user.email.toLowerCase().contains(_searchQuery);
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final matchesGlobal = user.id.toString() == query ||
+            user.firstName.toLowerCase().contains(query) ||
+            user.lastName.toLowerCase().contains(query) ||
+            user.email.toLowerCase().contains(query);
+        if (!matchesGlobal) return false;
+      }
+      
+      if (_idFilter.isNotEmpty && !user.id.toString().contains(_idFilter)) return false;
+      if (_nameFilter.isNotEmpty && !user.fullName.toLowerCase().contains(_nameFilter.toLowerCase())) return false;
+      if (_emailFilter.isNotEmpty && !user.email.toLowerCase().contains(_emailFilter.toLowerCase())) return false;
+      if (_statusFilter.isNotEmpty) {
+        final statusText = user.isActive ? 'activo' : 'inactivo';
+        if (!statusText.contains(_statusFilter.toLowerCase())) return false;
+      }
+      if (_createByFilter.isNotEmpty) {
+        final creator = (user.createByName ?? user.createBy?.toString() ?? '-').toLowerCase();
+        if (!creator.contains(_createByFilter.toLowerCase())) return false;
+      }
+      if (_createAtFilter.isNotEmpty) {
+        final dateStr = _formatDate(user.createAt).toLowerCase();
+        if (!dateStr.contains(_createAtFilter.toLowerCase())) return false;
+      }
+      
+      return true;
     }).toList();
 
     // 2. Paginate filtered users
@@ -233,50 +286,75 @@ class _UserListScreenState extends State<UserListScreen> {
             const SizedBox(height: 24),
 
             // Table Matrix Card
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+            Card(
+              color: themeColors.cardBackground,
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                side: BorderSide(color: themeColors.borderColor),
               ),
-              clipBehavior: Clip.antiAlias,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Search bar header inside card
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: context.tr('search_hint'),
-                          hintStyle: GoogleFonts.inter(
-                            color: Colors.white.withOpacity(0.35),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: themeColors.textPrimary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: themeColors.borderColor),
+                            ),
+                            child: TextField(
+                              controller: _searchController,
+                              style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: context.tr('search_hint'),
+                                hintStyle: GoogleFonts.inter(
+                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                  size: 20,
+                                ),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        icon: Icon(Icons.close_rounded,
+                                            color: themeColors.textSecondary.withOpacity(0.5), size: 18),
+                                        onPressed: () => _searchController.clear(),
+                                      )
+                                    : null,
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
                           ),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: Colors.white.withOpacity(0.4),
-                            size: 20,
-                          ),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: Icon(Icons.close_rounded,
-                                      color: Colors.white.withOpacity(0.5), size: 18),
-                                  onPressed: () => _searchController.clear(),
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        _buildExportButton(
+                          label: 'Excel',
+                          icon: Icons.table_chart_rounded,
+                          color: const Color(0xFF107C41),
+                          onPressed: () => _exportData(format: 'excel', data: filteredUsers),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildExportButton(
+                          label: 'PDF',
+                          icon: Icons.picture_as_pdf_rounded,
+                          color: const Color(0xFFE02424),
+                          onPressed: () => _exportData(format: 'pdf', data: filteredUsers),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildExportButton(
+                          label: context.tr('print'),
+                          icon: Icons.print_rounded,
+                          color: AppColors.primary,
+                          onPressed: () => _exportData(format: 'print', data: filteredUsers),
+                        ),
+                      ],
                     ),
                   ),
                   Divider(color: Colors.white.withOpacity(0.05), height: 1),
@@ -323,14 +401,15 @@ class _UserListScreenState extends State<UserListScreen> {
                                                 ),
                                                 horizontalMargin: 20,
                                                 columnSpacing: 35,
+                                                headingRowHeight: 64.0,
                                                 columns: [
-                                                  const DataColumn(label: Text('ID')),
-                                                  DataColumn(label: Text(context.tr('full_name'))),
-                                                  DataColumn(label: Text(context.tr('email'))),
-                                                  DataColumn(label: Text(context.tr('status'))),
-                                                  DataColumn(label: Text(context.tr('created_by'))),
-                                                  DataColumn(label: Text(context.tr('created_at'))),
-                                                  DataColumn(label: Text(context.tr('actions'))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('full_name'), (val) => setState(() => _nameFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('email'), (val) => setState(() => _emailFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))))),
+                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('actions'))))),
                                                 ],
                                                 rows: paginatedUsers.map((user) {
                                                   return DataRow(
@@ -434,12 +513,13 @@ class _UserListScreenState extends State<UserListScreen> {
     required int totalItems,
     required int totalPages,
   }) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.015),
+        color: themeColors.textPrimary.withOpacity(0.01),
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.05)),
+          top: BorderSide(color: themeColors.borderColor),
         ),
       ),
       child: Row(
@@ -448,7 +528,7 @@ class _UserListScreenState extends State<UserListScreen> {
           Text(
             '${context.tr('total')}: $totalItems ${context.tr('users_found')}',
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.5),
+              color: themeColors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -457,16 +537,16 @@ class _UserListScreenState extends State<UserListScreen> {
               Text(
                 '${context.tr('rows_per_page')}: ',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.4),
+                  color: themeColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
               DropdownButton<int>(
                 value: _rowsPerPage,
-                dropdownColor: const Color(0xFF1E1E2E),
+                dropdownColor: themeColors.cardBackground,
                 underline: const SizedBox.shrink(),
-                iconEnabledColor: Colors.white38,
-                style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                iconEnabledColor: themeColors.textSecondary,
+                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 12),
                 items: [5, 8, 10, 15].map((size) {
                   return DropdownMenuItem<int>(
                     value: size,
@@ -485,8 +565,8 @@ class _UserListScreenState extends State<UserListScreen> {
               const SizedBox(width: 14),
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
-                color: Colors.white70,
-                disabledColor: Colors.white.withOpacity(0.15),
+                color: themeColors.textPrimary,
+                disabledColor: themeColors.textSecondary.withOpacity(0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -494,15 +574,15 @@ class _UserListScreenState extends State<UserListScreen> {
               Text(
                 '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.8),
+                  color: themeColors.textPrimary,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
-                color: Colors.white70,
-                disabledColor: Colors.white.withOpacity(0.15),
+                color: themeColors.textPrimary,
+                disabledColor: themeColors.textSecondary.withOpacity(0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -578,6 +658,80 @@ class _UserListScreenState extends State<UserListScreen> {
       return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
     } catch (_) {
       return dateStr.split('T')[0];
+    }
+  }
+
+  Widget _buildExportButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withOpacity(0.15),
+        foregroundColor: color,
+        side: BorderSide(color: color.withOpacity(0.4)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        elevation: 0,
+      ),
+    );
+  }
+
+  Widget _buildHeaderFilter(String title, ValueChanged<String> onChanged) {
+    return HeaderFilter(
+      title: title,
+      onChanged: (val) {
+        onChanged(val);
+        setState(() {
+          _currentPage = 1;
+        });
+      },
+    );
+  }
+
+  void _exportData({required String format, required List<User> data}) async {
+    final headers = ['ID', 'Nombre', 'Correo', 'Estado', 'Creado por', 'Creado en'];
+    final rows = data.map((u) => [
+      u.id.toString().padLeft(3, '0'),
+      u.fullName,
+      u.email,
+      u.isActive ? 'Activo' : 'Inactivo',
+      u.createByName ?? u.createBy?.toString() ?? '-',
+      _formatDate(u.createAt),
+    ]).toList();
+
+    try {
+      if (format == 'excel') {
+        await ExportHelper.exportToExcel(
+          headers: headers,
+          rows: rows,
+          filename: 'reporte_usuarios_${DateTime.now().millisecondsSinceEpoch}',
+        );
+        CustomAlert.show(
+          context,
+          message: context.tr('export_excel_success'),
+          isSuccess: true,
+        );
+      } else {
+        final now = DateTime.now();
+        final dateStr = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+        await ExportHelper.exportToPdfAndPrint(
+          title: 'Reporte de Usuarios - $dateStr',
+          headers: headers,
+          rows: rows,
+        );
+      }
+    } catch (e) {
+      CustomAlert.show(
+        context,
+        message: '${context.tr('error_occurred')}: $e',
+        isSuccess: false,
+      );
     }
   }
 }

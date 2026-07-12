@@ -46,10 +46,10 @@ class UserInfo {
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
-      id: json['id'] as int,
-      email: json['email'] as String,
-      firstName: json['first_name'] as String,
-      lastName: json['last_name'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      email: (json['email'] as String?) ?? '',
+      firstName: (json['first_name'] as String?) ?? '',
+      lastName: (json['last_name'] as String?) ?? '',
       roleId: json['role_id'] as int?,
       roleCode: (json['role_code'] as String?) ?? '',
     );

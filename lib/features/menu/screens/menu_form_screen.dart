@@ -6,9 +6,11 @@ import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/menu_model.dart';
 import '../providers/menu_provider.dart';
+import '../../../core/utils/icon_library.dart';
 
 class MenuFormScreen extends StatefulWidget {
   final MenuModel? menu;
@@ -32,16 +34,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
 
   bool get isEditing => widget.menu != null;
 
-  final List<Map<String, dynamic>> _availableIcons = [
-    {'name': 'people_rounded', 'icon': Icons.people_rounded},
-    {'name': 'business_rounded', 'icon': Icons.business_rounded},
-    {'name': 'admin_panel_settings_rounded', 'icon': Icons.admin_panel_settings_rounded},
-    {'name': 'menu_rounded', 'icon': Icons.menu_rounded},
-    {'name': 'grid_view_rounded', 'icon': Icons.grid_view_rounded},
-    {'name': 'inventory_2_rounded', 'icon': Icons.inventory_2_rounded},
-    {'name': 'category_rounded', 'icon': Icons.category_rounded},
-    {'name': 'inventory_rounded', 'icon': Icons.inventory_rounded},
-  ];
+
 
   @override
   void initState() {
@@ -111,13 +104,10 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = menuProvider.errorMessage ?? 'Ocurrió un error';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error, style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      CustomAlert.show(
+        context,
+        message: error,
+        isSuccess: false,
       );
     }
   }
@@ -364,31 +354,58 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
 
                           _buildLabel('Selecciona un Ícono'),
                           const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: _availableIcons.map((i) {
-                              final isSelected = _selectedIcon == i['name'];
-                              return GestureDetector(
-                                onTap: () => setState(() => _selectedIcon = i['name']),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFF6C63FF).withOpacity(0.2) : Colors.white.withOpacity(0.04),
-                                    border: Border.all(
-                                      color: isSelected ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.08),
-                                      width: isSelected ? 1.5 : 1,
+                          InkWell(
+                            onTap: _showIconPicker,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.04),
+                                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6C63FF).withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
+                                    child: Icon(
+                                      IconLibrary.getIcon(_selectedIcon),
+                                      color: const Color(0xFF4ECDC4),
+                                      size: 24,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    i['icon'] as IconData,
-                                    color: isSelected ? const Color(0xFF4ECDC4) : Colors.white70,
-                                    size: 24,
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _selectedIcon.replaceAll('_rounded', '').replaceAll('_', ' ').toUpperCase(),
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Hacer clic para cambiar ícono',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white30,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -443,6 +460,116 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showIconPicker() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final filteredIconEntries = IconLibrary.icons.entries.where((entry) {
+              return entry.key.toLowerCase().contains(query.toLowerCase());
+            }).toList();
+
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E2E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Seleccionar Ícono',
+                    style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    ),
+                    child: TextField(
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar ícono...',
+                        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white30, size: 18),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onChanged: (val) {
+                        setDialogState(() {
+                          query = val;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 450,
+                height: 350,
+                child: filteredIconEntries.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No se encontraron íconos',
+                          style: GoogleFonts.inter(color: Colors.white30, fontSize: 13),
+                        ),
+                      )
+                    : GridView.builder(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 5,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                        itemCount: filteredIconEntries.length,
+                        itemBuilder: (context, index) {
+                          final entry = filteredIconEntries[index];
+                          final isSelected = _selectedIcon == entry.key;
+                          return Tooltip(
+                            message: entry.key.replaceAll('_rounded', '').replaceAll('_', ' '),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedIcon = entry.key;
+                                });
+                                Navigator.pop(ctx);
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF6C63FF).withOpacity(0.2) : Colors.white.withOpacity(0.04),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.08),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  entry.value,
+                                  color: isSelected ? const Color(0xFF4ECDC4) : Colors.white70,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Cerrar', style: GoogleFonts.inter(color: Colors.white54)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

@@ -53,6 +53,13 @@ class AuthStorage {
     return prefs.getString(_tokenKey);
   }
 
+  /// Get the stored user ID as an integer.
+  static Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idStr = prefs.getString(_userIdKey);
+    return idStr != null ? int.tryParse(idStr) : null;
+  }
+
   /// Get stored user info.
   static Future<Map<String, String?>> getUserInfo() async {
     final prefs = await SharedPreferences.getInstance();

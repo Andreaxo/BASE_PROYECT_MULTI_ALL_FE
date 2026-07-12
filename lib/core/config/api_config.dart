@@ -6,6 +6,9 @@ class ApiConfig {
   // Change this to your backend URL
   static const String baseUrl = 'http://localhost:8080/api';
 
+  // Base server URL (without /api) to load uploaded images
+  static String get serverUrl => baseUrl.replaceAll('/api', '');
+
   // Endpoints
   static const String loginEndpoint = '$baseUrl/auth/login';
   static const String usersEndpoint = '$baseUrl/users';

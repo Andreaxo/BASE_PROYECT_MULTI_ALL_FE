@@ -12,6 +12,7 @@ class CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final int? maxLines;
   final int? minLines;
+  final TextInputType keyboardType;
   final String? Function(String?)? validator;
 
   const CustomTextField({
@@ -24,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.maxLines = 1,
     this.minLines,
+    this.keyboardType = TextInputType.text,
     this.validator,
   });
 
@@ -38,6 +40,7 @@ class CustomTextField extends StatelessWidget {
       obscureText: obscureText,
       maxLines: obscureText ? 1 : maxLines,
       minLines: minLines,
+      keyboardType: keyboardType,
       style: GoogleFonts.inter(
         color: enabled ? themeColors.textPrimary : themeColors.textSecondary,
         fontSize: 15,

@@ -7,6 +7,7 @@ import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/category_model.dart';
 import '../providers/category_provider.dart';
@@ -66,13 +67,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = provider.errorMessage ?? context.tr('error_occurred');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error, style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      CustomAlert.show(
+        context,
+        message: error,
+        isSuccess: false,
       );
     }
   }

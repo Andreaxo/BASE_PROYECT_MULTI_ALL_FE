@@ -2,6 +2,10 @@ class Role {
   final int id;
   final String name;
   final String code;
+  final String description;
+  final int sessionDays;
+  final int sessionHours;
+  final int sessionMinutes;
   final bool isActive;
   final List<RolePermission> permissions;
   final int? createBy;
@@ -15,6 +19,10 @@ class Role {
     required this.id,
     required this.name,
     required this.code,
+    required this.description,
+    required this.sessionDays,
+    required this.sessionHours,
+    required this.sessionMinutes,
     required this.isActive,
     this.permissions = const [],
     this.createBy,
@@ -38,6 +46,10 @@ class Role {
       id: json['id'] as int,
       name: json['name'] as String,
       code: json['code'] as String,
+      description: json['description']?.toString() ?? '',
+      sessionDays: json['session_days'] as int? ?? 0,
+      sessionHours: json['session_hours'] as int? ?? 24,
+      sessionMinutes: json['session_minutes'] as int? ?? 0,
       isActive: json['is_active'] as bool,
       permissions: permsList,
       createBy: json['create_by'] as int?,
@@ -107,17 +119,29 @@ class PermissionRequest {
 class CreateRoleRequest {
   final String name;
   final String code;
+  final String description;
+  final int sessionDays;
+  final int sessionHours;
+  final int sessionMinutes;
   final List<PermissionRequest> permissions;
 
   CreateRoleRequest({
     required this.name,
     required this.code,
+    required this.description,
+    required this.sessionDays,
+    required this.sessionHours,
+    required this.sessionMinutes,
     required this.permissions,
   });
 
   Map<String, dynamic> toJson() => {
         'name': name,
         'code': code,
+        'description': description,
+        'session_days': sessionDays,
+        'session_hours': sessionHours,
+        'session_minutes': sessionMinutes,
         'permissions': permissions.map((p) => p.toJson()).toList(),
       };
 }
@@ -125,12 +149,20 @@ class CreateRoleRequest {
 class UpdateRoleRequest {
   final String? name;
   final String? code;
+  final String? description;
+  final int? sessionDays;
+  final int? sessionHours;
+  final int? sessionMinutes;
   final bool? isActive;
   final List<PermissionRequest> permissions;
 
   UpdateRoleRequest({
     this.name,
     this.code,
+    this.description,
+    this.sessionDays,
+    this.sessionHours,
+    this.sessionMinutes,
     this.isActive,
     required this.permissions,
   });
@@ -139,6 +171,10 @@ class UpdateRoleRequest {
     final map = <String, dynamic>{};
     if (name != null) map['name'] = name;
     if (code != null) map['code'] = code;
+    if (description != null) map['description'] = description;
+    if (sessionDays != null) map['session_days'] = sessionDays;
+    if (sessionHours != null) map['session_hours'] = sessionHours;
+    if (sessionMinutes != null) map['session_minutes'] = sessionMinutes;
     if (isActive != null) map['is_active'] = isActive;
     map['permissions'] = permissions.map((p) => p.toJson()).toList();
     return map;

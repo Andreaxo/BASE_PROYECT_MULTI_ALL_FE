@@ -2,6 +2,7 @@ class Company {
   final int id;
   final String name;
   final bool isActive;
+  final String photoUrl;
   final int? createBy;
   final String? createAt;
   final String? createByName;
@@ -13,6 +14,7 @@ class Company {
     required this.id,
     required this.name,
     required this.isActive,
+    this.photoUrl = '',
     this.createBy,
     this.createAt,
     this.createByName,
@@ -26,6 +28,7 @@ class Company {
       id: json['id'] as int,
       name: json['name'] as String,
       isActive: json['is_active'] as bool,
+      photoUrl: json['photo_url'] as String? ?? '',
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),
@@ -38,22 +41,28 @@ class Company {
 
 class CreateCompanyRequest {
   final String name;
+  final String photoUrl;
 
-  CreateCompanyRequest({required this.name});
+  CreateCompanyRequest({required this.name, this.photoUrl = ''});
 
-  Map<String, dynamic> toJson() => {'name': name};
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'photo_url': photoUrl,
+      };
 }
 
 class UpdateCompanyRequest {
   final String? name;
   final bool? isActive;
+  final String? photoUrl;
 
-  UpdateCompanyRequest({this.name, this.isActive});
+  UpdateCompanyRequest({this.name, this.isActive, this.photoUrl});
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     if (name != null) map['name'] = name;
     if (isActive != null) map['is_active'] = isActive;
+    if (photoUrl != null) map['photo_url'] = photoUrl;
     return map;
   }
 }

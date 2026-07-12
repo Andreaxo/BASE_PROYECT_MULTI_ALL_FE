@@ -76,4 +76,25 @@ class UserApiService {
       throw Exception(body['error'] ?? 'Failed to delete user');
     }
   }
+
+  /// Change own password.
+  static Future<void> changePassword({
+    required String currentPassword,
+    required String confirmCurrentPassword,
+    required String newPassword,
+  }) async {
+    final response = await ApiService.put(
+      '${ApiConfig.baseUrl}/auth/change-password',
+      {
+        'current_password': currentPassword,
+        'confirm_current_password': confirmCurrentPassword,
+        'new_password': newPassword,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(body['error'] ?? 'No se pudo cambiar la contraseña');
+    }
+  }
 }

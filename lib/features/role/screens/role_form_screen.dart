@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../../core/widgets/info_card.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../../menu/models/menu_model.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -26,6 +28,9 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
   late TextEditingController _nameController;
   late TextEditingController _codeController;
   late TextEditingController _descriptionController;
+  late TextEditingController _sessionDaysController;
+  late TextEditingController _sessionHoursController;
+  late TextEditingController _sessionMinutesController;
   late bool _isActive;
 
   // Stores permissions as "menuId_optionId" strings (e.g. "1_2")
@@ -44,7 +49,10 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.role?.name ?? '');
     _codeController = TextEditingController(text: widget.role?.code ?? '');
-    _descriptionController = TextEditingController(text: ''); // Added description controller
+    _descriptionController = TextEditingController(text: widget.role?.description ?? '');
+    _sessionDaysController = TextEditingController(text: widget.role?.sessionDays.toString() ?? '0');
+    _sessionHoursController = TextEditingController(text: widget.role?.sessionHours.toString() ?? '24');
+    _sessionMinutesController = TextEditingController(text: widget.role?.sessionMinutes.toString() ?? '0');
     _isActive = widget.role?.isActive ?? true;
 
     // Auto-generate code from role name (e.g. "Editor" -> "ROL_EDITOR")
@@ -74,6 +82,9 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
     _nameController.dispose();
     _codeController.dispose();
     _descriptionController.dispose();
+    _sessionDaysController.dispose();
+    _sessionHoursController.dispose();
+    _sessionMinutesController.dispose();
     super.dispose();
   }
 
@@ -106,6 +117,10 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
         UpdateRoleRequest(
           name: _nameController.text.trim(),
           code: _codeController.text.trim(),
+          description: _descriptionController.text.trim(),
+          sessionDays: int.tryParse(_sessionDaysController.text) ?? 0,
+          sessionHours: int.tryParse(_sessionHoursController.text) ?? 24,
+          sessionMinutes: int.tryParse(_sessionMinutesController.text) ?? 0,
           isActive: _isActive,
           permissions: permissionsList,
         ),
@@ -115,6 +130,10 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
         CreateRoleRequest(
           name: _nameController.text.trim(),
           code: _codeController.text.trim(),
+          description: _descriptionController.text.trim(),
+          sessionDays: int.tryParse(_sessionDaysController.text) ?? 0,
+          sessionHours: int.tryParse(_sessionHoursController.text) ?? 24,
+          sessionMinutes: int.tryParse(_sessionMinutesController.text) ?? 0,
           permissions: permissionsList,
         ),
       );
@@ -124,13 +143,10 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = roleProvider.errorMessage ?? 'Ocurrió un error';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error, style: GoogleFonts.inter()),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      CustomAlert.show(
+        context,
+        message: error,
+        isSuccess: false,
       );
     }
   }
@@ -352,6 +368,60 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                 icon: Icons.description_outlined,
                                 maxLines: 4,
                                 minLines: 3,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildLabel(context.tr('max_session_duration')),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSubLabel(context.tr('days')),
+                                        const SizedBox(height: 4),
+                                        CustomTextField(
+                                          controller: _sessionDaysController,
+                                          hint: '0',
+                                          icon: Icons.calendar_today_rounded,
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSubLabel(context.tr('hours')),
+                                        const SizedBox(height: 4),
+                                        CustomTextField(
+                                          controller: _sessionHoursController,
+                                          hint: '0',
+                                          icon: Icons.access_time_rounded,
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildSubLabel(context.tr('minutes')),
+                                        const SizedBox(height: 4),
+                                        CustomTextField(
+                                          controller: _sessionMinutesController,
+                                          hint: '0',
+                                          icon: Icons.timelapse_rounded,
+                                          keyboardType: TextInputType.number,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -639,18 +709,14 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
     final hasDelete = _selectedPermissions.contains(deleteKey);
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: isChild ? 24.0 : 8.0,
-        right: 8.0,
-        top: 8.0,
-        bottom: 8.0,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
       child: Row(
         children: [
           Expanded(
             flex: 3,
             child: Row(
               children: [
+                if (isChild) const SizedBox(width: 24),
                 if (hasChildren)
                   IconButton(
                     icon: Icon(
@@ -744,6 +810,18 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
         color: themeColors.textSecondary,
         fontSize: 13,
         fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildSubLabel(String text) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    return Text(
+      text,
+      style: GoogleFonts.inter(
+        color: themeColors.textSecondary.withOpacity(0.7),
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
       ),
     );
   }

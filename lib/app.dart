@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
@@ -12,6 +11,8 @@ import 'features/inventory/screens/category_list_screen.dart';
 import 'features/menu/screens/menu_list_screen.dart';
 import 'features/role/screens/role_list_screen.dart';
 import 'features/users/screens/user_list_screen.dart';
+import 'features/users/screens/profile_screen.dart';
+import 'features/statistics/screens/dashboard_screen.dart';
 
 class MulticlienteApp extends StatelessWidget {
   final bool isLoggedIn;
@@ -42,15 +43,47 @@ class MulticlienteApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       initialRoute: isLoggedIn ? '/users' : '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/users': (context) => const UserListScreen(),
-        '/companies': (context) => const CompanyListScreen(),
-        '/roles': (context) => const RoleListScreen(),
-        '/menus': (context) => const MenuListScreen(),
-        '/categories': (context) => const CategoryListScreen(),
-        '/items': (context) => const ArticleListScreen(),
-        '/inventory': (context) => const CategoryListScreen(),
+      onGenerateRoute: (settings) {
+        Widget builder;
+        switch (settings.name) {
+          case '/login':
+            builder = const LoginScreen();
+            break;
+          case '/users':
+            builder = const UserListScreen();
+            break;
+          case '/companies':
+            builder = const CompanyListScreen();
+            break;
+          case '/roles':
+            builder = const RoleListScreen();
+            break;
+          case '/menus':
+            builder = const MenuListScreen();
+            break;
+          case '/categories':
+          case '/inventory':
+            builder = const CategoryListScreen();
+            break;
+          case '/items':
+            builder = const ArticleListScreen();
+            break;
+          case '/profile':
+            builder = const ProfileScreen();
+            break;
+          case '/statistics/dashboard':
+            builder = const DashboardScreen();
+            break;
+          default:
+            builder = isLoggedIn ? const UserListScreen() : const LoginScreen();
+        }
+
+        return PageRouteBuilder(
+          settings: settings,
+          pageBuilder: (context, animation, secondaryAnimation) => builder,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        );
       },
     );
   }

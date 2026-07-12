@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../config/api_config.dart';
 import '../localization/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import '../utils/icon_library.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/menu/models/menu_model.dart';
 import '../../features/menu/providers/menu_provider.dart';
@@ -39,24 +41,21 @@ class _DashboardShellState extends State<DashboardShell> {
   }
 
   IconData _getIconData(String iconName) {
-    switch (iconName) {
-      case 'people_rounded':
-        return Icons.people_rounded;
-      case 'business_rounded':
-        return Icons.business_rounded;
-      case 'admin_panel_settings_rounded':
-        return Icons.admin_panel_settings_rounded;
-      case 'menu_rounded':
-        return Icons.menu_rounded;
-      case 'inventory_2_rounded':
-        return Icons.inventory_2_rounded;
-      case 'category_rounded':
-        return Icons.category_rounded;
-      case 'inventory_rounded':
-        return Icons.inventory_rounded;
-      default:
-        return Icons.grid_view_rounded;
-    }
+    return IconLibrary.getIcon(iconName);
+  }
+
+  Widget _buildDefaultCompanyIcon() {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, AppColors.accent],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Icon(Icons.business_rounded, color: Colors.white, size: 20),
+    );
   }
 
   Widget _buildMenuItem(AllowedMenu item, String? currentRoute, String langCode, AppThemeColors themeColors) {
@@ -237,7 +236,7 @@ class _DashboardShellState extends State<DashboardShell> {
 
     Widget buildSidebarContent() {
       return Container(
-        width: 260,
+        width: 300,
         decoration: BoxDecoration(
           color: themeColors.sidebarBg,
           border: Border(
@@ -248,38 +247,44 @@ class _DashboardShellState extends State<DashboardShell> {
           children: [
             // Brand Header
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.accent],
-                      ),
+                  // Company Logo / Photo
+                  if (authProvider.activeCompany != null && authProvider.activeCompany!.photoUrl.isNotEmpty)
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.hub_rounded, color: Colors.white, size: 24),
-                  ),
+                      child: Image.network(
+                        '${ApiConfig.serverUrl}${authProvider.activeCompany!.photoUrl}',
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildDefaultCompanyIcon(),
+                      ),
+                    )
+                  else
+                    _buildDefaultCompanyIcon(),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'PLATAFORMA',
+                          authProvider.activeCompany?.name ?? 'PLATAFORMA',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.outfit(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: themeColors.textPrimary,
-                            letterSpacing: 1.5,
                           ),
                         ),
                         Text(
-                          'Multicliente Base',
+                          authProvider.activeCompany != null ? 'Empresa Activa' : 'Multicliente Base',
                           style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: themeColors.textSecondary,
+                            fontSize: 11,
+                            color: themeColors.textSecondary.withOpacity(0.8),
                           ),
                         ),
                       ],
@@ -309,48 +314,67 @@ class _DashboardShellState extends State<DashboardShell> {
 
             // Profile info at bottom
             Divider(color: themeColors.borderColor, height: 1),
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: AppColors.primary.withOpacity(0.2),
-                    child: Text(
-                      authProvider.userName.isNotEmpty ? authProvider.userName[0].toUpperCase() : 'U',
-                      style: GoogleFonts.outfit(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.bold,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.of(context).pushNamed('/profile');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      if (authProvider.currentUser != null && authProvider.currentUser!.photoUrl.isNotEmpty)
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundImage: NetworkImage(
+                            '${ApiConfig.serverUrl}${authProvider.currentUser!.photoUrl}',
+                          ),
+                          backgroundColor: Colors.transparent,
+                        )
+                      else
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppColors.primary.withOpacity(0.2),
+                          child: Text(
+                            authProvider.userName.isNotEmpty ? authProvider.userName[0].toUpperCase() : 'U',
+                            style: GoogleFonts.outfit(
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              authProvider.userName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                color: themeColors.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              authProvider.roleCode.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                color: AppColors.accent,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 16),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          authProvider.userName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: themeColors.textPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          authProvider.roleCode.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            color: AppColors.accent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -364,6 +388,7 @@ class _DashboardShellState extends State<DashboardShell> {
       appBar: AppBar(
         backgroundColor: themeColors.sidebarBg.withOpacity(0.8),
         elevation: 0,
+        toolbarHeight: 74.0,
         leading: isMobile
             ? Builder(
                 builder: (context) => IconButton(
@@ -371,7 +396,10 @@ class _DashboardShellState extends State<DashboardShell> {
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               )
-            : null,
+            : IconButton(
+                icon: Icon(themeProvider.isSidebarCollapsed ? Icons.menu_rounded : Icons.menu_open_rounded, color: themeColors.textPrimary),
+                onPressed: () => themeProvider.toggleSidebar(),
+              ),
         title: Text(
           widget.title,
           style: GoogleFonts.outfit(
@@ -386,10 +414,10 @@ class _DashboardShellState extends State<DashboardShell> {
             Center(
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 decoration: BoxDecoration(
                   color: themeColors.textPrimary.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: themeColors.borderColor),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -398,6 +426,8 @@ class _DashboardShellState extends State<DashboardShell> {
                     dropdownColor: themeColors.cardBackground,
                     icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary, size: 18),
                     style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                    isDense: true,
+                    borderRadius: BorderRadius.circular(12),
                     onChanged: (val) async {
                       if (val != null) {
                         final nextComp = authProvider.userCompanies.firstWhere((c) => c.id == val);
@@ -416,7 +446,7 @@ class _DashboardShellState extends State<DashboardShell> {
                     items: authProvider.userCompanies.map((c) {
                       return DropdownMenuItem<int>(
                         value: c.id,
-                        child: Text(c.name),
+                        child: Text(c.name, style: GoogleFonts.inter(color: themeColors.textPrimary)),
                       );
                     }).toList(),
                   ),
@@ -484,7 +514,20 @@ class _DashboardShellState extends State<DashboardShell> {
       ),
       body: Row(
         children: [
-          if (!isMobile) buildSidebarContent(),
+          if (!isMobile)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: themeProvider.isSidebarCollapsed ? 0 : 300,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                child: SizedBox(
+                  width: 300,
+                  child: buildSidebarContent(),
+                ),
+              ),
+            ),
           Expanded(
             child: Container(
               decoration: BoxDecoration(

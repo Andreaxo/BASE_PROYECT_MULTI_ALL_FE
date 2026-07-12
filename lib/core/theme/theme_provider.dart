@@ -3,9 +3,11 @@ import '../services/auth_storage.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.dark;
+  bool _isSidebarCollapsed = false;
 
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
+  bool get isSidebarCollapsed => _isSidebarCollapsed;
 
   ThemeProvider() {
     _loadSavedTheme();
@@ -25,6 +27,11 @@ class ThemeProvider extends ChangeNotifier {
       _themeMode = ThemeMode.dark;
       await AuthStorage.saveThemeMode(true);
     }
+    notifyListeners();
+  }
+
+  void toggleSidebar() {
+    _isSidebarCollapsed = !_isSidebarCollapsed;
     notifyListeners();
   }
 }

@@ -5,6 +5,7 @@ class User {
   final String firstName;
   final String lastName;
   final bool isActive;
+  final String photoUrl;
   final int? createBy;
   final String? createAt;
   final String? createByName;
@@ -21,6 +22,7 @@ class User {
     required this.firstName,
     required this.lastName,
     required this.isActive,
+    this.photoUrl = '',
     this.createBy,
     this.createAt,
     this.createByName,
@@ -42,11 +44,12 @@ class User {
     }
 
     return User(
-      id: json['id'] as int,
-      email: json['email'] as String,
-      firstName: json['first_name'] as String,
-      lastName: json['last_name'] as String,
-      isActive: json['is_active'] as bool,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      email: (json['email'] as String?) ?? '',
+      firstName: (json['first_name'] as String?) ?? '',
+      lastName: (json['last_name'] as String?) ?? '',
+      isActive: (json['is_active'] as bool?) ?? false,
+      photoUrl: json['photo_url'] as String? ?? '',
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),
@@ -66,13 +69,15 @@ class User {
 class UserCompanyInfo {
   final int id;
   final String name;
+  final String photoUrl;
 
-  UserCompanyInfo({required this.id, required this.name});
+  UserCompanyInfo({required this.id, required this.name, this.photoUrl = ''});
 
   factory UserCompanyInfo.fromJson(Map<String, dynamic> json) {
     return UserCompanyInfo(
       id: json['id'] as int,
       name: json['name'] as String,
+      photoUrl: json['photo_url'] as String? ?? '',
     );
   }
 }
@@ -114,6 +119,7 @@ class UpdateUserRequest {
   final bool? isActive;
   final int? roleId;
   final List<int>? companyIds;
+  final String? photoUrl;
 
   UpdateUserRequest({
     this.email,
@@ -123,6 +129,7 @@ class UpdateUserRequest {
     this.isActive,
     this.roleId,
     this.companyIds,
+    this.photoUrl,
   });
 
   Map<String, dynamic> toJson() {
@@ -134,6 +141,7 @@ class UpdateUserRequest {
     if (isActive != null) map['is_active'] = isActive;
     if (roleId != null) map['role_id'] = roleId;
     if (companyIds != null) map['company_ids'] = companyIds;
+    if (photoUrl != null) map['photo_url'] = photoUrl;
     return map;
   }
 }
