@@ -14,6 +14,7 @@ class User {
   final String? updateByName;
   final int? roleId;
   final String roleCode;
+  final int? empresaId;
   final List<UserCompanyInfo> companies;
 
   User({
@@ -31,6 +32,7 @@ class User {
     this.updateByName,
     this.roleId,
     required this.roleCode,
+    this.empresaId,
     this.companies = const [],
   });
 
@@ -43,6 +45,9 @@ class User {
           .toList();
     }
 
+    final rawEmpresaId = (json['empresa_id'] as num?)?.toInt();
+    final fallbackEmpresaId = rawEmpresaId ?? (companiesList.isNotEmpty ? companiesList.first.id : null);
+
     return User(
       id: (json['id'] as num?)?.toInt() ?? 0,
       email: (json['email'] as String?) ?? '',
@@ -50,14 +55,15 @@ class User {
       lastName: (json['last_name'] as String?) ?? '',
       isActive: (json['is_active'] as bool?) ?? false,
       photoUrl: json['photo_url'] as String? ?? '',
-      createBy: json['create_by'] as int?,
+      createBy: (json['create_by'] as num?)?.toInt(),
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),
-      updateBy: json['update_by'] as int?,
+      updateBy: (json['update_by'] as num?)?.toInt(),
       updateAt: json['update_at']?.toString(),
       updateByName: json['update_by_name']?.toString(),
-      roleId: json['role_id'] as int?,
+      roleId: (json['role_id'] as num?)?.toInt(),
       roleCode: (json['role_code'] as String?) ?? '',
+      empresaId: fallbackEmpresaId,
       companies: companiesList,
     );
   }
@@ -68,15 +74,22 @@ class User {
 /// Helper model for user companies representation.
 class UserCompanyInfo {
   final int id;
+  final int nit;
   final String name;
   final String photoUrl;
 
-  UserCompanyInfo({required this.id, required this.name, this.photoUrl = ''});
+  UserCompanyInfo({
+    required this.id,
+    required this.nit,
+    required this.name,
+    this.photoUrl = '',
+  });
 
   factory UserCompanyInfo.fromJson(Map<String, dynamic> json) {
     return UserCompanyInfo(
-      id: json['id'] as int,
-      name: json['name'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      nit: (json['nit'] as num?)?.toInt() ?? 0,
+      name: (json['name'] as String?) ?? '',
       photoUrl: json['photo_url'] as String? ?? '',
     );
   }
@@ -101,13 +114,13 @@ class CreateUserRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-        'first_name': firstName,
-        'last_name': lastName,
-        if (roleId != null) 'role_id': roleId,
-        'company_ids': companyIds,
-      };
+    'email': email,
+    'password': password,
+    'first_name': firstName,
+    'last_name': lastName,
+    if (roleId != null) 'role_id': roleId,
+    'company_ids': companyIds,
+  };
 }
 
 /// Payload for updating an existing user.

@@ -7,7 +7,6 @@ import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
 import '../../../core/widgets/info_card.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../company/providers/company_provider.dart';
 import '../../role/providers/role_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -194,7 +193,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withOpacity(0.1),
+                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -300,12 +299,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                     icon: const Icon(Icons.lock_reset_rounded, size: 18),
                                     label: const Text('Cambiar Contraseña'),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary.withOpacity(0.15),
+                                      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                                       foregroundColor: AppColors.accent,
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
-                                        side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                                        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
                                       ),
                                     ),
                                   ),
@@ -327,7 +326,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                   suffixIcon: IconButton(
                                     icon: Icon(
                                       _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                                      color: themeColors.textSecondary.withOpacity(0.5),
+                                      color: themeColors.textSecondary.withValues(alpha: 0.5),
                                       size: 20,
                                     ),
                                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -374,14 +373,14 @@ class _UserFormScreenState extends State<UserFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withOpacity(0.05),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: themeColors.borderColor),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<int>(
                                 value: _selectedRoleId,
-                                hint: Text('Selecciona un Rol', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 14)),
+                                hint: Text('Selecciona un Rol', style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.5), fontSize: 14)),
                                 dropdownColor: themeColors.cardBackground,
                                 icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary),
                                 style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 15),
@@ -414,12 +413,12 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                       padding: const EdgeInsets.all(24.0),
                                       child: Text(
                                         'No hay empresas registradas.',
-                                        style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5)),
+                                        style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.5)),
                                       ),
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
-                                        color: themeColors.textPrimary.withOpacity(0.02),
+                                        color: themeColors.textPrimary.withValues(alpha: 0.02),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(color: themeColors.borderColor),
                                       ),

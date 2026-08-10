@@ -62,8 +62,9 @@ class CompanyApiService {
   }
 
   static Future<void> delete(int id) async {
-    final response =
-        await ApiService.delete('${ApiConfig.companiesEndpoint}/$id');
+    final response = await ApiService.delete(
+      '${ApiConfig.companiesEndpoint}/$id',
+    );
 
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;

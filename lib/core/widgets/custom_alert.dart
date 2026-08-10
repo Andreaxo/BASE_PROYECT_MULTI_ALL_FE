@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -114,13 +114,13 @@ class _AlertNotificationWidgetState extends State<_AlertNotificationWidget>
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: widget.isSuccess
-                          ? const Color(0xFF4ECDC4).withOpacity(0.35)
-                          : AppColors.error.withOpacity(0.35),
+                          ? const Color(0xFF4ECDC4).withValues(alpha: 0.35)
+                          : AppColors.error.withValues(alpha: 0.35),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
+                        color: Colors.black.withValues(alpha: 0.25),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -132,8 +132,8 @@ class _AlertNotificationWidgetState extends State<_AlertNotificationWidget>
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: widget.isSuccess
-                              ? const Color(0xFF4ECDC4).withOpacity(0.15)
-                              : AppColors.error.withOpacity(0.15),
+                              ? const Color(0xFF4ECDC4).withValues(alpha: 0.15)
+                              : AppColors.error.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -156,7 +156,7 @@ class _AlertNotificationWidgetState extends State<_AlertNotificationWidget>
                       IconButton(
                         icon: Icon(
                           Icons.close_rounded,
-                          color: widget.themeColors.textSecondary.withOpacity(0.5),
+                          color: widget.themeColors.textSecondary.withValues(alpha: 0.5),
                           size: 18,
                         ),
                         onPressed: _dismiss,

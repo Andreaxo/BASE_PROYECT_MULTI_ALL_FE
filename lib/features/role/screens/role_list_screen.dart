@@ -9,7 +9,6 @@ import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/widgets/custom_badge.dart';
 import '../../../core/widgets/custom_alert.dart';
-import '../../menu/models/menu_model.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/role_model.dart';
@@ -239,9 +238,9 @@ class _RoleListScreenState extends State<RoleListScreen> {
             // Breadcrumbs
             Row(
               children: [
-                Text('Admin', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
-                Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
-                Text('Gestión de Roles', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+                Text('Admin', style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.5), fontSize: 13)),
+                Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withValues(alpha: 0.5), size: 14),
+                Text('Gestión de Roles', style: GoogleFonts.inter(color: themeColors.textPrimary.withValues(alpha: 0.8), fontSize: 13)),
               ],
             ),
             const SizedBox(height: 12),
@@ -309,7 +308,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: StatCard(
-                    label: context.tr('last_modification') ?? 'Última Modificación',
+                    label: context.tr('last_modification'),
                     value: lastModText,
                     icon: Icons.history_rounded,
                   ),
@@ -336,7 +335,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withOpacity(0.05),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: themeColors.borderColor),
                             ),
@@ -346,17 +345,17 @@ class _RoleListScreenState extends State<RoleListScreen> {
                               decoration: InputDecoration(
                                 hintText: context.tr('search_role_hint'),
                                 hintStyle: GoogleFonts.inter(
-                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                  color: themeColors.textSecondary.withValues(alpha: 0.5),
                                 ),
                                 prefixIcon: Icon(
                                   Icons.search_rounded,
-                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                  color: themeColors.textSecondary.withValues(alpha: 0.5),
                                   size: 20,
                                 ),
                                 suffixIcon: _searchQuery.isNotEmpty
                                     ? IconButton(
                                         icon: Icon(Icons.close_rounded,
-                                            color: themeColors.textSecondary.withOpacity(0.5), size: 18),
+                                            color: themeColors.textSecondary.withValues(alpha: 0.5), size: 18),
                                         onPressed: () => _searchController.clear(),
                                       )
                                     : null,
@@ -390,7 +389,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
                       ],
                     ),
                   ),
-                  Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                  Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                   roleProvider.isLoading && roleProvider.roles.isEmpty
                       ? const Center(
@@ -409,91 +408,63 @@ class _RoleListScreenState extends State<RoleListScreen> {
                                   children: [
                                     LayoutBuilder(
                                       builder: (context, constraints) {
-                                        return SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              minWidth: constraints.maxWidth,
-                                            ),
-                                            child: Theme(
-                                              data: Theme.of(context).copyWith(
-                                                dividerColor: themeColors.borderColor,
-                                              ),
-                                              child: DataTable(
-                                                headingRowColor: WidgetStateProperty.all(
-                                                  themeColors.textPrimary.withOpacity(0.03),
-                                                ),
-                                                headingTextStyle: GoogleFonts.inter(
-                                                  color: themeColors.textPrimary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 13,
-                                                ),
-                                                dataTextStyle: GoogleFonts.inter(
-                                                  color: themeColors.textPrimary.withOpacity(0.85),
-                                                  fontSize: 13,
-                                                ),
-                                                horizontalMargin: 20,
-                                                columnSpacing: 40,
-                                                headingRowHeight: 64.0,
-                                                columns: [
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('role_name'), (val) => setState(() => _nameFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('unique_code'), (val) => setState(() => _codeFilter = val))))),
-                                                  DataColumn(
-                                                    label: SizedBox(
-                                                      height: 32,
-                                                      child: Align(
-                                                        alignment: Alignment.centerLeft,
-                                                        child: Text(context.tr('assigned_permissions')),
+                                        final minTableWidth = 1000.0;
+                                        final tableWidth = constraints.maxWidth > minTableWidth
+                                            ? constraints.maxWidth - 2
+                                            : minTableWidth;
+
+                                        return Container(
+                                          decoration: BoxDecoration(
+                                            color: themeColors.cardBackground,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: themeColors.borderColor),
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: SizedBox(
+                                              width: tableWidth,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                children: [
+                                                  // Custom Header
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                                    decoration: const BoxDecoration(
+                                                      color: AppColors.tableHeaderBg,
+                                                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                                    ),
+                                                    child: DefaultTextStyle.merge(
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 13,
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Expanded(flex: 1, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))),
+                                                          Expanded(flex: 2, child: _buildHeaderFilter(context.tr('role_name'), (val) => setState(() => _nameFilter = val))),
+                                                          Expanded(flex: 2, child: _buildHeaderFilter(context.tr('unique_code'), (val) => setState(() => _codeFilter = val))),
+                                                          Expanded(flex: 3, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('assigned_permissions')))),
+                                                          Expanded(flex: 2, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))),
+                                                          Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))),
+                                                          Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))),
+                                                          if (canEdit) const SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text('Acciones'))),
+                                                        ],
                                                       ),
                                                     ),
                                                   ),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))))),
-                                                  if (canEdit)
-                                                    DataColumn(
-                                                      label: SizedBox(
-                                                        height: 32,
-                                                        child: Align(
-                                                          alignment: Alignment.centerLeft,
-                                                          child: Text(context.tr('actions')),
-                                                        ),
-                                                      ),
-                                                    ),
+                                                  // Custom Rows
+                                                  ...paginatedRoles.map((role) {
+                                                    return _RoleRow(
+                                                      role: role,
+                                                      themeColors: themeColors,
+                                                      actionsWidget: _buildActionsCell(role),
+                                                      formattedDate: _formatDate(role.createAt),
+                                                      canEdit: canEdit,
+                                                    );
+                                                  }).toList(),
                                                 ],
-                                                rows: paginatedRoles.map((role) {
-                                                  return DataRow(
-                                                    cells: [
-                                                      DataCell(Text(role.id.toString().padLeft(3, '0'))),
-                                                      DataCell(Text(role.name)),
-                                                      DataCell(Text(role.code)),
-                                                      DataCell(CustomBadge(label: '${role.permissions.length} reglas')),
-                                                      DataCell(StatusBadge(label: role.isActive ? 'Activo' : 'Inactivo', isActive: role.isActive)),
-                                                      DataCell(
-                                                        Row(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            CircleAvatar(
-                                                              radius: 10,
-                                                              backgroundColor: const Color(0xFF6C63FF).withOpacity(0.2),
-                                                              child: Text(
-                                                                (role.createByName != null && role.createByName!.isNotEmpty)
-                                                                    ? role.createByName!.substring(0, 1).toUpperCase()
-                                                                    : 'S',
-                                                                style: GoogleFonts.inter(color: const Color(0xFF4ECDC4), fontSize: 9, fontWeight: FontWeight.bold),
-                                                              ),
-                                                            ),
-                                                            const SizedBox(width: 8),
-                                                            Text(role.createByName ?? 'System'),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      DataCell(Text(_formatDate(role.createAt))),
-                                                      if (canEdit) DataCell(_buildActionsCell(role)),
-                                                    ],
-                                                  );
-                                                }).toList(),
                                               ),
                                             ),
                                           ),
@@ -572,7 +543,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: themeColors.textPrimary.withOpacity(0.01),
+        color: themeColors.textPrimary.withValues(alpha: 0.01),
         border: Border(
           top: BorderSide(color: themeColors.borderColor),
         ),
@@ -581,10 +552,12 @@ class _RoleListScreenState extends State<RoleListScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${context.tr('total') ?? 'Total'}: $totalItems',
+            '${context.tr('total')}: $totalItems ${context.tr('roles').toLowerCase()}',
             style: GoogleFonts.inter(
               color: themeColors.textSecondary,
               fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
           Row(
@@ -621,7 +594,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -637,7 +610,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -659,13 +632,13 @@ class _RoleListScreenState extends State<RoleListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
             const SizedBox(height: 14),
             Text(
               'No se encontraron roles',
               style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 14,
               ),
             ),
@@ -683,13 +656,13 @@ class _RoleListScreenState extends State<RoleListScreen> {
           Icon(
             Icons.error_outline_rounded,
             size: 40,
-            color: const Color(0xFFFF6B6B).withOpacity(0.7),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.7),
           ),
           const SizedBox(height: 14),
           Text(
             provider.errorMessage!,
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 14),
@@ -706,13 +679,30 @@ class _RoleListScreenState extends State<RoleListScreen> {
     );
   }
 
+  String _getCreatorName(String? name, int? id) {
+    if (name == null) {
+      if (id != null && id != 0) return 'Usuario #$id';
+      return 'System';
+    }
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      if (id != null && id != 0) return 'Usuario #$id';
+      return 'System';
+    }
+    return trimmed;
+  }
+
   String _formatDate(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) return '-';
+    if (dateStr.startsWith('0001-01-01')) return '-';
     try {
       final dateTime = DateTime.parse(dateStr).toLocal();
+      if (dateTime.year <= 1970) return '-';
       return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}';
     } catch (_) {
-      return dateStr.split('T')[0];
+      final cleanDate = dateStr.split('T')[0];
+      if (cleanDate.startsWith('0001-01-01')) return '-';
+      return cleanDate;
     }
   }
 
@@ -727,9 +717,9 @@ class _RoleListScreenState extends State<RoleListScreen> {
       icon: Icon(icon, size: 16, color: color),
       label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
+        backgroundColor: color.withValues(alpha: 0.15),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.4)),
+        side: BorderSide(color: color.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         elevation: 0,
@@ -757,7 +747,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
       r.code,
       '${r.permissions.length} reglas',
       r.isActive ? 'Activo' : 'Inactivo',
-      r.createByName ?? 'System',
+      _getCreatorName(r.createByName, r.createBy),
       _formatDate(r.createAt),
     ]).toList();
 
@@ -789,5 +779,157 @@ class _RoleListScreenState extends State<RoleListScreen> {
         isSuccess: false,
       );
     }
+  }
+}
+
+// ── Custom full-width responsive role row with hover animations ──
+class _RoleRow extends StatefulWidget {
+  final Role role;
+  final AppThemeColors themeColors;
+  final Widget actionsWidget;
+  final String formattedDate;
+  final bool canEdit;
+
+  const _RoleRow({
+    required this.role,
+    required this.themeColors,
+    required this.actionsWidget,
+    required this.formattedDate,
+    required this.canEdit,
+  });
+
+  @override
+  State<_RoleRow> createState() => _RoleRowState();
+}
+
+class _RoleRowState extends State<_RoleRow> {
+  bool _isHovered = false;
+
+  String _getCreatorName(String? name, int? id) {
+    if (name == null) {
+      if (id != null && id != 0) return 'Usuario #$id';
+      return 'System';
+    }
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      if (id != null && id != 0) return 'Usuario #$id';
+      return 'System';
+    }
+    return trimmed;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final role = widget.role;
+    final themeColors = widget.themeColors;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _isHovered 
+              ? themeColors.cardBackground.withRed(30).withGreen(30).withBlue(50).withValues(alpha: 0.4)
+              : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: _isHovered 
+                  ? AppColors.primary.withValues(alpha: 0.4) 
+                  : themeColors.borderColor,
+              width: _isHovered ? 1.2 : 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Text(
+                role.id.toString().padLeft(3, '0'),
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                role.name,
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                role.code,
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary.withValues(alpha: 0.85),
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: CustomBadge(
+                  label: '${role.permissions.length} reglas',
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatusBadge(
+                  label: role.isActive ? 'Activo' : 'Inactivo',
+                  isActive: role.isActive,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                _getCreatorName(role.createByName, role.createBy),
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary.withValues(alpha: 0.85),
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                widget.formattedDate,
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary.withValues(alpha: 0.85),
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (widget.canEdit)
+              SizedBox(
+                width: 100,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: widget.actionsWidget,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

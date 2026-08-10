@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -297,7 +297,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withOpacity(0.1),
+                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -492,7 +492,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                           // Search Filter inside Matrix Card
                           Container(
                             decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withOpacity(0.05),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: TextField(
@@ -517,7 +517,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withOpacity(0.02),
+                              color: themeColors.textPrimary.withValues(alpha: 0.02),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -559,7 +559,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
                                       itemCount: parentMenus.length,
-                                      separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.03), height: 1),
+                                      separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.03), height: 1),
                                       itemBuilder: (context, idx) {
                                         final parent = parentMenus[idx];
                                         final children = filteredMenus.where((m) => m.parentId == parent.id).toList();
@@ -594,7 +594,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                     ),
                           
                           const SizedBox(height: 16),
-                          Divider(color: Colors.white.withOpacity(0.05)),
+                          Divider(color: Colors.white.withValues(alpha: 0.05)),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -649,7 +649,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                 const SizedBox(height: 40),
 
                 // Bottom Buttons Bar
-                Divider(color: Colors.white.withOpacity(0.05)),
+                Divider(color: Colors.white.withValues(alpha: 0.05)),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -819,7 +819,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
     return Text(
       text,
       style: GoogleFonts.inter(
-        color: themeColors.textSecondary.withOpacity(0.7),
+        color: themeColors.textSecondary.withValues(alpha: 0.7),
         fontSize: 11,
         fontWeight: FontWeight.bold,
       ),

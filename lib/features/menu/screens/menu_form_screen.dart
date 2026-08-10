@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
@@ -190,7 +189,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withOpacity(0.1),
+                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -320,9 +319,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.06),
+                              color: Colors.white.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<int>(
@@ -360,8 +359,8 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.04),
-                                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                                color: Colors.white.withValues(alpha: 0.04),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -369,7 +368,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF6C63FF).withOpacity(0.15),
+                                      color: const Color(0xFF6C63FF).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(
@@ -434,7 +433,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                 const SizedBox(height: 40),
 
                 // Action buttons
-                Divider(color: Theme.of(context).extension<AppThemeColors>()?.borderColor ?? Colors.white.withOpacity(0.05)),
+                Divider(color: Theme.of(context).extension<AppThemeColors>()?.borderColor ?? Colors.white.withValues(alpha: 0.05)),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -487,9 +486,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
+                      color: Colors.white.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withOpacity(0.08)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                     ),
                     child: TextField(
                       style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -542,9 +541,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF6C63FF).withOpacity(0.2) : Colors.white.withOpacity(0.04),
+                                  color: isSelected ? const Color(0xFF6C63FF).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.04),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.08),
+                                    color: isSelected ? const Color(0xFF4ECDC4) : Colors.white.withValues(alpha: 0.08),
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(12),

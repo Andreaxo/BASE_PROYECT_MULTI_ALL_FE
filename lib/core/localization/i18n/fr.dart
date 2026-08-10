@@ -2,6 +2,9 @@ const Map<String, String> frKeys = {
   // Auth & Login
   'login_title': 'Connexion',
   'login_subtitle': 'Saisissez vos identifiants pour accéder',
+  'welcome_title': 'Bienvenue sur Conexiate',
+  'welcome_subtitle':
+      'Connectez-vous pour accéder à votre compte et profiter de tous les services proposés par Conexia.',
   'email': 'Adresse E-mail',
   'password': 'Mot de passe',
   'login_button': 'Se connecter',
@@ -40,6 +43,8 @@ const Map<String, String> frKeys = {
   'article': 'Article',
   'menus': 'Menus',
   'menu': 'Menu',
+  'benefits': 'Avantages',
+  'benefit': 'Avantage',
 
   // Form Labels & Validations
   'first_name': 'Prénom',
@@ -65,6 +70,8 @@ const Map<String, String> frKeys = {
   'no_results': 'Aucun résultat trouvé',
   'search_other_keywords': 'Essayez de rechercher avec d\'autres mots-clés',
   'total_users': 'Total d\'utilisateurs',
+  'users_found': 'utilisateurs',
+  'total': 'Total',
   'rows_per_page': 'Lignes par page:',
   'page': 'Page',
   'of': 'de',
@@ -132,7 +139,7 @@ const Map<String, String> frKeys = {
   'delete_article_confirm':
       'Êtes-vous sûr de vouloir supprimer l\'article "{name}" (ID: {id})?',
   'no_category_assigned': 'Sans catégorie',
-  
+
   // Custom headers & buttons
   'id': 'ID',
   'company_name': 'Nom de l\'Entreprise',
@@ -143,21 +150,23 @@ const Map<String, String> frKeys = {
   'excel': 'Excel',
   'pdf': 'PDF',
   'label_es': 'Libellé (ES)',
+  'menu_label': 'Libellé',
   'label_en': 'Libellé (EN)',
   'label_fr': 'Libellé (FR)',
   'route_path': 'Route d\'accès',
   'icon': 'Icône',
   'sort_order': 'Ordre',
-  
+
   // Menu translations
   'delete_menu': 'Supprimer le Menu',
-  'delete_menu_confirm': 'Êtes-vous sûr de vouloir supprimer le menu "{name}" (ID: {id})?',
+  'delete_menu_confirm':
+      'Êtes-vous sûr de vouloir supprimer le menu "{name}" (ID: {id})?',
   'active_menus': 'Menus Actifs',
   'total_menus': 'Menus Totaux',
   'sync': 'Synchronisation',
   'sync_complete': 'Complète',
   'search_menu_hint': 'Rechercher par ID, libellé ou route...',
-  
+
   // Role translations
   'role_management': 'Gestion des Rôles',
   'add_role': 'Nouveau Rôle',
@@ -166,18 +175,20 @@ const Map<String, String> frKeys = {
   'hours': 'Heures',
   'minutes': 'Minutes',
   'delete_role': 'Supprimer le Rôle',
-  'delete_role_confirm': 'Êtes-vous sûr de vouloir supprimer le rôle "{name}" (ID: {id})?',
+  'delete_role_confirm':
+      'Êtes-vous sûr de vouloir supprimer le rôle "{name}" (ID: {id})?',
   'active_roles': 'Rôles Actifs',
   'total_roles': 'Rôles Totaux',
   'search_role_hint': 'Rechercher par ID, nom ou code...',
-  
+
   // Company translations
   'delete_company': 'Supprimer l\'Entreprise',
-  'delete_company_confirm': 'Êtes-vous sûr de vouloir supprimer l\'entreprise "{name}" (ID: {id})?',
+  'delete_company_confirm':
+      'Êtes-vous sûr de vouloir supprimer l\'entreprise "{name}" (ID: {id})?',
   'active_companies': 'Entreprises Actives',
   'total_companies': 'Entreprises Totales',
   'search_company_hint': 'Rechercher par ID ou nom...',
-  
+
   // Export & notifications
   'export_excel_success': 'Rapport Excel (.xlsx) exporté vers Téléchargements',
 
@@ -185,5 +196,6 @@ const Map<String, String> frKeys = {
   'statistics': 'Statistiques',
   'dashboard': 'Tableau de Bord',
   'statistics_dashboard_title': 'Statistiques de l\'Entreprise',
-  'statistics_dashboard_subtitle': 'Aperçu général des métriques et des données d\'inventaire.',
+  'statistics_dashboard_subtitle':
+      'Aperçu général des métriques et des données d\'inventaire.',
 };

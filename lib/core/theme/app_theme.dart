@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppThemeColors extends ThemeExtension<AppThemeColors> {
@@ -56,7 +56,7 @@ class AppTheme {
     cardBackground: const Color(0xFF131129),
     textPrimary: Colors.white,
     textSecondary: Colors.white54,
-    borderColor: Colors.white.withOpacity(0.08),
+    borderColor: Colors.white.withValues(alpha: 0.08),
     gradientBg: const [Color(0xFF0F0C29), Color(0xFF1A1A2E)],
     sidebarBg: const Color.fromARGB(111, 4, 47, 71), // AppColors.cardBg equivalent
   );
@@ -76,13 +76,18 @@ class AppTheme {
       primaryColor: const Color(0xFF6C63FF),
       scaffoldBackgroundColor: const Color(0xFF0F0C29),
       cardColor: const Color(0xFF131129),
-      dividerColor: Colors.white.withOpacity(0.08),
+      dividerColor: Colors.white.withValues(alpha: 0.08),
       colorScheme: const ColorScheme.dark(
         primary: Color.fromARGB(255, 7, 3, 90),
         secondary: Color.fromARGB(134, 8, 153, 143),
         surface: Color(0xFF1E1E2E),
         background: Color(0xFF0F0C29),
         error: Color.fromARGB(255, 218, 97, 97),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: Color(0xFF6C63FF),
+        selectionColor: Color(0x406C63FF),
+        selectionHandleColor: Color(0xFF6C63FF),
       ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.dark().textTheme,
@@ -104,6 +109,11 @@ class AppTheme {
         surface: Colors.white,
         background: Color(0xFFF1F5F9),
         error: Color(0xFFFF6B6B),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: Color(0xFF6C63FF),
+        selectionColor: Color(0x406C63FF),
+        selectionHandleColor: Color(0xFF6C63FF),
       ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.light().textTheme,

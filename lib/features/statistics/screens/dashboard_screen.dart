@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/dashboard_shell.dart';
 import '../../../core/widgets/stat_card.dart';
@@ -66,19 +65,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   context.tr('statistics'),
                   style: GoogleFonts.inter(
-                    color: themeColors.textSecondary.withOpacity(0.5),
+                    color: themeColors.textSecondary.withValues(alpha: 0.5),
                     fontSize: 13,
                   ),
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: themeColors.textSecondary.withOpacity(0.5),
+                  color: themeColors.textSecondary.withValues(alpha: 0.5),
                   size: 14,
                 ),
                 Text(
                   context.tr('dashboard'),
                   style: GoogleFonts.inter(
-                    color: themeColors.textPrimary.withOpacity(0.8),
+                    color: themeColors.textPrimary.withValues(alpha: 0.8),
                     fontSize: 13,
                   ),
                 ),

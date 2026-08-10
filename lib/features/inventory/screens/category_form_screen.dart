@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/outline_button.dart';
@@ -156,7 +155,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                                   setState(() => _isActive = value);
                                 },
                                 activeColor: const Color(0xFF4ECDC4),
-                                inactiveTrackColor: Colors.white.withOpacity(0.1),
+                                inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
                               ),
                               Text(
                                 _isActive ? 'Activo' : 'Inactivo',

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -26,9 +27,16 @@ class CompanyFormScreen extends StatefulWidget {
 class _CompanyFormScreenState extends State<CompanyFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _nitController;
+  late TextEditingController _razonSocialController;
   late bool _isActive;
   String _photoUrl = '';
   bool _isUploading = false;
+
+  late TextEditingController _validatorEmailController;
+  late TextEditingController _validatorPasswordController;
+  late TextEditingController _validatorFirstNameController;
+  late TextEditingController _validatorLastNameController;
 
   bool get isEditing => widget.company != null;
 
@@ -36,13 +44,29 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.company?.name ?? '');
+    _nitController = TextEditingController(
+      text: widget.company?.nit.toString() ?? '',
+    );
     _isActive = widget.company?.isActive ?? true;
     _photoUrl = widget.company?.photoUrl ?? '';
+    _razonSocialController = TextEditingController(
+      text: widget.company?.razonSocial ?? '',
+    );
+    _validatorEmailController = TextEditingController();
+    _validatorPasswordController = TextEditingController();
+    _validatorFirstNameController = TextEditingController();
+    _validatorLastNameController = TextEditingController();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _nitController.dispose();
+    _razonSocialController.dispose();
+    _validatorEmailController.dispose();
+    _validatorPasswordController.dispose();
+    _validatorFirstNameController.dispose();
+    _validatorLastNameController.dispose();
     super.dispose();
   }
 
@@ -62,7 +86,10 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
         final fileBytes = result.files.single.bytes!;
         final fileName = result.files.single.name;
 
-        final uploadedUrl = await UploadApiService.uploadImage(fileBytes, fileName);
+        final uploadedUrl = await UploadApiService.uploadImage(
+          fileBytes,
+          fileName,
+        );
         setState(() {
           _photoUrl = uploadedUrl;
         });
@@ -92,7 +119,6 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
 
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-
     final companyProvider = context.read<CompanyProvider>();
     bool success;
 
@@ -101,6 +127,8 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
         widget.company!.id,
         UpdateCompanyRequest(
           name: _nameController.text.trim(),
+          nit: int.parse(_nitController.text.trim()),
+          razonSocial: _razonSocialController.text.trim(),
           isActive: _isActive,
           photoUrl: _photoUrl,
         ),
@@ -109,27 +137,31 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
       success = await companyProvider.createCompany(
         CreateCompanyRequest(
           name: _nameController.text.trim(),
+          nit: int.tryParse(_nitController.text.trim()),
+          razonSocial: _razonSocialController.text.trim(),
           photoUrl: _photoUrl,
+          validatorEmail: _validatorEmailController.text.trim(),
+          validatorPassword: _validatorPasswordController.text.trim(),
+          validatorFirstName: _validatorFirstNameController.text.trim(),
+          validatorLastName: _validatorLastNameController.text.trim(),
         ),
       );
     }
 
     if (success && mounted) {
-      Navigator.pop(context, true);
+      Navigator.pop(context);
     } else if (mounted) {
       final error = companyProvider.errorMessage ?? 'Ocurrió un error';
-      CustomAlert.show(
-        context,
-        message: error,
-        isSuccess: false,
-      );
+      CustomAlert.show(context, message: error, isSuccess: false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final companyProvider = context.watch<CompanyProvider>();
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
 
     return Scaffold(
       backgroundColor: themeColors.gradientBg.first,
@@ -137,7 +169,11 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: themeColors.textPrimary, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: themeColors.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -199,7 +235,10 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                             children: [
                               Text(
                                 'Estado: ',
-                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                                style: GoogleFonts.inter(
+                                  color: Colors.white54,
+                                  fontSize: 14,
+                                ),
                               ),
                               Switch(
                                 value: _isActive,
@@ -207,12 +246,16 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                   setState(() => _isActive = value);
                                 },
                                 activeColor: const Color(0xFF4ECDC4),
-                                inactiveTrackColor: Colors.white.withOpacity(0.1),
+                                inactiveTrackColor: Colors.white.withValues(alpha: 
+                                  0.1,
+                                ),
                               ),
                               Text(
                                 _isActive ? 'Activo' : 'Inactivo',
                                 style: GoogleFonts.inter(
-                                  color: _isActive ? const Color(0xFF4ECDC4) : const Color(0xFFFF6B6B),
+                                  color: _isActive
+                                      ? const Color(0xFF4ECDC4)
+                                      : const Color(0xFFFF6B6B),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -230,26 +273,32 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                           Center(
+                          Center(
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
                                 InkWell(
-                                  onTap: _isUploading ? null : _pickAndUploadLogo,
+                                  onTap: _isUploading
+                                      ? null
+                                      : _pickAndUploadLogo,
                                   borderRadius: BorderRadius.circular(18),
                                   child: Container(
                                     width: 90,
                                     height: 90,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.05),
+                                      color: Colors.white.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(18),
                                       border: Border.all(
-                                        color: AppColors.primary.withOpacity(0.5),
+                                        color: AppColors.primary.withValues(alpha: 
+                                          0.5,
+                                        ),
                                         width: 2,
                                       ),
                                     ),
@@ -260,13 +309,19 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                               '${ApiConfig.serverUrl}$_photoUrl',
                                               fit: BoxFit.cover,
                                               errorBuilder: (_, __, ___) => Icon(
-                                                isEditing ? Icons.domain_verification_rounded : Icons.domain_add_rounded,
+                                                isEditing
+                                                    ? Icons
+                                                          .domain_verification_rounded
+                                                    : Icons.domain_add_rounded,
                                                 color: AppColors.accent,
                                                 size: 32,
                                               ),
                                             )
                                           : Icon(
-                                              isEditing ? Icons.domain_verification_rounded : Icons.domain_add_rounded,
+                                              isEditing
+                                                  ? Icons
+                                                        .domain_verification_rounded
+                                                  : Icons.domain_add_rounded,
                                               color: Colors.white70,
                                               size: 32,
                                             ),
@@ -296,19 +351,124 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                           const SizedBox(height: 8),
                           CustomTextField(
                             controller: _nameController,
-                            hint: 'Ej: Empresa Base S.A.',
+                            hint: 'Ej: Droguería La Sultana',
                             icon: Icons.business_rounded,
-                            validator: (v) => (v == null || v.isEmpty) ? 'El nombre es requerido' : null,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'El nombre es requerido'
+                                : null,
                           ),
+                          const SizedBox(height: 24),
+
+                          _buildLabel('NIT de la empresa'),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            controller: _nitController,
+                            hint: 'Ej: NIT 1.020.020-1',
+                            icon: Icons.numbers_rounded,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(15),
+                            ],
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'El NIT es requerido'
+                                : null,
+                          ),
+                          const SizedBox(height: 24),
+
+                          _buildLabel('Razon Social'),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            controller: _razonSocialController,
+                            hint: 'Ej: Droguería La Sultana Ltda.',
+                            icon: Icons.description_rounded,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'La razon social es requerida'
+                                : null,
+                          ),
+
+                          if (!isEditing) ...[
+                            const SizedBox(height: 24),
+                            Divider(color: Theme.of(context).dividerColor),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Icon(Icons.person_add_rounded, color: AppColors.primary, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Cuenta del Validador de Negocio (Opcional)',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: themeColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _buildLabel('Correo Electrónico del Validador'),
+                            const SizedBox(height: 8),
+                            CustomTextField(
+                              controller: _validatorEmailController,
+                              hint: 'ejemplo@negocio.com',
+                              icon: Icons.email_rounded,
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildLabel('Contraseña de Acceso'),
+                            const SizedBox(height: 8),
+                            CustomTextField(
+                              controller: _validatorPasswordController,
+                              hint: 'Mínimo 6 caracteres',
+                              icon: Icons.lock_rounded,
+                              obscureText: true,
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildLabel('Nombre Encargado'),
+                                      const SizedBox(height: 8),
+                                      CustomTextField(
+                                        controller: _validatorFirstNameController,
+                                        hint: 'Ej: Carlos',
+                                        icon: Icons.person_rounded,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildLabel('Apellido Encargado'),
+                                      const SizedBox(height: 8),
+                                      CustomTextField(
+                                        controller: _validatorLastNameController,
+                                        hint: 'Ej: Pérez',
+                                        icon: Icons.person_outline_rounded,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 20),
 
                     // Conseil Card
                     InfoCard(
                       title: 'Aislamiento Organizacional',
-                      content: 'El nombre de la empresa debe describir claramente a la entidad asociada. Los datos de inventario y catálogos de este espacio de trabajo no serán visibles por otras empresas.',
+                      content:
+                          'El nombre de la empresa debe describir claramente a la entidad asociada. Así se podrán generar los beneficios',
                       icon: Icons.info_outline_rounded,
                       iconColor: const Color(0xFF4ECDC4),
                     ),
@@ -331,6 +491,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                           icon: Icons.save_rounded,
                           isLoading: companyProvider.isLoading,
                           onPressed: _handleSave,
+
                           width: 200,
                         ),
                       ],
@@ -346,7 +507,9 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
   }
 
   Widget _buildLabel(String text) {
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     return Text(
       text,
       style: GoogleFonts.inter(

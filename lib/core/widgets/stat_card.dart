@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
@@ -57,7 +57,7 @@ class StatCard extends StatelessWidget {
             child: Icon(
               icon,
               size: 48,
-              color: themeColors.textPrimary.withOpacity(0.03),
+              color: themeColors.textPrimary.withValues(alpha: 0.03),
             ),
           ),
         ],

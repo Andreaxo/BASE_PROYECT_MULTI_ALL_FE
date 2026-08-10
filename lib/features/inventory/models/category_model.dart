@@ -25,10 +25,10 @@ class Category {
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
-      id: json['id'] as int,
-      companyId: json['company_id'] as int,
-      name: json['name'] as String,
-      isActive: json['is_active'] as bool,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      companyId: (json['company_id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] as String?) ?? '',
+      isActive: (json['is_active'] as bool?) ?? true,
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),

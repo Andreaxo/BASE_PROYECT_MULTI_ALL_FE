@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
   final int? minLines;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -27,14 +29,22 @@ class CustomTextField extends StatelessWidget {
     this.minLines,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.inputFormatters,
   });
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
 
     return TextFormField(
       controller: controller,
+      cursorColor: const Color(0xFF6C63FF),
+      cursorWidth: 2.0,
+      cursorRadius: const Radius.circular(2),
+      showCursor: true,
+      inputFormatters: inputFormatters,
       validator: validator,
       enabled: enabled,
       obscureText: obscureText,
@@ -47,11 +57,20 @@ class CustomTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 14),
-        prefixIcon: Icon(icon, color: themeColors.textSecondary.withOpacity(0.6), size: 20),
+        hintStyle: GoogleFonts.inter(
+          color: themeColors.textSecondary.withValues(alpha: 0.5),
+          fontSize: 14,
+        ),
+        prefixIcon: Icon(
+          icon,
+          color: themeColors.textSecondary.withValues(alpha: 0.6),
+          size: 20,
+        ),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: enabled ? themeColors.textPrimary.withOpacity(0.06) : themeColors.textPrimary.withOpacity(0.02),
+        fillColor: enabled
+            ? themeColors.textPrimary.withValues(alpha: 0.06)
+            : themeColors.textPrimary.withValues(alpha: 0.02),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: themeColors.borderColor),
@@ -62,7 +81,9 @@ class CustomTextField extends StatelessWidget {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: themeColors.borderColor.withOpacity(0.5)),
+          borderSide: BorderSide(
+            color: themeColors.borderColor.withValues(alpha: 0.5),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -77,7 +98,10 @@ class CustomTextField extends StatelessWidget {
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         errorStyle: GoogleFonts.inter(color: AppColors.error),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }

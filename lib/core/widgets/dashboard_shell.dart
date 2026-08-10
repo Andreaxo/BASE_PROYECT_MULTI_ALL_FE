@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../config/api_config.dart';
@@ -10,6 +10,8 @@ import '../utils/icon_library.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/menu/models/menu_model.dart';
 import '../../features/menu/providers/menu_provider.dart';
+import '../../features/referidos/providers/referido_provider.dart';
+import '../../features/rifas/providers/rifa_provider.dart';
 
 /// Premium layout wrapper providing dynamic left sidebar (desktop) or Drawer (mobile),
 /// an active company switcher, a language switcher (ES/EN), and dynamic menu loading.
@@ -67,38 +69,41 @@ class _DashboardShellState extends State<DashboardShell> {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: isAnySubSelected ? themeColors.textPrimary.withOpacity(0.02) : Colors.transparent,
+          color: isAnySubSelected ? themeColors.textPrimary.withValues(alpha: 0.02) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isAnySubSelected ? themeColors.borderColor : Colors.transparent,
             width: 1,
           ),
         ),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            dividerColor: Colors.transparent,
-            unselectedWidgetColor: themeColors.textSecondary,
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.accent,
-            ),
-          ),
-          child: ExpansionTile(
-            initiallyExpanded: isAnySubSelected,
-            leading: Icon(
-              _getIconData(item.icon),
-              color: isAnySubSelected ? AppColors.accent : themeColors.textSecondary,
-              size: 20,
-            ),
-            title: Text(
-              label,
-              style: GoogleFonts.inter(
-                color: isAnySubSelected ? themeColors.textPrimary : themeColors.textSecondary,
-                fontWeight: isAnySubSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 14,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              dividerColor: Colors.transparent,
+              unselectedWidgetColor: themeColors.textSecondary,
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                primary: AppColors.accent,
               ),
             ),
-            childrenPadding: const EdgeInsets.only(left: 12, bottom: 8),
-            children: item.submenus.map((sub) => _buildSubMenuItem(sub, currentRoute, langCode, themeColors)).toList(),
+            child: ExpansionTile(
+              initiallyExpanded: isAnySubSelected,
+              leading: Icon(
+                _getIconData(item.icon),
+                color: isAnySubSelected ? AppColors.accent : themeColors.textSecondary,
+                size: 20,
+              ),
+              title: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: isAnySubSelected ? themeColors.textPrimary : themeColors.textSecondary,
+                  fontWeight: isAnySubSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 14,
+                ),
+              ),
+              childrenPadding: const EdgeInsets.only(left: 12, bottom: 8),
+              children: item.submenus.map((sub) => _buildSubMenuItem(sub, currentRoute, langCode, themeColors)).toList(),
+            ),
           ),
         ),
       );
@@ -117,12 +122,12 @@ class _DashboardShellState extends State<DashboardShell> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.15)
+                  ? AppColors.primary.withValues(alpha: 0.15)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? AppColors.primary.withOpacity(0.3)
+                    ? AppColors.primary.withValues(alpha: 0.3)
                     : Colors.transparent,
                 width: 1,
               ),
@@ -181,7 +186,7 @@ class _DashboardShellState extends State<DashboardShell> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primary.withOpacity(0.1)
+                ? AppColors.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -191,7 +196,7 @@ class _DashboardShellState extends State<DashboardShell> {
                 _getIconData(sub.icon),
                 color: isSelected
                     ? AppColors.accent
-                    : themeColors.textSecondary.withOpacity(0.8),
+                    : themeColors.textSecondary.withValues(alpha: 0.8),
                 size: 16,
               ),
               const SizedBox(width: 12),
@@ -231,8 +236,204 @@ class _DashboardShellState extends State<DashboardShell> {
     final languageProvider = context.watch<LanguageProvider>();
     final themeProvider = context.watch<ThemeProvider>();
     final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final isMember = authProvider.roleCode == 'user' || authProvider.roleCode == 'user_member';
+    final showUnifiedBranding = isMember ||
+        authProvider.roleCode == 'business_validator' ||
+        authProvider.roleCode == 'superadmin';
 
-    final menus = menuProvider.myMenus;
+    final rawMenus = menuProvider.myMenus;
+    final menus = <AllowedMenu>[];
+    bool hasReferidos = false;
+    bool hasBeneficios = false;
+    bool hasCompany = false;
+    bool hasRifas = false;
+
+    for (final m in rawMenus) {
+      final isRef = m.route == '/referidos' ||
+          m.route == '/mis-referidos' ||
+          m.label.toLowerCase().contains('referid');
+      final isBen = m.route == '/benefit' ||
+          m.route == '/benefits' ||
+          m.label.toLowerCase().contains('benefic');
+      final isComp = m.route == '/companies' ||
+          m.route == '/company' ||
+          m.label.toLowerCase().contains('empresa') ||
+          m.label.toLowerCase().contains('aliad');
+      final isRifa = m.route == '/rifas' ||
+          m.route == '/rifa' ||
+          m.route == '/mis-rifas' ||
+          m.label.toLowerCase().contains('rifa');
+
+      if (isRef) {
+        if (!hasReferidos) {
+          hasReferidos = true;
+          menus.add(
+            AllowedMenu(
+              id: m.id,
+              label: m.label.isNotEmpty ? m.label : 'Referidos',
+              labelEn: m.labelEn.isNotEmpty ? m.labelEn : 'Referrals',
+              labelFr: m.labelFr.isNotEmpty ? m.labelFr : 'Parrainage',
+              route: '/referidos',
+              icon: m.icon.isNotEmpty ? m.icon : 'share_rounded',
+              sortOrder: m.sortOrder,
+              permissions: m.permissions,
+              submenus: m.submenus,
+            ),
+          );
+        }
+      } else if (isBen) {
+        if (!hasBeneficios) {
+          hasBeneficios = true;
+          menus.add(
+            AllowedMenu(
+              id: m.id,
+              label: m.label.isNotEmpty ? m.label : 'Beneficios',
+              labelEn: m.labelEn.isNotEmpty ? m.labelEn : 'Benefits',
+              labelFr: m.labelFr.isNotEmpty ? m.labelFr : 'Avantages',
+              route: '/benefit',
+              icon: m.icon.isNotEmpty ? m.icon : 'card_giftcard_rounded',
+              sortOrder: m.sortOrder,
+              permissions: m.permissions,
+              submenus: m.submenus,
+            ),
+          );
+        }
+      } else if (isComp) {
+        if (!hasCompany) {
+          hasCompany = true;
+          menus.add(
+            AllowedMenu(
+              id: m.id,
+              label: 'Negocios Aliados',
+              labelEn: 'Allied Businesses',
+              labelFr: 'Partenaires',
+              route: '/companies',
+              icon: 'store_rounded',
+              sortOrder: m.sortOrder,
+              permissions: m.permissions,
+              submenus: m.submenus,
+            ),
+          );
+        }
+      } else if (isRifa) {
+        if (!hasRifas) {
+          hasRifas = true;
+          menus.add(
+            AllowedMenu(
+              id: m.id,
+              label: m.label.isNotEmpty ? m.label : 'Rifas',
+              labelEn: m.labelEn.isNotEmpty ? m.labelEn : 'Raffles',
+              labelFr: m.labelFr.isNotEmpty ? m.labelFr : 'Tombolas',
+              route: '/rifas',
+              icon: m.icon.isNotEmpty ? m.icon : 'confirmation_number_rounded',
+              sortOrder: m.sortOrder,
+              permissions: m.permissions,
+              submenus: m.submenus,
+            ),
+          );
+        }
+      } else {
+        menus.add(m);
+      }
+    }
+
+    final isBusinessValidator = authProvider.roleCode == 'business_validator' || authProvider.roleCode == 'negocio';
+
+    if (authProvider.isLoggedIn && isBusinessValidator) {
+      menus.clear();
+      menus.add(
+        AllowedMenu(
+          id: 996,
+          label: 'Validar Redenciones',
+          labelEn: 'Validate Redemptions',
+          labelFr: 'Valider Redemptions',
+          route: '/redemptions',
+          icon: 'qr_code_scanner_rounded',
+          sortOrder: 10,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+      menus.add(
+        AllowedMenu(
+          id: 994,
+          label: 'Gestionar Mis Beneficios',
+          labelEn: 'Manage My Benefits',
+          labelFr: 'Gérer Mes Avantages',
+          route: '/company-benefits',
+          icon: 'card_giftcard_rounded',
+          sortOrder: 11,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
+
+    if (authProvider.isLoggedIn &&
+        (authProvider.roleCode == 'superadmin' ||
+            authProvider.roleCode == 'admin')) {
+      menus.add(
+        AllowedMenu(
+          id: 995,
+          label: 'Redenciones Globales',
+          labelEn: 'Global Redemptions',
+          labelFr: 'Redemptions Globales',
+          route: '/redemptions',
+          icon: 'assignment_turned_in_rounded',
+          sortOrder: 85,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
+
+    if (authProvider.isLoggedIn && !hasRifas && !isBusinessValidator) {
+      menus.add(
+        AllowedMenu(
+          id: 997,
+          label: 'Rifas',
+          labelEn: 'Raffles',
+          labelFr: 'Tombolas',
+          route: '/rifas',
+          icon: 'confirmation_number_rounded',
+          sortOrder: 90,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
+
+    if (authProvider.isLoggedIn && !hasBeneficios && !isBusinessValidator) {
+      menus.add(
+        AllowedMenu(
+          id: 998,
+          label: 'Beneficios',
+          labelEn: 'Benefits',
+          labelFr: 'Avantages',
+          route: '/benefit',
+          icon: 'card_giftcard_rounded',
+          sortOrder: 95,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
+
+    if (authProvider.isLoggedIn && !hasReferidos && !isBusinessValidator) {
+      menus.add(
+        AllowedMenu(
+          id: 999,
+          label: 'Referidos',
+          labelEn: 'Referrals',
+          labelFr: 'Parrainage',
+          route: '/referidos',
+          icon: 'share_rounded',
+          sortOrder: 100,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
 
     Widget buildSidebarContent() {
       return Container(
@@ -250,8 +451,9 @@ class _DashboardShellState extends State<DashboardShell> {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Row(
                 children: [
-                  // Company Logo / Photo
-                  if (authProvider.activeCompany != null && authProvider.activeCompany!.photoUrl.isNotEmpty)
+                  if (!showUnifiedBranding &&
+                      authProvider.activeCompany != null &&
+                      authProvider.activeCompany!.photoUrl.isNotEmpty)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
@@ -260,6 +462,22 @@ class _DashboardShellState extends State<DashboardShell> {
                         height: 42,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _buildDefaultCompanyIcon(),
+                      ),
+                    )
+                  else if (showUnifiedBranding)
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.stars_rounded,
+                        color: Colors.white,
+                        size: 22,
                       ),
                     )
                   else
@@ -271,7 +489,9 @@ class _DashboardShellState extends State<DashboardShell> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          authProvider.activeCompany?.name ?? 'PLATAFORMA',
+                          showUnifiedBranding
+                              ? 'Conexiate'
+                              : (authProvider.activeCompany?.name ?? 'PLATAFORMA'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.outfit(
@@ -281,10 +501,14 @@ class _DashboardShellState extends State<DashboardShell> {
                           ),
                         ),
                         Text(
-                          authProvider.activeCompany != null ? 'Empresa Activa' : 'Multicliente Base',
+                          showUnifiedBranding
+                              ? 'Red de Beneficios'
+                              : (authProvider.activeCompany != null
+                                  ? 'Empresa Activa'
+                                  : 'Multicliente Base'),
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: themeColors.textSecondary.withOpacity(0.8),
+                            color: themeColors.textSecondary.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -335,7 +559,7 @@ class _DashboardShellState extends State<DashboardShell> {
                       else
                         CircleAvatar(
                           radius: 18,
-                          backgroundColor: AppColors.primary.withOpacity(0.2),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                           child: Text(
                             authProvider.userName.isNotEmpty ? authProvider.userName[0].toUpperCase() : 'U',
                             style: GoogleFonts.outfit(
@@ -371,7 +595,7 @@ class _DashboardShellState extends State<DashboardShell> {
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 16),
+                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withValues(alpha: 0.5), size: 16),
                     ],
                   ),
                 ),
@@ -386,7 +610,7 @@ class _DashboardShellState extends State<DashboardShell> {
       backgroundColor: themeColors.gradientBg.first,
       drawer: isMobile ? Drawer(child: buildSidebarContent()) : null,
       appBar: AppBar(
-        backgroundColor: themeColors.sidebarBg.withOpacity(0.8),
+        backgroundColor: themeColors.sidebarBg.withValues(alpha: 0.8),
         elevation: 0,
         toolbarHeight: 74.0,
         leading: isMobile
@@ -409,14 +633,14 @@ class _DashboardShellState extends State<DashboardShell> {
           ),
         ),
         actions: [
-          // Active Company Selector Dropdown
-          if (authProvider.userCompanies.isNotEmpty) ...[
+          // Active Company Selector Dropdown (Hidden for regular members/users)
+          if (!showUnifiedBranding && authProvider.userCompanies.isNotEmpty) ...[
             Center(
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                 decoration: BoxDecoration(
-                  color: themeColors.textPrimary.withOpacity(0.05),
+                  color: themeColors.textPrimary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: themeColors.borderColor),
                 ),
@@ -460,7 +684,7 @@ class _DashboardShellState extends State<DashboardShell> {
             child: Container(
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: themeColors.textPrimary.withOpacity(0.05),
+                color: themeColors.textPrimary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: themeColors.borderColor),
               ),
@@ -503,6 +727,8 @@ class _DashboardShellState extends State<DashboardShell> {
             tooltip: context.tr('logout'),
             onPressed: () async {
               menuProvider.clearMyMenus();
+              context.read<ReferidoProvider>().resetSilent();
+              context.read<RifaProvider>().resetSilent();
               await authProvider.logout();
               if (mounted) {
                 Navigator.of(context).pushReplacementNamed('/login');
@@ -576,7 +802,7 @@ class GestureButton extends StatelessWidget {
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: isSelected ? Colors.white : themeColors.textPrimary.withOpacity(0.7),
+            color: isSelected ? Colors.white : themeColors.textPrimary.withValues(alpha: 0.7),
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

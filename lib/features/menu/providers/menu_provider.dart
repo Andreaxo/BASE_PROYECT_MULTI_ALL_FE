@@ -53,6 +53,7 @@ class MenuProvider extends ChangeNotifier {
     try {
       final newMenu = await MenuApiService.create(request);
       _menus.add(newMenu);
+      await loadMyMenus();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -75,6 +76,7 @@ class MenuProvider extends ChangeNotifier {
       if (index != -1) {
         _menus[index] = updatedMenu;
       }
+      await loadMyMenus();
       _isLoading = false;
       notifyListeners();
       return true;
@@ -94,6 +96,7 @@ class MenuProvider extends ChangeNotifier {
     try {
       await MenuApiService.delete(id);
       _menus.removeWhere((m) => m.id == id);
+      await loadMyMenus();
       _isLoading = false;
       notifyListeners();
       return true;

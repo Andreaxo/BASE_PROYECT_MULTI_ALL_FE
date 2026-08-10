@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -6,7 +6,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/dashboard_shell.dart';
 import '../../../core/widgets/stat_card.dart';
 import '../../../core/widgets/info_card.dart';
-import '../../../core/widgets/status_badge.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
@@ -79,7 +78,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               .replaceAll('{name}', article.name)
               .replaceAll('{id}', article.id.toString()),
           style: GoogleFonts.inter(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
         actions: [
@@ -87,7 +86,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
             ),
           ),
           ElevatedButton(
@@ -213,9 +212,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   // Breadcrumbs
                   Row(
                     children: [
-                      Text('Inventario', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
-                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
-                      Text('Artículos', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+                      Text('Inventario', style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.5), fontSize: 13)),
+                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withValues(alpha: 0.5), size: 14),
+                      Text('Artículos', style: GoogleFonts.inter(color: themeColors.textPrimary.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -302,7 +301,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                               Expanded(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: themeColors.textPrimary.withOpacity(0.05),
+                                    color: themeColors.textPrimary.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: themeColors.borderColor),
                                   ),
@@ -310,19 +309,19 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                     controller: _searchController,
                                     style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 14),
                                     decoration: InputDecoration(
-                                      hintText: context.tr('search_article_hint') ?? 'Buscar...',
+                                      hintText: context.tr('search_article_hint'),
                                       hintStyle: GoogleFonts.inter(
-                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                        color: themeColors.textSecondary.withValues(alpha: 0.5),
                                       ),
                                       prefixIcon: Icon(
                                         Icons.search_rounded,
-                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                        color: themeColors.textSecondary.withValues(alpha: 0.5),
                                         size: 20,
                                       ),
                                       suffixIcon: _searchQuery.isNotEmpty
                                           ? IconButton(
                                               icon: Icon(Icons.close_rounded,
-                                                  color: themeColors.textSecondary.withOpacity(0.5), size: 18),
+                                                  color: themeColors.textSecondary.withValues(alpha: 0.5), size: 18),
                                               onPressed: () => _searchController.clear(),
                                             )
                                           : null,
@@ -356,7 +355,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                             ],
                           ),
                         ),
-                        Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                        Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                         articleProvider.isLoading && articleProvider.articles.isEmpty
                             ? const Center(
@@ -387,7 +386,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                     ),
                                                     child: DataTable(
                                                       headingRowColor: WidgetStateProperty.all(
-                                                        themeColors.textPrimary.withOpacity(0.03),
+                                                        themeColors.textPrimary.withValues(alpha: 0.03),
                                                       ),
                                                       headingTextStyle: GoogleFonts.inter(
                                                         color: themeColors.textPrimary,
@@ -395,7 +394,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                         fontSize: 13,
                                                       ),
                                                       dataTextStyle: GoogleFonts.inter(
-                                                        color: themeColors.textPrimary.withOpacity(0.85),
+                                                        color: themeColors.textPrimary.withValues(alpha: 0.85),
                                                         fontSize: 13,
                                                       ),
                                                       horizontalMargin: 20,
@@ -418,7 +417,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                               children: [
                                                                 CircleAvatar(
                                                                   radius: 12,
-                                                                  backgroundColor: const Color(0xFF6C63FF).withOpacity(0.2),
+                                                                  backgroundColor: const Color(0xFF6C63FF).withValues(alpha: 0.2),
                                                                   child: Text(
                                                                     art.name.isNotEmpty ? art.name[0].toUpperCase() : '',
                                                                     style: GoogleFonts.outfit(
@@ -436,10 +435,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                               Container(
                                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                                                 decoration: BoxDecoration(
-                                                                  color: const Color(0xFF6C63FF).withOpacity(0.1),
+                                                                  color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
                                                                   borderRadius: BorderRadius.circular(20),
                                                                   border: Border.all(
-                                                                    color: const Color(0xFF6C63FF).withOpacity(0.3),
+                                                                    color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
                                                                   ),
                                                                 ),
                                                                 child: Text(
@@ -531,7 +530,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: themeColors.textPrimary.withOpacity(0.01),
+        color: themeColors.textPrimary.withValues(alpha: 0.01),
         border: Border(
           top: BorderSide(color: themeColors.borderColor),
         ),
@@ -540,16 +539,18 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${context.tr('total')}: $totalItems ${context.tr('article_list_title').toLowerCase()}',
+            '${context.tr('total')}: $totalItems ${context.tr('articles').toLowerCase()}',
             style: GoogleFonts.inter(
               color: themeColors.textSecondary,
               fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
           Row(
             children: [
               Text(
-                '${context.tr('rows_per_page')}: ',
+                context.tr('rows_per_page'),
                 style: GoogleFonts.inter(
                   color: themeColors.textSecondary,
                   fontSize: 12,
@@ -580,7 +581,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -596,7 +597,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -618,13 +619,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
             const SizedBox(height: 14),
             Text(
               context.tr('no_results'),
               style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 14,
               ),
             ),
@@ -642,13 +643,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           Icon(
             Icons.error_outline_rounded,
             size: 40,
-            color: const Color(0xFFFF6B6B).withOpacity(0.7),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.7),
           ),
           const SizedBox(height: 14),
           Text(
             provider.errorMessage!,
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 14),
@@ -707,9 +708,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
       icon: Icon(icon, size: 16, color: color),
       label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
+        backgroundColor: color.withValues(alpha: 0.15),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.4)),
+        side: BorderSide(color: color.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         elevation: 0,

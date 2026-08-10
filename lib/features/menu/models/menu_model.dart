@@ -35,14 +35,14 @@ class MenuModel {
 
   factory MenuModel.fromJson(Map<String, dynamic> json) {
     return MenuModel(
-      id: json['id'] as int,
-      label: json['label'] as String,
-      labelEn: json['label_en'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      label: (json['label'] as String?) ?? '',
+      labelEn: (json['label_en'] as String?) ?? '',
       labelFr: (json['label_fr'] as String?) ?? '',
-      route: json['route'] as String,
+      route: (json['route'] as String?) ?? '',
       icon: (json['icon'] as String?) ?? '',
-      isActive: json['is_active'] as bool,
-      sortOrder: json['sort_order'] as int,
+      isActive: (json['is_active'] as bool?) ?? true,
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
       parentId: json['parent_id'] as int?,
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
@@ -87,14 +87,14 @@ class AllowedMenu {
     }
 
     return AllowedMenu(
-      id: json['id'] as int,
-      label: json['label'] as String,
-      labelEn: json['label_en'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      label: (json['label'] as String?) ?? '',
+      labelEn: (json['label_en'] as String?) ?? '',
       labelFr: (json['label_fr'] as String?) ?? '',
-      route: json['route'] as String,
+      route: (json['route'] as String?) ?? '',
       icon: (json['icon'] as String?) ?? '',
-      sortOrder: json['sort_order'] as int,
-      parentId: json['parent_id'] as int?,
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      parentId: (json['parent_id'] as num?)?.toInt(),
       permissions: List<String>.from(json['permissions'] ?? []),
       submenus: subs,
     );

@@ -11,6 +11,7 @@ class IconLibrary {
     'list_rounded': Icons.list_rounded,
     'view_list_rounded': Icons.view_list_rounded,
     'view_module_rounded': Icons.view_module_rounded,
+    'share_rounded': Icons.share_rounded,
     
     // Admin / Org
     'people_rounded': Icons.people_rounded,
@@ -114,6 +115,10 @@ class IconLibrary {
     
     // Others
     'loyalty_rounded': Icons.loyalty_rounded,
+    'card_giftcard_rounded': Icons.card_giftcard_rounded,
+    'confirmation_number_rounded': Icons.confirmation_number_rounded,
+    'emoji_events_rounded': Icons.emoji_events_rounded,
+    'casino_rounded': Icons.casino_rounded,
     'star_rounded': Icons.star_rounded,
     'favorite_rounded': Icons.favorite_rounded,
     'thumb_up_rounded': Icons.thumb_up_rounded,

@@ -62,7 +62,9 @@ class _MenuListScreenState extends State<MenuListScreen> {
   }
 
   void _showDeleteDialog(MenuModel menu) {
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -76,12 +78,11 @@ class _MenuListScreenState extends State<MenuListScreen> {
           ),
         ),
         content: Text(
-          context.tr('delete_menu_confirm')
+          context
+              .tr('delete_menu_confirm')
               .replaceAll('{name}', menu.label)
               .replaceAll('{id}', menu.id.toString()),
-          style: GoogleFonts.inter(
-            color: themeColors.textSecondary,
-          ),
+          style: GoogleFonts.inter(color: themeColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -131,9 +132,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
   void _navigateToForm({MenuModel? menu}) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => MenuFormScreen(menu: menu),
-      ),
+      MaterialPageRoute(builder: (_) => MenuFormScreen(menu: menu)),
     );
     if (result == true && mounted) {
       context.read<MenuProvider>().loadMenus();
@@ -144,15 +143,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
       );
     }
   }
-
-  IconData _getIconData(String iconName) {
-    return IconLibrary.getIcon(iconName);
-  }
-
   @override
   Widget build(BuildContext context) {
     final menuProvider = context.watch<MenuProvider>();
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
 
     final allowedMenu = menuProvider.findAllowedMenu('/menus');
     final canEdit = allowedMenu?.permissions.contains('EDIT') ?? false;
@@ -162,22 +158,30 @@ class _MenuListScreenState extends State<MenuListScreen> {
     final filteredMenus = menuProvider.menus.where((m) {
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
-        final matchesGlobal = m.id.toString() == query ||
+        final matchesGlobal =
+            m.id.toString() == query ||
             m.label.toLowerCase().contains(query) ||
             m.labelEn.toLowerCase().contains(query) ||
             m.route.toLowerCase().contains(query);
         if (!matchesGlobal) return false;
       }
-      
-      if (_idFilter.isNotEmpty && !m.id.toString().contains(_idFilter)) return false;
-      if (_labelFilter.isNotEmpty && !m.label.toLowerCase().contains(_labelFilter.toLowerCase())) return false;
-      if (_routeFilter.isNotEmpty && !m.route.toLowerCase().contains(_routeFilter.toLowerCase())) return false;
-      if (_sortOrderFilter.isNotEmpty && !m.sortOrder.toString().contains(_sortOrderFilter)) return false;
+
+      if (_idFilter.isNotEmpty && !m.id.toString().contains(_idFilter))
+        return false;
+      if (_labelFilter.isNotEmpty &&
+          !m.label.toLowerCase().contains(_labelFilter.toLowerCase()))
+        return false;
+      if (_routeFilter.isNotEmpty &&
+          !m.route.toLowerCase().contains(_routeFilter.toLowerCase()))
+        return false;
+      if (_sortOrderFilter.isNotEmpty &&
+          !m.sortOrder.toString().contains(_sortOrderFilter))
+        return false;
       if (_statusFilter.isNotEmpty) {
         final statusText = m.isActive ? 'activo' : 'inactivo';
         if (!statusText.contains(_statusFilter.toLowerCase())) return false;
       }
-      
+
       return true;
     }).toList();
 
@@ -211,9 +215,25 @@ class _MenuListScreenState extends State<MenuListScreen> {
             // Breadcrumbs
             Row(
               children: [
-                Text('Admin', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
-                Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
-                Text('Menús', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+                Text(
+                  'Admin',
+                  style: GoogleFonts.inter(
+                    color: themeColors.textSecondary.withValues(alpha: 0.5),
+                    fontSize: 13,
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: themeColors.textSecondary.withValues(alpha: 0.5),
+                  size: 14,
+                ),
+                Text(
+                  'Menús',
+                  style: GoogleFonts.inter(
+                    color: themeColors.textPrimary.withValues(alpha: 0.8),
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -240,7 +260,11 @@ class _MenuListScreenState extends State<MenuListScreen> {
                     ),
                     child: ElevatedButton.icon(
                       onPressed: () => _navigateToForm(),
-                      icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                      icon: const Icon(
+                        Icons.add_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         context.tr('new_button'),
                         style: GoogleFonts.inter(fontWeight: FontWeight.bold),
@@ -249,7 +273,10 @@ class _MenuListScreenState extends State<MenuListScreen> {
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -308,7 +335,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withOpacity(0.05),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: themeColors.borderColor,
@@ -323,21 +350,27 @@ class _MenuListScreenState extends State<MenuListScreen> {
                               decoration: InputDecoration(
                                 hintText: context.tr('search_menu_hint'),
                                 hintStyle: GoogleFonts.inter(
-                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                  color: themeColors.textSecondary.withValues(alpha: 
+                                    0.5,
+                                  ),
                                 ),
                                 prefixIcon: Icon(
                                   Icons.search_rounded,
-                                  color: themeColors.textSecondary.withOpacity(0.5),
+                                  color: themeColors.textSecondary.withValues(alpha: 
+                                    0.5,
+                                  ),
                                   size: 20,
                                 ),
                                 suffixIcon: _searchQuery.isNotEmpty
                                     ? IconButton(
                                         icon: Icon(
                                           Icons.close_rounded,
-                                          color: themeColors.textSecondary.withOpacity(0.5),
+                                          color: themeColors.textSecondary
+                                              .withValues(alpha: 0.5),
                                           size: 18,
                                         ),
-                                        onPressed: () => _searchController.clear(),
+                                        onPressed: () =>
+                                            _searchController.clear(),
                                       )
                                     : null,
                                 border: InputBorder.none,
@@ -353,26 +386,29 @@ class _MenuListScreenState extends State<MenuListScreen> {
                           label: 'Excel',
                           icon: Icons.table_chart_rounded,
                           color: const Color(0xFF107C41),
-                          onPressed: () => _exportData(format: 'excel', data: filteredMenus),
+                          onPressed: () =>
+                              _exportData(format: 'excel', data: filteredMenus),
                         ),
                         const SizedBox(width: 8),
                         _buildExportButton(
                           label: 'PDF',
                           icon: Icons.picture_as_pdf_rounded,
                           color: const Color(0xFFE02424),
-                          onPressed: () => _exportData(format: 'pdf', data: filteredMenus),
+                          onPressed: () =>
+                              _exportData(format: 'pdf', data: filteredMenus),
                         ),
                         const SizedBox(width: 8),
                         _buildExportButton(
                           label: 'Imprimir',
                           icon: Icons.print_rounded,
                           color: AppColors.primary,
-                          onPressed: () => _exportData(format: 'print', data: filteredMenus),
+                          onPressed: () =>
+                              _exportData(format: 'print', data: filteredMenus),
                         ),
                       ],
                     ),
                   ),
-                  Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                  Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                   menuProvider.isLoading && menuProvider.menus.isEmpty
                       ? const Center(
@@ -383,79 +419,82 @@ class _MenuListScreenState extends State<MenuListScreen> {
                             ),
                           ),
                         )
-                      : menuProvider.errorMessage != null && menuProvider.menus.isEmpty
-                          ? _buildErrorWidget(menuProvider)
-                          : filteredMenus.isEmpty
-                              ? _buildEmptyWidget()
-                              : Column(
-                                  children: [
-                                    LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        return SingleChildScrollView(
-                                          scrollDirection: Axis.horizontal,
-                                          child: ConstrainedBox(
-                                            constraints: BoxConstraints(
-                                              minWidth: constraints.maxWidth,
-                                            ),
-                                            child: Theme(
-                                              data: Theme.of(context).copyWith(
-                                                dividerColor: themeColors.borderColor,
-                                              ),
-                                              child: DataTable(
-                                                headingRowColor: WidgetStateProperty.all(
-                                                  themeColors.textPrimary.withOpacity(0.03),
-                                                ),
-                                                headingTextStyle: GoogleFonts.inter(
-                                                  color: themeColors.textPrimary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 13,
-                                                ),
-                                                dataTextStyle: GoogleFonts.inter(
-                                                  color: themeColors.textPrimary.withOpacity(0.85),
-                                                  fontSize: 13,
-                                                ),
-                                                horizontalMargin: 20,
-                                                columnSpacing: 40,
-                                                headingRowHeight: 64.0,
-                                                columns: [
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('label_es'), (val) => setState(() => _labelFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('label_en'))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('label_fr'))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('route_path'), (val) => setState(() => _routeFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('icon'))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('sort_order'), (val) => setState(() => _sortOrderFilter = val))))),
-                                                  DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))))),
-                                                  if (canEdit)
-                                                    DataColumn(label: SizedBox(height: 32, child: Align(alignment: Alignment.centerLeft, child: Text(context.tr('actions'))))),
-                                                ],
-                                                rows: paginatedMenus.map((menu) {
-                                                  return DataRow(
-                                                    cells: [
-                                                      DataCell(Text(menu.id.toString().padLeft(3, '0'))),
-                                                      DataCell(Text(menu.label)),
-                                                      DataCell(Text(menu.labelEn)),
-                                                      DataCell(Text(menu.labelFr)),
-                                                      DataCell(Text(menu.route)),
-                                                      DataCell(Icon(_getIconData(menu.icon), color: const Color(0xFF4ECDC4), size: 18)),
-                                                      DataCell(Text(menu.sortOrder.toString())),
-                                                      DataCell(StatusBadge(label: menu.isActive ? 'Activo' : 'Inactivo', isActive: menu.isActive)),
-                                                      if (canEdit) DataCell(_buildActionsCell(menu)),
-                                                    ],
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    _buildPaginationFooter(
-                                      totalItems: totalMenus,
-                                      totalPages: safeTotalPages,
-                                    ),
-                                  ],
-                                ),
+                      : menuProvider.errorMessage != null &&
+                            menuProvider.menus.isEmpty
+                      ? _buildErrorWidget(menuProvider)
+                      : filteredMenus.isEmpty
+                      ? _buildEmptyWidget()
+                      : Column(
+                          children: [
+                             LayoutBuilder(
+                               builder: (context, constraints) {
+                                 final minTableWidth = 800.0;
+                                 final tableWidth = constraints.maxWidth > minTableWidth
+                                     ? constraints.maxWidth - 2
+                                     : minTableWidth;
+
+                                 return Container(
+                                   decoration: BoxDecoration(
+                                     color: themeColors.cardBackground,
+                                     borderRadius: BorderRadius.circular(16),
+                                     border: Border.all(color: themeColors.borderColor),
+                                   ),
+                                   clipBehavior: Clip.antiAlias,
+                                   child: SingleChildScrollView(
+                                     scrollDirection: Axis.horizontal,
+                                     child: SizedBox(
+                                       width: tableWidth,
+                                       child: Column(
+                                         crossAxisAlignment: CrossAxisAlignment.stretch,
+                                         children: [
+                                           // Custom Header
+                                           Container(
+                                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                             decoration: const BoxDecoration(
+                                               color: AppColors.tableHeaderBg,
+                                               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                             ),
+                                             child: DefaultTextStyle.merge(
+                                               style: GoogleFonts.inter(
+                                                 color: Colors.white,
+                                                 fontWeight: FontWeight.bold,
+                                                 fontSize: 13,
+                                               ),
+                                               child: Row(
+                                                 children: [
+                                                   Expanded(flex: 1, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))),
+                                                   Expanded(flex: 3, child: _buildHeaderFilter(context.tr('menu_label'), (val) => setState(() => _labelFilter = val))),
+                                                   Expanded(flex: 3, child: _buildHeaderFilter(context.tr('route_path'), (val) => setState(() => _routeFilter = val))),
+                                                   Expanded(flex: 1, child: Align(alignment: Alignment.center, child: Text(context.tr('icon')))),
+                                                   Expanded(flex: 1, child: _buildHeaderFilter(context.tr('sort_order'), (val) => setState(() => _sortOrderFilter = val))),
+                                                   Expanded(flex: 2, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))),
+                                                   if (canEdit) const SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text('Acciones'))),
+                                                 ],
+                                               ),
+                                             ),
+                                           ),
+                                           // Custom Rows
+                                           ...paginatedMenus.map((menu) {
+                                             return _MenuRow(
+                                               menu: menu,
+                                               themeColors: themeColors,
+                                               actionsWidget: _buildActionsCell(menu),
+                                               canEdit: canEdit,
+                                             );
+                                           }).toList(),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                 );
+                               },
+                             ),
+                            _buildPaginationFooter(
+                              totalItems: totalMenus,
+                              totalPages: safeTotalPages,
+                            ),
+                          ],
+                        ),
                 ],
               ),
             ),
@@ -467,7 +506,8 @@ class _MenuListScreenState extends State<MenuListScreen> {
                 Expanded(
                   child: InfoCard(
                     title: 'Navegación Dinámica',
-                    content: 'El menú lateral se construye en tiempo real a partir del árbol de menús permitidos según el rol asignado al usuario. Esto permite restringir accesos desde la interfaz.',
+                    content:
+                        'El menú lateral se construye en tiempo real a partir del árbol de menús permitidos según el rol asignado al usuario. Esto permite restringir accesos desde la interfaz.',
                     icon: Icons.alt_route_rounded,
                     iconColor: const Color(0xFF4ECDC4),
                   ),
@@ -476,7 +516,8 @@ class _MenuListScreenState extends State<MenuListScreen> {
                 Expanded(
                   child: InfoCard(
                     title: 'Asociación de Jerarquías',
-                    content: 'Los menús que poseen un parent ID actúan como submódulos o carpetas colapsables (como Inventario). Al definir un rol, se asocian permisos específicos por módulo.',
+                    content:
+                        'Los menús que poseen un parent ID actúan como submódulos o carpetas colapsables (como Inventario). Al definir un rol, se asocian permisos específicos por módulo.',
                     icon: Icons.account_tree_outlined,
                     iconColor: const Color(0xFF6C63FF),
                   ),
@@ -494,12 +535,20 @@ class _MenuListScreenState extends State<MenuListScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined, color: AppColors.accent, size: 18),
+          icon: const Icon(
+            Icons.edit_outlined,
+            color: AppColors.accent,
+            size: 18,
+          ),
           tooltip: 'Editar',
           onPressed: () => _navigateToForm(menu: menu),
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
+          icon: const Icon(
+            Icons.delete_outline_rounded,
+            color: AppColors.error,
+            size: 18,
+          ),
           tooltip: 'Eliminar',
           onPressed: () => _showDeleteDialog(menu),
         ),
@@ -511,23 +560,25 @@ class _MenuListScreenState extends State<MenuListScreen> {
     required int totalItems,
     required int totalPages,
   }) {
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: themeColors.textPrimary.withOpacity(0.01),
-        border: Border(
-          top: BorderSide(color: themeColors.borderColor),
-        ),
+        color: themeColors.textPrimary.withValues(alpha: 0.01),
+        border: Border(top: BorderSide(color: themeColors.borderColor)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${context.tr('total') ?? 'Total'}: $totalItems',
+            '${context.tr('total')}: $totalItems ${context.tr('menus').toLowerCase()}',
             style: GoogleFonts.inter(
               color: themeColors.textSecondary,
               fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
           Row(
@@ -544,7 +595,10 @@ class _MenuListScreenState extends State<MenuListScreen> {
                 dropdownColor: themeColors.cardBackground,
                 underline: const SizedBox.shrink(),
                 iconEnabledColor: themeColors.textSecondary,
-                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary,
+                  fontSize: 12,
+                ),
                 items: [5, 8, 10, 15].map((size) {
                   return DropdownMenuItem<int>(
                     value: size,
@@ -564,7 +618,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -580,7 +634,7 @@ class _MenuListScreenState extends State<MenuListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -602,13 +656,13 @@ class _MenuListScreenState extends State<MenuListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
             const SizedBox(height: 14),
             Text(
               'No se encontraron menús',
               style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 14,
               ),
             ),
@@ -626,12 +680,12 @@ class _MenuListScreenState extends State<MenuListScreen> {
           Icon(
             Icons.error_outline_rounded,
             size: 40,
-            color: const Color(0xFFFF6B6B).withOpacity(0.7),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.7),
           ),
           const SizedBox(height: 14),
           Text(
             provider.errorMessage!,
-            style: GoogleFonts.inter(color: Colors.white.withOpacity(0.7)),
+            style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7)),
           ),
           const SizedBox(height: 14),
           ElevatedButton(
@@ -661,11 +715,18 @@ class _MenuListScreenState extends State<MenuListScreen> {
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: Icon(icon, size: 16, color: color),
-      label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+      label: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
+        backgroundColor: color.withValues(alpha: 0.15),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.4)),
+        side: BorderSide(color: color.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         elevation: 0,
@@ -685,18 +746,42 @@ class _MenuListScreenState extends State<MenuListScreen> {
     );
   }
 
-  void _exportData({required String format, required List<MenuModel> data}) async {
-    final headers = ['ID', 'Etiqueta (ES)', 'Etiqueta (EN)', 'Etiqueta (FR)', 'Ruta de Acceso', 'Ícono', 'Orden', 'Estado'];
-    final rows = data.map((m) => [
-      m.id.toString().padLeft(3, '0'),
-      m.label,
-      m.labelEn,
-      m.labelFr,
-      m.route,
-      m.icon,
-      m.sortOrder.toString(),
-      m.isActive ? 'Activo' : 'Inactivo',
-    ]).toList();
+  String _getTranslatedLabel(BuildContext context, MenuModel menu) {
+    final languageCode = Localizations.localeOf(context).languageCode.toLowerCase();
+    switch (languageCode) {
+      case 'en':
+        return menu.labelEn.isNotEmpty ? menu.labelEn : menu.label;
+      case 'fr':
+        return menu.labelFr.isNotEmpty ? menu.labelFr : menu.label;
+      default:
+        return menu.label;
+    }
+  }
+
+  void _exportData({
+    required String format,
+    required List<MenuModel> data,
+  }) async {
+    final headers = [
+      'ID',
+      context.tr('menu_label'),
+      context.tr('route_path'),
+      context.tr('icon'),
+      context.tr('sort_order'),
+      context.tr('status'),
+    ];
+    final rows = data
+        .map(
+          (m) => [
+            m.id.toString().padLeft(3, '0'),
+            _getTranslatedLabel(context, m),
+            m.route,
+            m.icon,
+            m.sortOrder.toString(),
+            m.isActive ? 'Activo' : 'Inactivo',
+          ],
+        )
+        .toList();
 
     try {
       if (format == 'excel') {
@@ -712,7 +797,8 @@ class _MenuListScreenState extends State<MenuListScreen> {
         );
       } else {
         final now = DateTime.now();
-        final dateStr = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+        final dateStr =
+            '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
         await ExportHelper.exportToPdfAndPrint(
           title: 'Reporte de Menús - $dateStr',
           headers: headers,
@@ -726,5 +812,144 @@ class _MenuListScreenState extends State<MenuListScreen> {
         isSuccess: false,
       );
     }
+  }
+}
+
+// ── Custom full-width responsive menu row with hover animations ──
+class _MenuRow extends StatefulWidget {
+  final MenuModel menu;
+  final AppThemeColors themeColors;
+  final Widget actionsWidget;
+  final bool canEdit;
+
+  const _MenuRow({
+    required this.menu,
+    required this.themeColors,
+    required this.actionsWidget,
+    required this.canEdit,
+  });
+
+  @override
+  State<_MenuRow> createState() => _MenuRowState();
+}
+
+class _MenuRowState extends State<_MenuRow> {
+  bool _isHovered = false;
+
+  String _getTranslatedLabel(BuildContext context, MenuModel menu) {
+    final languageCode = Localizations.localeOf(context).languageCode.toLowerCase();
+    switch (languageCode) {
+      case 'en':
+        return menu.labelEn.isNotEmpty ? menu.labelEn : menu.label;
+      case 'fr':
+        return menu.labelFr.isNotEmpty ? menu.labelFr : menu.label;
+      default:
+        return menu.label;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final menu = widget.menu;
+    final themeColors = widget.themeColors;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _isHovered 
+              ? themeColors.cardBackground.withRed(30).withGreen(30).withBlue(50).withValues(alpha: 0.4)
+              : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: _isHovered 
+                  ? AppColors.primary.withValues(alpha: 0.4) 
+                  : themeColors.borderColor,
+              width: _isHovered ? 1.2 : 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 1,
+              child: Text(
+                menu.id.toString().padLeft(3, '0'),
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                _getTranslatedLabel(context, menu),
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                menu.route,
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary.withValues(alpha: 0.85),
+                  fontSize: 13,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.center,
+                child: Icon(
+                  IconLibrary.getIcon(menu.icon),
+                  size: 18,
+                  color: themeColors.textSecondary,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(
+                menu.sortOrder.toString(),
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary.withValues(alpha: 0.85),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatusBadge(
+                  label: menu.isActive ? 'Activo' : 'Inactivo',
+                  isActive: menu.isActive,
+                ),
+              ),
+            ),
+            if (widget.canEdit)
+              SizedBox(
+                width: 100,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: widget.actionsWidget,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

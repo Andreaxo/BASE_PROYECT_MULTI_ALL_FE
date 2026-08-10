@@ -6,11 +6,14 @@ import 'core/services/auth_storage.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/company/providers/company_provider.dart';
-import 'features/inventory/providers/article_provider.dart';
 import 'features/inventory/providers/category_provider.dart';
 import 'features/menu/providers/menu_provider.dart';
 import 'features/role/providers/role_provider.dart';
+import 'features/benefits/providers/benefit_provider.dart';
+import 'features/benefits/providers/redemption_provider.dart';
 import 'features/users/providers/user_provider.dart';
+import 'features/referidos/providers/referido_provider.dart';
+import 'features/rifas/providers/rifa_provider.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -18,39 +21,28 @@ void main() async {
 
   // Check initial login status
   final isLoggedIn = await AuthStorage.isLoggedIn();
+  final userInfo = await AuthStorage.getUserInfo();
+  final roleCode = userInfo['roleCode'] ?? '';
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => LanguageProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ThemeProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
           create: (_) => AuthProvider()..checkAuthStatus(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => UserProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CompanyProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => RoleProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => MenuProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CategoryProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ArticleProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => CompanyProvider()),
+        ChangeNotifierProvider(create: (_) => RoleProvider()),
+        ChangeNotifierProvider(create: (_) => MenuProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => BenefitProvider()),
+        ChangeNotifierProvider(create: (_) => RedemptionProvider()),
+        ChangeNotifierProvider(create: (_) => ReferidoProvider()),
+        ChangeNotifierProvider(create: (_) => RifaProvider()),
       ],
-      child: MulticlienteApp(isLoggedIn: isLoggedIn),
+      child: MulticlienteApp(isLoggedIn: isLoggedIn, roleCode: roleCode),
     ),
   );
 }

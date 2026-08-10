@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GradientButton extends StatelessWidget {
@@ -31,12 +31,12 @@ class GradientButton extends StatelessWidget {
                 colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
               )
             : null,
-        color: !hasCallback ? Colors.white.withOpacity(0.05) : null,
+        color: !hasCallback ? Colors.white.withValues(alpha: 0.05) : null,
         borderRadius: BorderRadius.circular(12),
         boxShadow: hasCallback
             ? [
                 BoxShadow(
-                  color: const Color(0xFF6C63FF).withOpacity(0.2),
+                  color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

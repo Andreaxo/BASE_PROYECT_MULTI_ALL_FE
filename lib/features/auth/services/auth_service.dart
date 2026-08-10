@@ -28,12 +28,58 @@ class AuthApiService {
   static Future<User> getProfile() async {
     final response = await ApiService.get('${ApiConfig.baseUrl}/auth/profile');
     if (response.statusCode == 200) {
-      return User.fromJson(
+      return User.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(body['error'] ?? 'Failed to load user profile');
+    }
+  }
+
+  /// Register a new user with an optional referral code.
+  static Future<LoginResponse> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    String? refCode,
+  }) async {
+    final response = await ApiService.post(ApiConfig.registerEndpoint, {
+      'email': email,
+      'password': password,
+      'first_name': firstName,
+      'last_name': lastName,
+      if (refCode != null && refCode.trim().isNotEmpty)
+        'ref_code': refCode.trim(),
+    }, requiresAuth: false);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return LoginResponse.fromJson(
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     } else {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw Exception(body['error'] ?? 'Failed to load user profile');
+      throw Exception(body['error'] ?? 'Falló el registro');
+    }
+  }
+
+  /// Update own profile details.
+  static Future<User> updateProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+  }) async {
+    final response = await ApiService.put('${ApiConfig.baseUrl}/auth/profile', {
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+    });
+    print("DEBUG updateProfile response status: ${response.statusCode}");
+    print("DEBUG updateProfile response body: ${response.body}");
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(body['error'] ?? 'Error al actualizar el perfil');
     }
   }
 }

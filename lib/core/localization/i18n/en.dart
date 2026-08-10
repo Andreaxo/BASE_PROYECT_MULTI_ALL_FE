@@ -3,6 +3,9 @@ const Map<String, String> enKeys = {
   'login_title': 'Login',
   'login_subtitle': 'Enter your credentials to access',
   'email': 'Email Address',
+  'welcome_title': 'Welcome to Conexiate',
+  'welcome_subtitle':
+      'Sign in to access your account and enjoy all the services Conexia has to offer.',
   'password': 'Password',
   'login_button': 'Log In',
   'login_loading': 'Logging in...',
@@ -40,6 +43,8 @@ const Map<String, String> enKeys = {
   'article': 'Article',
   'menus': 'Menus',
   'menu': 'Menu',
+  'benefits': 'Benefits',
+  'benefit': 'Benefit',
 
   // Form Labels & Validations
   'first_name': 'First Name',
@@ -65,6 +70,8 @@ const Map<String, String> enKeys = {
   'no_results': 'No results found',
   'search_other_keywords': 'Try searching with other keywords',
   'total_users': 'Total users',
+  'users_found': 'users',
+  'total': 'Total',
   'rows_per_page': 'Rows per page:',
   'page': 'Page',
   'of': 'of',
@@ -126,7 +133,7 @@ const Map<String, String> enKeys = {
   'delete_article_confirm':
       'Are you sure you want to delete item "{name}" (ID: {id})?',
   'no_category_assigned': 'No Category',
-  
+
   // Custom headers & buttons
   'id': 'ID',
   'company_name': 'Company Name',
@@ -137,21 +144,23 @@ const Map<String, String> enKeys = {
   'excel': 'Excel',
   'pdf': 'PDF',
   'label_es': 'Label (ES)',
+  'menu_label': 'Label',
   'label_en': 'Label (EN)',
   'label_fr': 'Label (FR)',
   'route_path': 'Access Route',
   'icon': 'Icon',
   'sort_order': 'Order',
-  
+
   // Menu translations
   'delete_menu': 'Delete Menu',
-  'delete_menu_confirm': 'Are you sure you want to delete menu "{name}" (ID: {id})?',
+  'delete_menu_confirm':
+      'Are you sure you want to delete menu "{name}" (ID: {id})?',
   'active_menus': 'Active Menus',
   'total_menus': 'Total Menus',
   'sync': 'Synchronization',
   'sync_complete': 'Complete',
   'search_menu_hint': 'Search by ID, label or route...',
-  
+
   // Role translations
   'role_management': 'Role Management',
   'add_role': 'New Role',
@@ -160,18 +169,20 @@ const Map<String, String> enKeys = {
   'hours': 'Hours',
   'minutes': 'Minutes',
   'delete_role': 'Delete Role',
-  'delete_role_confirm': 'Are you sure you want to delete role "{name}" (ID: {id})?',
+  'delete_role_confirm':
+      'Are you sure you want to delete role "{name}" (ID: {id})?',
   'active_roles': 'Active Roles',
   'total_roles': 'Total Roles',
   'search_role_hint': 'Search by ID, name or code...',
-  
+
   // Company translations
   'delete_company': 'Delete Company',
-  'delete_company_confirm': 'Are you sure you want to delete company "{name}" (ID: {id})?',
+  'delete_company_confirm':
+      'Are you sure you want to delete company "{name}" (ID: {id})?',
   'active_companies': 'Active Companies',
   'total_companies': 'Total Companies',
   'search_company_hint': 'Search by ID or name...',
-  
+
   // Export & notifications
   'export_excel_success': 'Excel report (.xlsx) exported to Downloads',
 
@@ -179,5 +190,6 @@ const Map<String, String> enKeys = {
   'statistics': 'Statistics',
   'dashboard': 'Dashboard',
   'statistics_dashboard_title': 'Company Statistics',
-  'statistics_dashboard_subtitle': 'General overview of metrics and inventory data.',
+  'statistics_dashboard_subtitle':
+      'General overview of metrics and inventory data.',
 };

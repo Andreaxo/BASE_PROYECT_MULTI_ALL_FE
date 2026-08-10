@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -79,7 +79,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               .replaceAll('{name}', category.name)
               .replaceAll('{id}', category.id.toString()),
           style: GoogleFonts.inter(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
         actions: [
@@ -87,7 +87,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white.withOpacity(0.5)),
+              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
             ),
           ),
           ElevatedButton(
@@ -211,9 +211,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                   // Breadcrumbs
                   Row(
                     children: [
-                      Text('Inventario', style: GoogleFonts.inter(color: themeColors.textSecondary.withOpacity(0.5), fontSize: 13)),
-                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withOpacity(0.5), size: 14),
-                      Text('Categorías', style: GoogleFonts.inter(color: themeColors.textPrimary.withOpacity(0.8), fontSize: 13)),
+                      Text('Inventario', style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.5), fontSize: 13)),
+                      Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary.withValues(alpha: 0.5), size: 14),
+                      Text('Categorías', style: GoogleFonts.inter(color: themeColors.textPrimary.withValues(alpha: 0.8), fontSize: 13)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -300,7 +300,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                               Expanded(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: themeColors.textPrimary.withOpacity(0.05),
+                                    color: themeColors.textPrimary.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: themeColors.borderColor),
                                   ),
@@ -310,17 +310,17 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                     decoration: InputDecoration(
                                       hintText: context.tr('category_search_hint'),
                                       hintStyle: GoogleFonts.inter(
-                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                        color: themeColors.textSecondary.withValues(alpha: 0.5),
                                       ),
                                       prefixIcon: Icon(
                                         Icons.search_rounded,
-                                        color: themeColors.textSecondary.withOpacity(0.5),
+                                        color: themeColors.textSecondary.withValues(alpha: 0.5),
                                         size: 20,
                                       ),
                                       suffixIcon: _searchQuery.isNotEmpty
                                           ? IconButton(
                                               icon: Icon(Icons.close_rounded,
-                                                  color: themeColors.textSecondary.withOpacity(0.5), size: 18),
+                                                  color: themeColors.textSecondary.withValues(alpha: 0.5), size: 18),
                                               onPressed: () => _searchController.clear(),
                                             )
                                           : null,
@@ -354,7 +354,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                             ],
                           ),
                         ),
-                        Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                        Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
 
                         categoryProvider.isLoading && categoryProvider.categories.isEmpty
                             ? const Center(
@@ -385,7 +385,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                                     ),
                                                     child: DataTable(
                                                       headingRowColor: WidgetStateProperty.all(
-                                                        themeColors.textPrimary.withOpacity(0.03),
+                                                        themeColors.textPrimary.withValues(alpha: 0.03),
                                                       ),
                                                       headingTextStyle: GoogleFonts.inter(
                                                         color: themeColors.textPrimary,
@@ -393,7 +393,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                                         fontSize: 13,
                                                       ),
                                                       dataTextStyle: GoogleFonts.inter(
-                                                        color: themeColors.textPrimary.withOpacity(0.85),
+                                                        color: themeColors.textPrimary.withValues(alpha: 0.85),
                                                         fontSize: 13,
                                                       ),
                                                       horizontalMargin: 20,
@@ -417,8 +417,8 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                                                 CircleAvatar(
                                                                   radius: 12,
                                                                   backgroundColor: category.isActive
-                                                                      ? const Color(0xFF6C63FF).withOpacity(0.2)
-                                                                      : Colors.white.withOpacity(0.1),
+                                                                      ? const Color(0xFF6C63FF).withValues(alpha: 0.2)
+                                                                      : Colors.white.withValues(alpha: 0.1),
                                                                   child: Text(
                                                                     category.name.isNotEmpty ? category.name[0].toUpperCase() : '',
                                                                     style: GoogleFonts.outfit(
@@ -514,7 +514,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: themeColors.textPrimary.withOpacity(0.01),
+        color: themeColors.textPrimary.withValues(alpha: 0.01),
         border: Border(
           top: BorderSide(color: themeColors.borderColor),
         ),
@@ -523,16 +523,18 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${context.tr('total')}: $totalItems ${context.tr('category_list_title').toLowerCase()}',
+            '${context.tr('total')}: $totalItems ${context.tr('categories').toLowerCase()}',
             style: GoogleFonts.inter(
               color: themeColors.textSecondary,
               fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.3,
             ),
           ),
           Row(
             children: [
               Text(
-                '${context.tr('rows_per_page')}: ',
+                context.tr('rows_per_page'),
                 style: GoogleFonts.inter(
                   color: themeColors.textSecondary,
                   fontSize: 12,
@@ -563,7 +565,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
@@ -579,7 +581,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
                 color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withOpacity(0.3),
+                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
                     : null,
@@ -601,13 +603,13 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
             const SizedBox(height: 14),
             Text(
               context.tr('no_results'),
               style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.4),
+                color: Colors.white.withValues(alpha: 0.4),
                 fontSize: 14,
               ),
             ),
@@ -625,13 +627,13 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
           Icon(
             Icons.error_outline_rounded,
             size: 40,
-            color: const Color(0xFFFF6B6B).withOpacity(0.7),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.7),
           ),
           const SizedBox(height: 14),
           Text(
             provider.errorMessage!,
             style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 14),
@@ -690,9 +692,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
       icon: Icon(icon, size: 16, color: color),
       label: Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
+        backgroundColor: color.withValues(alpha: 0.15),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.4)),
+        side: BorderSide(color: color.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         elevation: 0,

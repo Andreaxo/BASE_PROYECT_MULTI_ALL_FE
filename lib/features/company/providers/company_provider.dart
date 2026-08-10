@@ -54,9 +54,11 @@ class CompanyProvider extends ChangeNotifier {
     try {
       final updatedComp = await CompanyApiService.update(id, request);
       final index = _companies.indexWhere((c) => c.id == id);
+
       if (index != -1) {
         _companies[index] = updatedComp;
       }
+
       _isLoading = false;
       notifyListeners();
       return true;

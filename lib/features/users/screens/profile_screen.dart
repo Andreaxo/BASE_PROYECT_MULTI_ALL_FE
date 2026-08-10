@@ -1,9 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../../core/config/api_config.dart';
-import '../../../core/services/upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_text_field.dart';
@@ -11,7 +8,7 @@ import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../models/user_model.dart';
+import '../../auth/services/auth_service.dart';
 import '../services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -28,9 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _emailController;
   final TextEditingController _passwordController = TextEditingController();
 
-  String _photoUrl = '';
   bool _isSaving = false;
-  bool _isUploading = false;
   String? _errorMessage;
 
   @override
@@ -42,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
-    _photoUrl = user?.photoUrl ?? '';
   }
 
   @override
@@ -52,47 +46,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickAndUploadImage() async {
-    setState(() {
-      _isUploading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        withData: true,
-      );
-
-      if (result != null && result.files.single.bytes != null) {
-        final fileBytes = result.files.single.bytes!;
-        final fileName = result.files.single.name;
-
-        final uploadedUrl = await UploadApiService.uploadImage(fileBytes, fileName);
-        setState(() {
-          _photoUrl = uploadedUrl;
-        });
-
-        if (mounted) {
-          CustomAlert.show(
-            context,
-            message: 'Imagen subida correctamente',
-            isSuccess: true,
-          );
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
-    } finally {
-      setState(() {
-        _isUploading = false;
-      });
-    }
   }
 
   Future<void> _handleSave() async {
@@ -115,15 +68,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final request = UpdateUserRequest(
+      await AuthApiService.updateProfile(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
-        password: null,
-        photoUrl: _photoUrl,
       );
-
-      await UserApiService.update(userId, request);
 
       // Refresh AuthProvider profile state
       await authProvider.refreshProfile();
@@ -172,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Gestiona tus datos personales, contraseña y foto de perfil.',
+                'Gestiona tus datos personales y tu contraseña.',
                 style: GoogleFonts.inter(
                   color: themeColors.textSecondary,
                   fontSize: 14,
@@ -180,113 +129,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 32),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Photo section
-                  Card(
-                    color: themeColors.cardBackground,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: themeColors.borderColor),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary.withOpacity(0.5),
-                                    width: 3,
-                                  ),
-                                  color: Colors.white.withOpacity(0.05),
-                                ),
-                                child: ClipOval(
-                                  child: _photoUrl.isNotEmpty
-                                      ? Image.network(
-                                          '${ApiConfig.serverUrl}$_photoUrl',
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Icon(
-                                            Icons.person_rounded,
-                                            size: 64,
-                                            color: Colors.white30,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.person_rounded,
-                                          size: 64,
-                                          color: Colors.white30,
-                                        ),
-                                ),
-                              ),
-                              if (_isUploading)
-                                Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.black.withOpacity(0.5),
-                                  ),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.accent,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: _isUploading ? null : _pickAndUploadImage,
-                            icon: const Icon(Icons.cloud_upload_rounded, size: 18),
-                            label: Text(
-                              'Subir Foto',
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary.withOpacity(0.15),
-                              foregroundColor: AppColors.accent,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-
-                  // Fields section
-                  Expanded(
-                    child: Card(
-                      color: themeColors.cardBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: themeColors.borderColor),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+              Card(
+                color: themeColors.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: themeColors.borderColor),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                             if (_errorMessage != null) ...[
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.error.withOpacity(0.1),
+                                  color: AppColors.error.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [
@@ -368,12 +228,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: const Icon(Icons.lock_outline_rounded, size: 18),
                                 label: const Text('Cambiar Contraseña'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                                  backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                                   foregroundColor: AppColors.accent,
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                                    side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3)),
                                   ),
                                 ),
                               ),
@@ -394,9 +254,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -461,9 +318,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.error.withOpacity(0.1),
+                              color: AppColors.error.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                              border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               children: [
@@ -493,7 +350,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscureCurrent ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                              color: themeColors.textSecondary.withOpacity(0.5),
+                              color: themeColors.textSecondary.withValues(alpha: 0.5),
                               size: 20,
                             ),
                             onPressed: () => setDialogState(() => obscureCurrent = !obscureCurrent),
@@ -514,7 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscureConfirmCurrent ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                              color: themeColors.textSecondary.withOpacity(0.5),
+                              color: themeColors.textSecondary.withValues(alpha: 0.5),
                               size: 20,
                             ),
                             onPressed: () => setDialogState(() => obscureConfirmCurrent = !obscureConfirmCurrent),
@@ -539,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscureNew ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                              color: themeColors.textSecondary.withOpacity(0.5),
+                              color: themeColors.textSecondary.withValues(alpha: 0.5),
                               size: 20,
                             ),
                             onPressed: () => setDialogState(() => obscureNew = !obscureNew),

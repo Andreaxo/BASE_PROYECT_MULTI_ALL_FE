@@ -50,7 +50,7 @@ class UserInfo {
       email: (json['email'] as String?) ?? '',
       firstName: (json['first_name'] as String?) ?? '',
       lastName: (json['last_name'] as String?) ?? '',
-      roleId: json['role_id'] as int?,
+      roleId: (json['role_id'] as num?)?.toInt(),
       roleCode: (json['role_code'] as String?) ?? '',
     );
   }

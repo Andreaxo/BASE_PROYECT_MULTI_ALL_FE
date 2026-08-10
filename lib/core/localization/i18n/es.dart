@@ -2,6 +2,9 @@ const Map<String, String> esKeys = {
   // Auth & Login
   'login_title': 'Iniciar Sesión',
   'login_subtitle': 'Ingresa tus credenciales para acceder',
+  'welcome_title': 'Bienvenido a tu plataforma: Conexiate',
+  'welcome_subtitle':
+      'Inicia sesión para acceder a tu cuenta y disfrutar de todos los servicios que Conexia tiene para ti.',
   'email': 'Correo Electrónico',
   'password': 'Contraseña',
   'login_button': 'Ingresar',
@@ -40,6 +43,8 @@ const Map<String, String> esKeys = {
   'article': 'Artículo',
   'menus': 'Menús',
   'menu': 'Menú',
+  'benefits': 'Beneficios',
+  'benefit': 'Beneficio',
 
   // Form Labels & Validations
   'first_name': 'Nombre',
@@ -65,6 +70,8 @@ const Map<String, String> esKeys = {
   'no_results': 'No se encontraron resultados',
   'search_other_keywords': 'Prueba a buscar con otras palabras clave',
   'total_users': 'Total de usuarios',
+  'users_found': 'usuarios',
+  'total': 'Total',
   'rows_per_page': 'Filas por página:',
   'page': 'Pág.',
   'of': 'de',
@@ -131,7 +138,7 @@ const Map<String, String> esKeys = {
   'delete_article_confirm':
       '¿Estás seguro de que deseas eliminar el artículo "{name}" (ID: {id})?',
   'no_category_assigned': 'Sin Categoría',
-  
+
   // Custom headers & buttons
   'id': 'ID',
   'company_name': 'Nombre de la Empresa',
@@ -142,21 +149,23 @@ const Map<String, String> esKeys = {
   'excel': 'Excel',
   'pdf': 'PDF',
   'label_es': 'Etiqueta (ES)',
+  'menu_label': 'Etiqueta',
   'label_en': 'Etiqueta (EN)',
   'label_fr': 'Etiqueta (FR)',
   'route_path': 'Ruta de Acceso',
   'icon': 'Ícono',
   'sort_order': 'Orden',
-  
+
   // Menu translations
   'delete_menu': 'Eliminar Menú',
-  'delete_menu_confirm': '¿Está seguro de que desea eliminar el menú "{name}" (ID: {id})?',
+  'delete_menu_confirm':
+      '¿Está seguro de que desea eliminar el menú "{name}" (ID: {id})?',
   'active_menus': 'Menús Activos',
   'total_menus': 'Menús Totales',
   'sync': 'Sincronización',
   'sync_complete': 'Completa',
   'search_menu_hint': 'Buscar por ID, etiqueta o ruta...',
-  
+
   // Role translations
   'role_management': 'Gestión de Roles',
   'add_role': 'Nuevo Rol',
@@ -165,14 +174,16 @@ const Map<String, String> esKeys = {
   'hours': 'Horas',
   'minutes': 'Minutos',
   'delete_role': 'Eliminar Rol',
-  'delete_role_confirm': '¿Está seguro de que desea eliminar el rol "{name}" (ID: {id})?',
+  'delete_role_confirm':
+      '¿Está seguro de que desea eliminar el rol "{name}" (ID: {id})?',
   'active_roles': 'Roles Activos',
   'total_roles': 'Roles Totales',
   'search_role_hint': 'Buscar por ID, nombre o código...',
-  
+
   // Company translations
   'delete_company': 'Eliminar Empresa',
-  'delete_company_confirm': '¿Está seguro de que desea eliminar la empresa "{name}" (ID: {id})?',
+  'delete_company_confirm':
+      '¿Está seguro de que desea eliminar la empresa "{name}" (ID: {id})?',
   'active_companies': 'Empresas Activas',
   'total_companies': 'Empresas Totales',
   'search_company_hint': 'Buscar por ID o nombre...',
@@ -184,5 +195,6 @@ const Map<String, String> esKeys = {
   'statistics': 'Estadísticas',
   'dashboard': 'Dashboard',
   'statistics_dashboard_title': 'Estadísticas de la Empresa',
-  'statistics_dashboard_subtitle': 'Visualización general de métricas y datos de inventario.',
+  'statistics_dashboard_subtitle':
+      'Visualización general de métricas y datos de inventario.',
 };

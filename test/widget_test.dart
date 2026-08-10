@@ -17,7 +17,7 @@ void main() {
             create: (_) => UserProvider(),
           ),
         ],
-        child: const MulticlienteApp(isLoggedIn: false),
+        child: const MulticlienteApp(isLoggedIn: false, roleCode: ''),
       ),
     );
 

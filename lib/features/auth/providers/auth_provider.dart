@@ -31,8 +31,8 @@ class AuthProvider extends ChangeNotifier {
     _isLoggedIn = await AuthStorage.isLoggedIn();
     if (_isLoggedIn) {
       final userInfo = await AuthStorage.getUserInfo();
-      _userName =
-          '${userInfo['firstName'] ?? ''} ${userInfo['lastName'] ?? ''}'.trim();
+      _userName = '${userInfo['firstName'] ?? ''} ${userInfo['lastName'] ?? ''}'
+          .trim();
       _roleCode = userInfo['roleCode'] ?? '';
 
       try {
@@ -40,19 +40,22 @@ class AuthProvider extends ChangeNotifier {
         _currentUser = profile;
         _userName = '${profile.firstName} ${profile.lastName}'.trim();
         _roleCode = profile.roleCode;
-        
+
         if (_roleCode == 'superadmin') {
           // SuperAdmin can manage/work on all companies in the system
           _userCompanies = await CompanyApiService.getAll();
         } else {
           // Regular users can only access their associated companies
           _userCompanies = profile.companies
-              .map((c) => Company(
-                    id: c.id,
-                    name: c.name,
-                    isActive: true,
-                    photoUrl: c.photoUrl,
-                  ))
+              .map(
+                (c) => Company(
+                  id: c.id,
+                  nit: c.nit,
+                  name: c.name,
+                  isActive: true,
+                  photoUrl: c.photoUrl,
+                ),
+              )
               .toList();
         }
 
@@ -78,6 +81,11 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await AuthStorage.clear();
+      _activeCompany = null;
+      _userCompanies = [];
+      _currentUser = null;
+
       final response = await AuthApiService.login(
         LoginRequest(email: email, password: password),
       );
@@ -104,12 +112,15 @@ class AuthProvider extends ChangeNotifier {
         _userCompanies = await CompanyApiService.getAll();
       } else {
         _userCompanies = profile.companies
-            .map((c) => Company(
-                  id: c.id,
-                  name: c.name,
-                  isActive: true,
-                  photoUrl: c.photoUrl,
-                ))
+            .map(
+              (c) => Company(
+                id: c.id,
+                nit: c.nit,
+                name: c.name,
+                isActive: true,
+                photoUrl: c.photoUrl,
+              ),
+            )
             .toList();
       }
 
@@ -129,6 +140,81 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Perform registration with optional referral code and auto-login.
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    String? refCode,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await AuthStorage.clear();
+      _activeCompany = null;
+      _userCompanies = [];
+      _currentUser = null;
+
+      final response = await AuthApiService.register(
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        refCode: refCode,
+      );
+
+      await AuthStorage.saveAuthData(
+        token: response.token,
+        userId: response.user.id,
+        email: response.user.email,
+        firstName: response.user.firstName,
+        lastName: response.user.lastName,
+        roleId: response.user.roleId,
+        roleCode: response.user.roleCode,
+      );
+
+      _isLoggedIn = true;
+      _userName = '${response.user.firstName} ${response.user.lastName}'.trim();
+      _roleCode = response.user.roleCode;
+
+      try {
+        final profile = await AuthApiService.getProfile();
+        _currentUser = profile;
+        if (_roleCode == 'superadmin') {
+          _userCompanies = await CompanyApiService.getAll();
+        } else {
+          _userCompanies = profile.companies
+              .map(
+                (c) => Company(
+                  id: c.id,
+                  nit: c.nit,
+                  name: c.name,
+                  isActive: true,
+                  photoUrl: c.photoUrl,
+                ),
+              )
+              .toList();
+        }
+        if (_userCompanies.isNotEmpty) {
+          _activeCompany = _userCompanies.first;
+          await AuthStorage.saveActiveCompanyId(_activeCompany!.id);
+        }
+      } catch (_) {}
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Select a new active company context.
   Future<void> setActiveCompany(Company company) async {
     _activeCompany = company;
@@ -136,7 +222,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Refresh user profile information from the API.
   Future<void> refreshProfile() async {
     if (_isLoggedIn) {
       try {
@@ -149,12 +234,15 @@ class AuthProvider extends ChangeNotifier {
           _userCompanies = await CompanyApiService.getAll();
         } else {
           _userCompanies = profile.companies
-              .map((c) => Company(
-                    id: c.id,
-                    name: c.name,
-                    isActive: true,
-                    photoUrl: c.photoUrl,
-                  ))
+              .map(
+                (c) => Company(
+                  id: c.id,
+                  nit: c.nit,
+                  name: c.name,
+                  isActive: true,
+                  photoUrl: c.photoUrl,
+                ),
+              )
               .toList();
         }
 

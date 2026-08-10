@@ -43,14 +43,14 @@ class Role {
     }
 
     return Role(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      code: json['code'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] as String?) ?? '',
+      code: (json['code'] as String?) ?? '',
       description: json['description']?.toString() ?? '',
-      sessionDays: json['session_days'] as int? ?? 0,
-      sessionHours: json['session_hours'] as int? ?? 24,
-      sessionMinutes: json['session_minutes'] as int? ?? 0,
-      isActive: json['is_active'] as bool,
+      sessionDays: (json['session_days'] as num?)?.toInt() ?? 0,
+      sessionHours: (json['session_hours'] as num?)?.toInt() ?? 24,
+      sessionMinutes: (json['session_minutes'] as num?)?.toInt() ?? 0,
+      isActive: (json['is_active'] as bool?) ?? true,
       permissions: permsList,
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),

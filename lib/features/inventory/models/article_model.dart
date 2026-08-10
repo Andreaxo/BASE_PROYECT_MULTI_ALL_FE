@@ -29,13 +29,13 @@ class Article {
 
   factory Article.fromJson(Map<String, dynamic> json) {
     return Article(
-      id: json['id'] as int,
-      companyId: json['company_id'] as int,
-      categoryId: json['category_id'] as int,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      companyId: (json['company_id'] as num?)?.toInt() ?? 0,
+      categoryId: (json['category_id'] as num?)?.toInt() ?? 0,
       category: json['category'] != null
           ? Category.fromJson(json['category'] as Map<String, dynamic>)
           : null,
-      name: json['name'] as String,
+      name: (json['name'] as String?) ?? '',
       createBy: json['create_by'] as int?,
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),

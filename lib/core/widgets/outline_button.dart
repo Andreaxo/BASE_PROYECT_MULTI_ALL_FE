@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class OutlineButtonWidget extends StatelessWidget {
@@ -25,7 +25,7 @@ class OutlineButtonWidget extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
