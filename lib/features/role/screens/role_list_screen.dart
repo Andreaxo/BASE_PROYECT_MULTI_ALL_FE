@@ -15,6 +15,7 @@ import '../models/role_model.dart';
 import '../providers/role_provider.dart';
 import '../../../core/utils/export_helper.dart';
 import 'package:multicliente_app/core/widgets/header_filter.dart';
+import '../../../core/widgets/custom_pagination_footer.dart';
 import 'role_form_screen.dart';
 
 class RoleListScreen extends StatefulWidget {
@@ -449,7 +450,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
                                                           Expanded(flex: 2, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))),
                                                           Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))),
                                                           Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))),
-                                                          if (canEdit) const SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text('Acciones'))),
+                                                           if (canEdit) SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text(context.tr('actions')))),
                                                         ],
                                                       ),
                                                     ),
@@ -471,12 +472,20 @@ class _RoleListScreenState extends State<RoleListScreen> {
                                         );
                                       },
                                     ),
-                                    _buildPaginationFooter(
-                                      totalItems: totalRoles,
-                                      totalPages: safeTotalPages,
-                                    ),
-                                  ],
-                                ),
+                                     CustomPaginationFooter(
+                                       totalItems: totalRoles,
+                                       currentPage: _currentPage,
+                                       rowsPerPage: _rowsPerPage,
+                                       onPageChanged: (newPage) =>
+                                           setState(() => _currentPage = newPage),
+                                       onRowsPerPageChanged: (newSize) =>
+                                           setState(() {
+                                         _rowsPerPage = newSize;
+                                         _currentPage = 1;
+                                       }),
+                                     ),
+                                   ],
+                                 ),
                 ],
               ),
             ),
@@ -535,92 +544,6 @@ class _RoleListScreenState extends State<RoleListScreen> {
     );
   }
 
-  Widget _buildPaginationFooter({
-    required int totalItems,
-    required int totalPages,
-  }) {
-    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: themeColors.textPrimary.withValues(alpha: 0.01),
-        border: Border(
-          top: BorderSide(color: themeColors.borderColor),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${context.tr('total')}: $totalItems ${context.tr('roles').toLowerCase()}',
-            style: GoogleFonts.inter(
-              color: themeColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-            ),
-          ),
-          Row(
-            children: [
-              Text(
-                context.tr('rows_per_page'),
-                style: GoogleFonts.inter(
-                  color: themeColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              DropdownButton<int>(
-                value: _rowsPerPage,
-                dropdownColor: themeColors.cardBackground,
-                underline: const SizedBox.shrink(),
-                iconEnabledColor: themeColors.textSecondary,
-                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 12),
-                items: [5, 8, 10, 15].map((size) {
-                  return DropdownMenuItem<int>(
-                    value: size,
-                    child: Text('  $size  '),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _rowsPerPage = val;
-                      _currentPage = 1;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(width: 14),
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage > 1
-                    ? () => setState(() => _currentPage--)
-                    : null,
-              ),
-              Text(
-                '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage < totalPages
-                    ? () => setState(() => _currentPage++)
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyWidget() {
     return Center(

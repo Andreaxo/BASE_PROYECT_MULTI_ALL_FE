@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,6 +17,7 @@ import '../../../core/widgets/custom_alert.dart';
 import '../providers/company_provider.dart';
 import '../../../core/utils/export_helper.dart';
 import 'package:multicliente_app/core/widgets/header_filter.dart';
+import '../../../core/widgets/custom_pagination_footer.dart';
 
 class CompanyListScreen extends StatefulWidget {
   const CompanyListScreen({super.key});
@@ -96,14 +99,14 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                 if (success) {
                   CustomAlert.show(
                     context,
-                    message: 'Empresa eliminada correctamente',
+                    message: 'Empresa eliminada correctamente.',
                     isSuccess: true,
                   );
                 } else {
                   CustomAlert.show(
                     context,
                     message:
-                        provider.errorMessage ?? 'Error al eliminar empresa',
+                        provider.errorMessage ?? 'No fue posible eliminar la empresa.',
                     isSuccess: false,
                   );
                 }
@@ -441,7 +444,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                           children: [
                             LayoutBuilder(
                               builder: (context, constraints) {
-                                final minTableWidth = 950.0;
+                                final minTableWidth = 1100.0;
                                 final tableWidth = constraints.maxWidth > minTableWidth
                                     ? constraints.maxWidth - 2
                                     : minTableWidth;
@@ -476,12 +479,13 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                                               child: Row(
                                                 children: [
                                                   Expanded(flex: 1, child: _buildHeaderFilter(context.tr('id'), (val) => setState(() => _idFilter = val))),
-                                                  Expanded(flex: 2, child: _buildHeaderFilter(context.tr('NIT'), (val) => setState(() => _nitFilter = val))),
+                                                  Expanded(flex: 2, child: _buildHeaderFilter(context.tr('nit'), (val) => setState(() => _nitFilter = val))),
                                                   Expanded(flex: 3, child: _buildHeaderFilter(context.tr('company_name'), (val) => setState(() => _nameFilter = val))),
+                                                  Expanded(flex: 2, child: Text(context.tr('unique_code'))),
+                                                  Expanded(flex: 2, child: Text(context.tr('membership'))),
                                                   Expanded(flex: 2, child: _buildHeaderFilter(context.tr('status'), (val) => setState(() => _statusFilter = val))),
-                                                  Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_by'), (val) => setState(() => _createByFilter = val))),
                                                   Expanded(flex: 2, child: _buildHeaderFilter(context.tr('created_at'), (val) => setState(() => _createAtFilter = val))),
-                                                  if (canEdit) const SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text('Acciones'))),
+                                                  if (canEdit) SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text(context.tr('actions')))),
                                                 ],
                                               ),
                                             ),
@@ -528,9 +532,16 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                                 );
                               },
                             ),
-                            _buildPaginationFooter(
+                            CustomPaginationFooter(
                               totalItems: totalCompanies,
-                              totalPages: safeTotalPages,
+                              currentPage: _currentPage,
+                              rowsPerPage: _rowsPerPage,
+                              onPageChanged: (newPage) =>
+                                  setState(() => _currentPage = newPage),
+                              onRowsPerPageChanged: (newSize) => setState(() {
+                                _rowsPerPage = newSize;
+                                _currentPage = 1;
+                              }),
                             ),
                           ],
                         ),
@@ -595,95 +606,6 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     );
   }
 
-  Widget _buildPaginationFooter({
-    required int totalItems,
-    required int totalPages,
-  }) {
-    final themeColors =
-        Theme.of(context).extension<AppThemeColors>() ??
-        AppTheme.darkThemeColors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: themeColors.textPrimary.withValues(alpha: 0.01),
-        border: Border(top: BorderSide(color: themeColors.borderColor)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${context.tr('total')}: $totalItems ${context.tr('companies').toLowerCase()}',
-            style: GoogleFonts.inter(
-              color: themeColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-            ),
-          ),
-          Row(
-            children: [
-              Text(
-                context.tr('rows_per_page'),
-                style: GoogleFonts.inter(
-                  color: themeColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              DropdownButton<int>(
-                value: _rowsPerPage,
-                dropdownColor: themeColors.cardBackground,
-                underline: const SizedBox.shrink(),
-                iconEnabledColor: themeColors.textSecondary,
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary,
-                  fontSize: 12,
-                ),
-                items: [5, 8, 10, 15].map((size) {
-                  return DropdownMenuItem<int>(
-                    value: size,
-                    child: Text('  $size  '),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _rowsPerPage = val;
-                      _currentPage = 1;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(width: 14),
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage > 1
-                    ? () => setState(() => _currentPage--)
-                    : null,
-              ),
-              Text(
-                '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage < totalPages
-                    ? () => setState(() => _currentPage++)
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyWidget() {
     return Center(
@@ -892,17 +814,131 @@ class _CompanyRow extends StatefulWidget {
 class _CompanyRowState extends State<_CompanyRow> {
   bool _isHovered = false;
 
-  String _getCreatorName(String? name, int? id) {
-    if (name == null) {
-      if (id != null && id != 0) return 'Usuario #$id';
-      return 'System';
+  Widget _buildSubscriptionBadge(String status, String? fechaFin) {
+    Color bgColor;
+    Color textColor;
+    String label;
+    IconData icon;
+
+    switch (status.toLowerCase()) {
+      case 'activa':
+        bgColor = const Color(0xFF10B981).withValues(alpha: 0.15);
+        textColor = const Color(0xFF10B981);
+        label = 'Activa';
+        icon = Icons.check_circle_outline_rounded;
+        break;
+      case 'vencida':
+        bgColor = const Color(0xFFEF4444).withValues(alpha: 0.15);
+        textColor = const Color(0xFFEF4444);
+        label = 'Vencida';
+        icon = Icons.error_outline_rounded;
+        break;
+      case 'suspendida':
+        bgColor = const Color(0xFF6B7280).withValues(alpha: 0.15);
+        textColor = const Color(0xFF9CA3AF);
+        label = 'Suspendida';
+        icon = Icons.pause_circle_outline_rounded;
+        break;
+      case 'prueba':
+      default:
+        bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.15);
+        textColor = const Color(0xFFF59E0B);
+        label = 'Prueba';
+        icon = Icons.timer_outlined;
+        break;
     }
-    final trimmed = name.trim();
-    if (trimmed.isEmpty) {
-      if (id != null && id != 0) return 'Usuario #$id';
-      return 'System';
+
+    String tooltip = 'Suscripción: $label';
+    if (fechaFin != null && fechaFin.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(fechaFin);
+        tooltip += ' (Vence: ${DateFormat('dd/MM/yyyy').format(dt)})';
+      } catch (_) {}
     }
-    return trimmed;
+
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: textColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: textColor),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: textColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompanyCodeBadge(BuildContext context, String? code, AppThemeColors themeColors) {
+    if (code == null || code.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.inter(
+          color: themeColors.textSecondary.withValues(alpha: 0.5),
+          fontSize: 13,
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: code));
+        CustomAlert.show(
+          context,
+          message: 'Código de empresa "$code" copiado al portapapeles',
+          isSuccess: true,
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              code,
+              style: GoogleFonts.sourceCodePro(
+                color: const Color(0xFF60A5FA),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.copy_rounded,
+              size: 13,
+              color: Color(0xFF60A5FA),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -991,21 +1027,24 @@ class _CompanyRowState extends State<_CompanyRow> {
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: StatusBadge(
-                  label: company.isActive ? 'Activo' : 'Inactivo',
-                  isActive: company.isActive,
-                ),
+                child: _buildCompanyCodeBadge(context, company.codigoEmpresa, themeColors),
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text(
-                _getCreatorName(company.createByName, company.createBy),
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary.withValues(alpha: 0.85),
-                  fontSize: 13,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _buildSubscriptionBadge(company.suscripcionEstado, company.fechaFinPrueba),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatusBadge(
+                  label: company.isActive ? 'Activo' : 'Inactivo',
+                  isActive: company.isActive,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
             Expanded(

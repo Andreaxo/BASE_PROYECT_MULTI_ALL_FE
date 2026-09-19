@@ -23,7 +23,9 @@ class AppLocalizations {
 
   String translate(String key) {
     final langCode = locale.languageCode;
-    return _localizedValues[langCode]?[key] ?? key;
+    return _localizedValues[langCode]?[key] ??
+        _localizedValues['es']?[key] ??
+        key;
   }
 }
 

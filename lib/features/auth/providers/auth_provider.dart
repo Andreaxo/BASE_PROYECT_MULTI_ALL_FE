@@ -22,6 +22,34 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String get userName => _userName;
   String get roleCode => _roleCode;
+  bool get isSuperAdmin =>
+      _roleCode.toLowerCase().trim() == 'superadmin' ||
+      _roleCode.toLowerCase().trim() == 'super_admin';
+  bool get isAdminOrSuperAdmin =>
+      isSuperAdmin || _roleCode.toLowerCase().trim() == 'admin';
+  String get roleDisplayName {
+    switch (_roleCode.toLowerCase().trim()) {
+      case 'superadmin':
+      case 'super_admin':
+        return 'Super Administrador';
+      case 'admin':
+        return 'Administrador';
+      case 'business_validator':
+      case 'negocio':
+        return 'Validador de Negocio';
+      case 'user':
+      case 'user_member':
+        return 'Miembro Conexiate';
+      default:
+        if (_roleCode.isEmpty) return 'Usuario';
+        return _roleCode
+            .replaceAll('_', ' ')
+            .split(' ')
+            .where((w) => w.isNotEmpty)
+            .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+            .join(' ');
+    }
+  }
   List<Company> get userCompanies => _userCompanies;
   Company? get activeCompany => _activeCompany;
   User? get currentUser => _currentUser;
@@ -54,6 +82,10 @@ class AuthProvider extends ChangeNotifier {
                   name: c.name,
                   isActive: true,
                   photoUrl: c.photoUrl,
+                  suscripcionEstado: c.suscripcionEstado,
+                  razonSocial: c.razonSocial,
+                  codigoEmpresa: c.codigoEmpresa,
+                  fechaFinPrueba: c.fechaFinPrueba,
                 ),
               )
               .toList();
@@ -119,6 +151,10 @@ class AuthProvider extends ChangeNotifier {
                 name: c.name,
                 isActive: true,
                 photoUrl: c.photoUrl,
+                suscripcionEstado: c.suscripcionEstado,
+                razonSocial: c.razonSocial,
+                codigoEmpresa: c.codigoEmpresa,
+                fechaFinPrueba: c.fechaFinPrueba,
               ),
             )
             .toList();
@@ -140,13 +176,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Perform registration with optional referral code and auto-login.
+  /// Perform registration with optional referral code and company code, plus auto-login.
   Future<bool> register({
     required String email,
     required String password,
     required String firstName,
     required String lastName,
     String? refCode,
+    String? codigoEmpresa,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -164,6 +201,7 @@ class AuthProvider extends ChangeNotifier {
         firstName: firstName,
         lastName: lastName,
         refCode: refCode,
+        codigoEmpresa: codigoEmpresa,
       );
 
       await AuthStorage.saveAuthData(
@@ -194,6 +232,10 @@ class AuthProvider extends ChangeNotifier {
                   name: c.name,
                   isActive: true,
                   photoUrl: c.photoUrl,
+                  suscripcionEstado: c.suscripcionEstado,
+                  razonSocial: c.razonSocial,
+                  codigoEmpresa: c.codigoEmpresa,
+                  fechaFinPrueba: c.fechaFinPrueba,
                 ),
               )
               .toList();
@@ -241,6 +283,10 @@ class AuthProvider extends ChangeNotifier {
                   name: c.name,
                   isActive: true,
                   photoUrl: c.photoUrl,
+                  suscripcionEstado: c.suscripcionEstado,
+                  razonSocial: c.razonSocial,
+                  codigoEmpresa: c.codigoEmpresa,
+                  fechaFinPrueba: c.fechaFinPrueba,
                 ),
               )
               .toList();
@@ -271,6 +317,15 @@ class AuthProvider extends ChangeNotifier {
 
         notifyListeners();
       } catch (_) {}
+    }
+  }
+
+  /// Validate a company code in real-time.
+  Future<Map<String, dynamic>?> validarCodigoEmpresa(String codigo) async {
+    try {
+      return await AuthApiService.validarCodigoEmpresa(codigo);
+    } catch (_) {
+      return null;
     }
   }
 

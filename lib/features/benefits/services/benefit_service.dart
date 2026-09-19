@@ -15,7 +15,15 @@ class BenefitApiService {
           .map((json) => Benefit.fromJson(json as Map<String, dynamic>))
           .toList();
     } else {
-      throw Exception('Failed to load benefits');
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          throw Exception(body['error'].toString());
+        }
+      } catch (e) {
+        if (e is! FormatException) rethrow;
+      }
+      throw Exception('No fue posible cargar los beneficios');
     }
   }
 
@@ -30,7 +38,15 @@ class BenefitApiService {
           .map((json) => Benefit.fromJson(json as Map<String, dynamic>))
           .toList();
     } else {
-      throw Exception('Failed to load company benefits');
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          throw Exception(body['error'].toString());
+        }
+      } catch (e) {
+        if (e is! FormatException) rethrow;
+      }
+      throw Exception('No fue posible cargar los beneficios de la empresa');
     }
   }
 
@@ -42,7 +58,15 @@ class BenefitApiService {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     } else {
-      throw Exception('Benefit not found');
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          throw Exception(body['error'].toString());
+        }
+      } catch (e) {
+        if (e is! FormatException) rethrow;
+      }
+      throw Exception('Beneficio no encontrado');
     }
   }
 

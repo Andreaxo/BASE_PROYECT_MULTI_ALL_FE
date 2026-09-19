@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../config/api_config.dart';
@@ -343,6 +343,19 @@ class _DashboardShellState extends State<DashboardShell> {
       menus.clear();
       menus.add(
         AllowedMenu(
+          id: 997,
+          label: 'Inicio',
+          labelEn: 'Home',
+          labelFr: 'Accueil',
+          route: '/business-home',
+          icon: 'home_rounded',
+          sortOrder: 5,
+          permissions: const ['VIEW'],
+          submenus: const [],
+        ),
+      );
+      menus.add(
+        AllowedMenu(
           id: 996,
           label: 'Validar Redenciones',
           labelEn: 'Validate Redemptions',
@@ -363,6 +376,19 @@ class _DashboardShellState extends State<DashboardShell> {
           route: '/company-benefits',
           icon: 'card_giftcard_rounded',
           sortOrder: 11,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+      menus.add(
+        AllowedMenu(
+          id: 993,
+          label: 'Mi Membresía',
+          labelEn: 'My Membership',
+          labelFr: 'Mon Adhésion',
+          route: '/membresia',
+          icon: 'workspace_premium_rounded',
+          sortOrder: 12,
           permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
           submenus: const [],
         ),
@@ -429,6 +455,22 @@ class _DashboardShellState extends State<DashboardShell> {
           route: '/referidos',
           icon: 'share_rounded',
           sortOrder: 100,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    }
+
+    if (authProvider.isLoggedIn && !isBusinessValidator) {
+      menus.add(
+        AllowedMenu(
+          id: 992,
+          label: authProvider.isAdminOrSuperAdmin ? 'Membresías' : 'Mi Membresía',
+          labelEn: authProvider.isAdminOrSuperAdmin ? 'Memberships' : 'My Membership',
+          labelFr: authProvider.isAdminOrSuperAdmin ? 'Adhésions' : 'Mon Adhésion',
+          route: '/membresia',
+          icon: 'workspace_premium_rounded',
+          sortOrder: 105,
           permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
           submenus: const [],
         ),
@@ -585,11 +627,13 @@ class _DashboardShellState extends State<DashboardShell> {
                               ),
                             ),
                             Text(
-                              authProvider.roleCode.toUpperCase(),
+                              authProvider.roleDisplayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
                                 color: AppColors.accent,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],

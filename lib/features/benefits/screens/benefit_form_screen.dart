@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -118,8 +118,97 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
       Navigator.pop(context, true);
     } else if (mounted) {
       final error = benefitProvider.errorMessage ?? 'Ocurrió un error';
-      CustomAlert.show(context, message: error, isSuccess: false);
+      final lowerErr = error.toLowerCase();
+      if (lowerErr.contains('suscripción') ||
+          lowerErr.contains('suscripcion') ||
+          lowerErr.contains('subscription') ||
+          lowerErr.contains('expirad') ||
+          lowerErr.contains('vencid')) {
+        _showSubscriptionExpiredDialog(context, error);
+      } else {
+        CustomAlert.show(context, message: error, isSuccess: false);
+      }
     }
+  }
+
+  void _showSubscriptionExpiredDialog(BuildContext context, String rawMessage) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: themeColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFEF4444),
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                'Suscripción Inactiva o Vencida',
+                style: GoogleFonts.outfit(
+                  color: themeColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              rawMessage.isNotEmpty && rawMessage.contains('suscripción')
+                  ? rawMessage
+                  : 'La suscripción de tu empresa se encuentra inactiva o vencida. Para crear nuevos beneficios y publicar promociones, por favor activa tu suscripción comunicándote con el administrador de Conexiate.',
+              style: GoogleFonts.inter(
+                color: themeColors.textSecondary,
+                fontSize: 14,
+                height: 1.45,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Entendido',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

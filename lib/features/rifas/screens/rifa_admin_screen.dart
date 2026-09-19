@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
@@ -11,6 +10,7 @@ import '../../../core/widgets/stat_card.dart';
 import '../../users/providers/user_provider.dart';
 import '../models/rifa_model.dart';
 import '../providers/rifa_provider.dart';
+import '../../../core/widgets/custom_pagination_footer.dart';
 
 class RifaAdminScreen extends StatefulWidget {
   const RifaAdminScreen({super.key});
@@ -31,7 +31,7 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
 
   // Pagination
   int _currentPage = 1;
-  final int _rowsPerPage = 8;
+  int _rowsPerPage = 10;
 
   @override
   void initState() {
@@ -965,7 +965,17 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                         ...pageItems.map((r) => _buildRow(r, themeColors)),
 
                         // Pagination
-                        if (totalItems > _rowsPerPage) _buildPagination(safeTotalPages, themeColors),
+                        CustomPaginationFooter(
+                          totalItems: totalItems,
+                          currentPage: _currentPage,
+                          rowsPerPage: _rowsPerPage,
+                          onPageChanged: (newPage) =>
+                              setState(() => _currentPage = newPage),
+                          onRowsPerPageChanged: (newSize) => setState(() {
+                            _rowsPerPage = newSize;
+                            _currentPage = 1;
+                          }),
+                        ),
                       ],
                     ),
                   ),
@@ -1082,33 +1092,6 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
     );
   }
 
-  Widget _buildPagination(int totalPages, AppThemeColors themeColors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
-            style: GoogleFonts.inter(
-              color: themeColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: Icon(Icons.chevron_left_rounded, color: _currentPage > 1 ? themeColors.textPrimary : themeColors.textSecondary),
-            onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
-          ),
-          IconButton(
-            icon: Icon(Icons.chevron_right_rounded, color: _currentPage < totalPages ? themeColors.textPrimary : themeColors.textSecondary),
-            onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
-          ),
-        ],
-      ),
-    );
-  }
 
   InputDecoration _inputDecoration(String label, IconData icon, AppThemeColors themeColors) {
     return InputDecoration(

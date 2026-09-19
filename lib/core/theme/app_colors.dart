@@ -11,6 +11,7 @@ class AppColors {
     219,
   ); // Color inicial del lado derecho
   static const Color accent = Color(0xFF4ECDC4);
+  static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFFFB300);
   static const Color error = Color(0xFFFF6B6B);
 

@@ -29,6 +29,14 @@ class ReferidoApiService {
           .map((json) => Referido.fromJson(json as Map<String, dynamic>))
           .toList();
     } else {
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          throw Exception(body['error'].toString());
+        }
+      } catch (e) {
+        if (e is! FormatException) rethrow;
+      }
       throw Exception('Error al cargar mis referidos');
     }
   }
@@ -41,6 +49,14 @@ class ReferidoApiService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       return (body['code_refer'] as String?) ?? '';
     } else {
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          throw Exception(body['error'].toString());
+        }
+      } catch (e) {
+        if (e is! FormatException) rethrow;
+      }
       throw Exception('Error al obtener código de referido');
     }
   }

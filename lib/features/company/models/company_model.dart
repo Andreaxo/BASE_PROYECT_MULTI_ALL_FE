@@ -11,6 +11,9 @@ class Company {
   final String? updateByName;
   final int nit;
   final String? razonSocial;
+  final String suscripcionEstado;
+  final String? fechaFinPrueba;
+  final String? codigoEmpresa;
 
   Company({
     required this.id,
@@ -25,6 +28,9 @@ class Company {
     this.updateAt,
     this.updateByName,
     this.razonSocial,
+    this.suscripcionEstado = 'prueba',
+    this.fechaFinPrueba,
+    this.codigoEmpresa,
   });
 
   factory Company.fromJson(Map<String, dynamic> json) {
@@ -41,6 +47,9 @@ class Company {
       updateByName: json['update_by_name']?.toString(),
       nit: (json['nit'] as num?)?.toInt() ?? 0,
       razonSocial: json['razon_social']?.toString(),
+      suscripcionEstado: (json['suscripcion_estado'] as String?) ?? 'prueba',
+      fechaFinPrueba: json['fecha_fin_prueba']?.toString(),
+      codigoEmpresa: json['codigo_empresa'] as String?,
     );
   }
 }

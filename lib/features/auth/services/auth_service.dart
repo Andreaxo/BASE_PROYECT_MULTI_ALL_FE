@@ -35,13 +35,14 @@ class AuthApiService {
     }
   }
 
-  /// Register a new user with an optional referral code.
+  /// Register a new user with optional referral code and company code.
   static Future<LoginResponse> register({
     required String email,
     required String password,
     required String firstName,
     required String lastName,
     String? refCode,
+    String? codigoEmpresa,
   }) async {
     final response = await ApiService.post(ApiConfig.registerEndpoint, {
       'email': email,
@@ -50,6 +51,8 @@ class AuthApiService {
       'last_name': lastName,
       if (refCode != null && refCode.trim().isNotEmpty)
         'ref_code': refCode.trim(),
+      if (codigoEmpresa != null && codigoEmpresa.trim().isNotEmpty)
+        'codigo_empresa': codigoEmpresa.trim(),
     }, requiresAuth: false);
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -59,6 +62,19 @@ class AuthApiService {
     } else {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       throw Exception(body['error'] ?? 'Falló el registro');
+    }
+  }
+
+  /// Validate a company code in real-time.
+  static Future<Map<String, dynamic>> validarCodigoEmpresa(String codigo) async {
+    final response = await ApiService.get(
+      '${ApiConfig.baseUrl}/auth/validar-codigo-empresa/${Uri.encodeComponent(codigo.trim())}',
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw Exception(body['error'] ?? 'Código de empresa no válido');
     }
   }
 

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/config/api_config.dart';
@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/membership_gate_banner.dart';
 import '../../../core/widgets/stat_card.dart';
 import '../models/rifa_model.dart';
 import '../providers/rifa_provider.dart';
@@ -237,6 +238,11 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
                 ),
               ),
               const SizedBox(height: 24),
+
+              // ── Gating Banner ──
+              const MembershipGateBanner(
+                featureName: 'las rifas y sorteos exclusivos',
+              ),
 
               // ── Active Rifa Hero Banner ──
               if (provider.isLoadingActive)

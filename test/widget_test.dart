@@ -5,17 +5,15 @@ import 'package:multicliente_app/features/auth/providers/auth_provider.dart';
 import 'package:multicliente_app/features/users/providers/user_provider.dart';
 
 void main() {
-  testWidgets('App smoke test - shows login screen initially when logged out', (WidgetTester tester) async {
+  testWidgets('App smoke test - shows login screen initially when logged out', (
+    WidgetTester tester,
+  ) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider(
-            create: (_) => AuthProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => UserProvider(),
-          ),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => UserProvider()),
         ],
         child: const MulticlienteApp(isLoggedIn: false, roleCode: ''),
       ),

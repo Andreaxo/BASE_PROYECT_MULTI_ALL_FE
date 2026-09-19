@@ -77,12 +77,20 @@ class UserCompanyInfo {
   final int nit;
   final String name;
   final String photoUrl;
+  final String suscripcionEstado;
+  final String? razonSocial;
+  final String? codigoEmpresa;
+  final String? fechaFinPrueba;
 
   UserCompanyInfo({
     required this.id,
     required this.nit,
     required this.name,
     this.photoUrl = '',
+    this.suscripcionEstado = 'prueba',
+    this.razonSocial,
+    this.codigoEmpresa,
+    this.fechaFinPrueba,
   });
 
   factory UserCompanyInfo.fromJson(Map<String, dynamic> json) {
@@ -91,6 +99,10 @@ class UserCompanyInfo {
       nit: (json['nit'] as num?)?.toInt() ?? 0,
       name: (json['name'] as String?) ?? '',
       photoUrl: json['photo_url'] as String? ?? '',
+      suscripcionEstado: (json['suscripcion_estado'] as String?) ?? 'prueba',
+      razonSocial: json['razon_social'] as String?,
+      codigoEmpresa: json['codigo_empresa'] as String?,
+      fechaFinPrueba: json['fecha_fin_prueba']?.toString(),
     );
   }
 }

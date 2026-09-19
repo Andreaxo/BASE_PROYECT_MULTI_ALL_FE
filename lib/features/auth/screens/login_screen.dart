@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -51,13 +52,15 @@ class _LoginScreenState extends State<LoginScreen>
     _animController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
       _emailController.text.trim(),
       _passwordController.text,
@@ -68,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen>
       context.read<RifaProvider>().resetSilent();
       final role = authProvider.roleCode;
       if (role == 'business_validator' || role == 'negocio') {
-        Navigator.of(context).pushReplacementNamed('/redemptions');
+        Navigator.of(context).pushReplacementNamed('/business-home');
       } else if (role == 'user' || role == 'user_member') {
         Navigator.of(context).pushReplacementNamed('/referidos');
       } else {
@@ -212,6 +215,10 @@ class _LoginScreenState extends State<LoginScreen>
                   label: context.tr('email'),
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) {
+                    FocusScope.of(context).requestFocus(_passwordFocusNode);
+                  },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return context.tr('email_required');
@@ -228,9 +235,12 @@ class _LoginScreenState extends State<LoginScreen>
                 _buildTextField(
                   themeProvider: themeProvider,
                   controller: _passwordController,
+                  focusNode: _passwordFocusNode,
                   label: context.tr('password'),
                   icon: Icons.lock_outline_rounded,
                   obscure: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _handleLogin(),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -304,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '¿Tienes un código? ',
+                      context.tr('have_code'),
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         color: themeProvider.isDarkMode
@@ -317,7 +327,7 @@ class _LoginScreenState extends State<LoginScreen>
                       child: GestureDetector(
                         onTap: _showRegisterDialog,
                         child: Text(
-                          'Regístrate con código de referido',
+                          context.tr('register_with_referral'),
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -344,9 +354,14 @@ class _LoginScreenState extends State<LoginScreen>
     final emailCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
     final refCodeCtrl = TextEditingController();
+    final companyCodeCtrl = TextEditingController();
     bool isLoading = false;
     String? dialogError;
     bool obscurePassword = true;
+    String? validatedCompanyName;
+    bool isValidatingCompany = false;
+    String? companyValidationError;
+    String referralType = 'none'; // 'friend', 'company', 'none'
 
     showDialog(
       context: context,
@@ -361,6 +376,38 @@ class _LoginScreenState extends State<LoginScreen>
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            void onCompanyCodeChanged(String value) async {
+              final code = value.trim();
+              if (code.isEmpty) {
+                setDialogState(() {
+                  validatedCompanyName = null;
+                  isValidatingCompany = false;
+                  companyValidationError = null;
+                });
+                return;
+              }
+
+              setDialogState(() {
+                isValidatingCompany = true;
+                companyValidationError = null;
+              });
+
+              final res = await context
+                  .read<AuthProvider>()
+                  .validarCodigoEmpresa(code);
+
+              setDialogState(() {
+                isValidatingCompany = false;
+                if (res != null && res['name'] != null) {
+                  validatedCompanyName = res['name'];
+                  companyValidationError = null;
+                } else {
+                  validatedCompanyName = null;
+                  companyValidationError = 'Código de empresa no válido';
+                }
+              });
+            }
+
             return Dialog(
               backgroundColor: Colors.transparent,
               insetPadding: const EdgeInsets.symmetric(
@@ -437,7 +484,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Únete con tu código de referido',
+                                    'Únete y disfruta beneficios exclusivos',
                                     style: GoogleFonts.inter(
                                       color: Colors.white.withValues(
                                         alpha: 0.8,
@@ -470,362 +517,597 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
 
                       // ── Body del formulario ────────────────────────────
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Form(
-                          key: formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Error banner
-                              if (dialogError != null) ...[
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error.withValues(
-                                      alpha: 0.12,
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Error banner
+                                if (dialogError != null) ...[
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
+                                    decoration: BoxDecoration(
                                       color: AppColors.error.withValues(
-                                        alpha: 0.3,
+                                        alpha: 0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: AppColors.error.withValues(
+                                          alpha: 0.3,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.error_outline_rounded,
-                                        color: AppColors.error,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          dialogError!,
-                                          style: GoogleFonts.inter(
-                                            color: AppColors.error,
-                                            fontSize: 13,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline_rounded,
+                                          color: AppColors.error,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            dialogError!,
+                                            style: GoogleFonts.inter(
+                                              color: AppColors.error,
+                                              fontSize: 13,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-
-                              // Nombre y Apellido en fila
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      themeProvider: themeProvider,
-                                      controller: firstNameCtrl,
-                                      label: 'Nombre',
-                                      icon: Icons.badge_outlined,
-                                      validator: (v) =>
-                                          v == null || v.trim().isEmpty
-                                          ? 'Requerido'
-                                          : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      themeProvider: themeProvider,
-                                      controller: lastNameCtrl,
-                                      label: 'Apellido',
-                                      icon: Icons.badge_outlined,
-                                      validator: (v) =>
-                                          v == null || v.trim().isEmpty
-                                          ? 'Requerido'
-                                          : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Correo
-                              _buildTextField(
-                                themeProvider: themeProvider,
-                                controller: emailCtrl,
-                                label: 'Correo electrónico',
-                                icon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (v) {
-                                  if (v == null || v.trim().isEmpty)
-                                    return 'Ingresa tu correo';
-                                  if (!v.contains('@'))
-                                    return 'Correo no válido';
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Contraseña
-                              _buildTextField(
-                                themeProvider: themeProvider,
-                                controller: passwordCtrl,
-                                label: 'Contraseña',
-                                icon: Icons.lock_outline_rounded,
-                                obscure: obscurePassword,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                    size: 20,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.4)
-                                        : Colors.black38,
-                                  ),
-                                  onPressed: () => setDialogState(
-                                    () => obscurePassword = !obscurePassword,
-                                  ),
-                                ),
-                                validator: (v) => v == null || v.length < 6
-                                    ? 'Mínimo 6 caracteres'
-                                    : null,
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Separador código de referido
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Divider(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.1)
-                                          : Colors.black.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            AppColors.primary,
-                                            AppColors.accent,
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        '🎟  Código de Referido',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Divider(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.1)
-                                          : Colors.black.withValues(
-                                              alpha: 0.08,
-                                            ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Campo código de referido
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.primary.withValues(
-                                        alpha: isDark ? 0.12 : 0.06,
-                                      ),
-                                      AppColors.accent.withValues(
-                                        alpha: isDark ? 0.08 : 0.04,
-                                      ),
-                                    ],
-                                  ),
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.25,
-                                    ),
-                                  ),
-                                ),
-                                child: _buildTextField(
-                                  themeProvider: themeProvider,
-                                  controller: refCodeCtrl,
-                                  label: 'Código de Referido (opcional)',
-                                  icon: Icons.confirmation_number_outlined,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4),
-                                child: Text(
-                                  'Si tienes un código, será vinculado a tu cuenta al registrarte.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.4)
-                                        : Colors.black38,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Botón registrarse
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.accent,
                                       ],
-                                      begin: Alignment.centerLeft,
-                                      end: Alignment.centerRight,
                                     ),
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withValues(
-                                          alpha: 0.35,
-                                        ),
-                                        blurRadius: 14,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
                                   ),
-                                  child: ElevatedButton(
-                                    onPressed: isLoading
-                                        ? null
-                                        : () async {
-                                            if (!formKey.currentState!
-                                                .validate())
-                                              return;
-                                            setDialogState(() {
-                                              isLoading = true;
-                                              dialogError = null;
-                                            });
+                                  const SizedBox(height: 16),
+                                ],
 
-                                            final authProvider = context
-                                                .read<AuthProvider>();
-                                            final success = await authProvider
-                                                .register(
-                                                  email: emailCtrl.text.trim(),
-                                                  password: passwordCtrl.text,
-                                                  firstName: firstNameCtrl.text
-                                                      .trim(),
-                                                  lastName: lastNameCtrl.text
-                                                      .trim(),
-                                                  refCode: refCodeCtrl.text
-                                                      .trim(),
-                                                );
-
-                                            if (success) {
-                                              if (ctx.mounted)
-                                                Navigator.of(ctx).pop();
-                                              if (mounted) {
-                                                context
-                                                    .read<ReferidoProvider>()
-                                                    .resetSilent();
-                                                context
-                                                    .read<RifaProvider>()
-                                                    .resetSilent();
-                                                CustomAlert.show(
-                                                  context,
-                                                  message:
-                                                      '¡Registro exitoso! Bienvenido a Conexiate.',
-                                                  isSuccess: true,
-                                                );
-                                                final role =
-                                                    authProvider.roleCode;
-                                                if (role == 'user' ||
-                                                    role == 'user_member') {
-                                                  Navigator.of(
-                                                    context,
-                                                  ).pushReplacementNamed(
-                                                    '/referidos',
-                                                  );
-                                                } else {
-                                                  Navigator.of(
-                                                    context,
-                                                  ).pushReplacementNamed(
-                                                    '/users',
-                                                  );
-                                                }
-                                              }
-                                            } else {
-                                              setDialogState(() {
-                                                isLoading = false;
-                                                dialogError =
-                                                    authProvider.errorMessage ??
-                                                    'Error al registrar usuario';
-                                              });
-                                            }
-                                          },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      shadowColor: Colors.transparent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                                // Nombre y Apellido en fila
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        themeProvider: themeProvider,
+                                        controller: firstNameCtrl,
+                                        label: 'Nombre',
+                                        icon: Icons.badge_outlined,
+                                        validator: (v) =>
+                                            v == null || v.trim().isEmpty
+                                                ? 'Requerido'
+                                                : null,
                                       ),
                                     ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
-                                              color: Colors.white,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        themeProvider: themeProvider,
+                                        controller: lastNameCtrl,
+                                        label: 'Apellido',
+                                        icon: Icons.badge_outlined,
+                                        validator: (v) =>
+                                            v == null || v.trim().isEmpty
+                                                ? 'Requerido'
+                                                : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+
+                                // Correo
+                                _buildTextField(
+                                  themeProvider: themeProvider,
+                                  controller: emailCtrl,
+                                  label: 'Correo electrónico',
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (v) {
+                                    if (v == null || v.trim().isEmpty)
+                                      return 'Ingresa tu correo';
+                                    if (!v.contains('@'))
+                                      return 'Correo no válido';
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+
+                                // Contraseña
+                                _buildTextField(
+                                  themeProvider: themeProvider,
+                                  controller: passwordCtrl,
+                                  label: 'Contraseña',
+                                  icon: Icons.lock_outline_rounded,
+                                  obscure: obscurePassword,
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      size: 20,
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.4)
+                                          : Colors.black38,
+                                    ),
+                                    onPressed: () => setDialogState(
+                                      () => obscurePassword = !obscurePassword,
+                                    ),
+                                  ),
+                                  validator: (v) => v == null || v.length < 6
+                                      ? 'Mínimo 6 caracteres'
+                                      : null,
+                                ),
+                                const SizedBox(height: 20),
+
+                                const SizedBox(height: 20),
+
+                                // ── Selector de Tipo de Invitación ──
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Divider(
+                                        color: isDark
+                                            ? Colors.white.withValues(alpha: 0.1)
+                                            : Colors.black.withValues(alpha: 0.08),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text(
+                                        '¿Tienes un código de invitación? (Opcional)',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white70 : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Divider(
+                                        color: isDark
+                                            ? Colors.white.withValues(alpha: 0.1)
+                                            : Colors.black.withValues(alpha: 0.08),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+
+                                // 3 Opciones Segmentadas: Amigo / Empresa / Ninguno
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () {
+                                          setDialogState(() {
+                                            referralType = 'friend';
+                                            companyCodeCtrl.clear();
+                                            validatedCompanyName = null;
+                                            companyValidationError = null;
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                                          decoration: BoxDecoration(
+                                            color: referralType == 'friend'
+                                                ? AppColors.primary.withValues(alpha: isDark ? 0.25 : 0.15)
+                                                : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: referralType == 'friend'
+                                                  ? AppColors.accent
+                                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                                              width: referralType == 'friend' ? 1.5 : 1,
                                             ),
-                                          )
-                                        : Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(
-                                                Icons.person_add_rounded,
-                                                color: Colors.white,
+                                              Icon(
+                                                Icons.person_pin_rounded,
                                                 size: 20,
+                                                color: referralType == 'friend'
+                                                    ? AppColors.accent
+                                                    : (isDark ? Colors.white60 : Colors.black54),
                                               ),
-                                              const SizedBox(width: 10),
+                                              const SizedBox(height: 4),
                                               Text(
-                                                'Crear mi cuenta',
+                                                'Amigo Afiliado',
                                                 style: GoogleFonts.inter(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 15,
-                                                  letterSpacing: 0.3,
+                                                  fontSize: 11,
+                                                  fontWeight: referralType == 'friend' ? FontWeight.bold : FontWeight.w500,
+                                                  color: referralType == 'friend'
+                                                      ? (isDark ? Colors.white : AppColors.primary)
+                                                      : (isDark ? Colors.white70 : Colors.black87),
                                                 ),
+                                                textAlign: TextAlign.center,
                                               ),
                                             ],
                                           ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () {
+                                          setDialogState(() {
+                                            referralType = 'company';
+                                            refCodeCtrl.clear();
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                                          decoration: BoxDecoration(
+                                            color: referralType == 'company'
+                                                ? const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.25 : 0.15)
+                                                : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: referralType == 'company'
+                                                  ? const Color(0xFF06B6D4)
+                                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                                              width: referralType == 'company' ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.business_rounded,
+                                                size: 20,
+                                                color: referralType == 'company'
+                                                    ? const Color(0xFF06B6D4)
+                                                    : (isDark ? Colors.white60 : Colors.black54),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Empresa Aliada',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  fontWeight: referralType == 'company' ? FontWeight.bold : FontWeight.w500,
+                                                  color: referralType == 'company'
+                                                      ? (isDark ? Colors.white : const Color(0xFF3B82F6))
+                                                      : (isDark ? Colors.white70 : Colors.black87),
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () {
+                                          setDialogState(() {
+                                            referralType = 'none';
+                                            refCodeCtrl.clear();
+                                            companyCodeCtrl.clear();
+                                            validatedCompanyName = null;
+                                            companyValidationError = null;
+                                          });
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                                          decoration: BoxDecoration(
+                                            color: referralType == 'none'
+                                                ? Colors.grey.withValues(alpha: isDark ? 0.25 : 0.15)
+                                                : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: referralType == 'none'
+                                                  ? Colors.grey
+                                                  : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                                              width: referralType == 'none' ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.remove_circle_outline_rounded,
+                                                size: 20,
+                                                color: referralType == 'none'
+                                                    ? Colors.grey
+                                                    : (isDark ? Colors.white60 : Colors.black54),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Sin Código',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  fontWeight: referralType == 'none' ? FontWeight.bold : FontWeight.w500,
+                                                  color: referralType == 'none'
+                                                      ? (isDark ? Colors.white : Colors.black87)
+                                                      : (isDark ? Colors.white70 : Colors.black87),
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+
+                                // ── Campo Dinámico Según Selección ──
+                                if (referralType == 'friend') ...[
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.06),
+                                          AppColors.accent.withValues(alpha: isDark ? 0.08 : 0.04),
+                                        ],
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.primary.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: _buildTextField(
+                                      themeProvider: themeProvider,
+                                      controller: refCodeCtrl,
+                                      label: 'Código de Referido de tu Amigo (Ej: AFIL001)',
+                                      icon: Icons.confirmation_number_outlined,
+                                      textCapitalization: TextCapitalization.characters,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: Text(
+                                      'Tu amigo recibirá la comisión de referido al activar tu membresía.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: isDark ? Colors.white.withValues(alpha: 0.5) : Colors.black54,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ] else if (referralType == 'company') ...[
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.12 : 0.06),
+                                          const Color(0xFF06B6D4).withValues(alpha: isDark ? 0.08 : 0.04),
+                                        ],
+                                      ),
+                                      border: Border.all(
+                                        color: validatedCompanyName != null
+                                            ? AppColors.success
+                                            : (companyValidationError != null
+                                                ? AppColors.error
+                                                : const Color(0xFF3B82F6).withValues(alpha: 0.3)),
+                                        width: validatedCompanyName != null ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: _buildTextField(
+                                      themeProvider: themeProvider,
+                                      controller: companyCodeCtrl,
+                                      label: 'Código de Empresa Aliada',
+                                      icon: Icons.business_rounded,
+                                      textCapitalization: TextCapitalization.characters,
+                                      onChanged: onCompanyCodeChanged,
+                                      suffixIcon: isValidatingCompany
+                                          ? const Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                            )
+                                          : (validatedCompanyName != null
+                                              ? const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22)
+                                              : (companyValidationError != null
+                                                  ? const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 22)
+                                                  : null)),
+                                    ),
+                                  ),
+                                  if (validatedCompanyName != null) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.success.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.verified_rounded, color: AppColors.success, size: 16),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Te vas a afiliar a: $validatedCompanyName ✅',
+                                              style: GoogleFonts.inter(
+                                                color: AppColors.success,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ] else if (companyValidationError != null) ...[
+                                    const SizedBox(height: 6),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 4),
+                                      child: Text(
+                                        companyValidationError!,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          color: AppColors.error,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+
+                                const SizedBox(height: 24),
+
+                                // Botón registrarse
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.primary,
+                                          AppColors.accent,
+                                        ],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: isLoading
+                                          ? null
+                                          : () async {
+                                              if (!formKey.currentState!
+                                                  .validate())
+                                                return;
+                                              setDialogState(() {
+                                                isLoading = true;
+                                                dialogError = null;
+                                              });
+
+                                              final authProvider = context
+                                                  .read<AuthProvider>();
+                                              final finalRefCode = referralType == 'friend' && refCodeCtrl.text.trim().isNotEmpty
+                                                  ? refCodeCtrl.text.trim()
+                                                  : null;
+                                              final finalCompanyCode = referralType == 'company' && companyCodeCtrl.text.trim().isNotEmpty
+                                                  ? companyCodeCtrl.text.trim()
+                                                  : null;
+
+                                              final success = await authProvider
+                                                  .register(
+                                                    email: emailCtrl.text.trim(),
+                                                    password: passwordCtrl.text,
+                                                    firstName: firstNameCtrl.text.trim(),
+                                                    lastName: lastNameCtrl.text.trim(),
+                                                    refCode: finalRefCode,
+                                                    codigoEmpresa: finalCompanyCode,
+                                                  );
+
+                                              if (success) {
+                                                if (ctx.mounted)
+                                                  Navigator.of(ctx).pop();
+                                                if (mounted) {
+                                                  context
+                                                      .read<ReferidoProvider>()
+                                                      .resetSilent();
+                                                  context
+                                                      .read<RifaProvider>()
+                                                      .resetSilent();
+                                                  CustomAlert.show(
+                                                    context,
+                                                    message:
+                                                        '¡Registro exitoso! Bienvenido a Conexiate.',
+                                                    isSuccess: true,
+                                                  );
+                                                  final role =
+                                                      authProvider.roleCode;
+                                                  if (role == 'user' ||
+                                                      role == 'user_member') {
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pushReplacementNamed(
+                                                      '/referidos',
+                                                    );
+                                                  } else {
+                                                    Navigator.of(
+                                                      context,
+                                                    ).pushReplacementNamed(
+                                                      '/users',
+                                                    );
+                                                  }
+                                                }
+                                              } else {
+                                                setDialogState(() {
+                                                  isLoading = false;
+                                                  dialogError =
+                                                      authProvider.errorMessage ??
+                                                      'Error al registrar usuario';
+                                                });
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                        ),
+                                      ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.5,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.person_add_rounded,
+                                                  color: Colors.white,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(
+                                                  'Crear mi cuenta',
+                                                  style: GoogleFonts.inter(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 15,
+                                                    letterSpacing: 0.3,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -1121,7 +1403,12 @@ class _LoginScreenState extends State<LoginScreen>
     TextInputType keyboardType = TextInputType.text,
     bool obscure = false,
     Widget? suffixIcon,
+    FocusNode? focusNode,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
     String? Function(String?)? validator,
+    void Function(String)? onChanged,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black87;
     final labelColor = themeProvider.isDarkMode
@@ -1136,9 +1423,14 @@ class _LoginScreenState extends State<LoginScreen>
 
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       keyboardType: keyboardType,
       obscureText: obscure,
       validator: validator,
+      onChanged: onChanged,
+      textCapitalization: textCapitalization,
       style: GoogleFonts.inter(color: textColor, fontSize: 15),
       decoration: InputDecoration(
         labelText: label,

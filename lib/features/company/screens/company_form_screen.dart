@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -149,9 +149,16 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
     }
 
     if (success && mounted) {
+      CustomAlert.show(
+        context,
+        message: isEditing
+            ? 'Negocio aliado actualizado correctamente.'
+            : 'Negocio aliado creado exitosamente.',
+        isSuccess: true,
+      );
       Navigator.pop(context);
     } else if (mounted) {
-      final error = companyProvider.errorMessage ?? 'Ocurrió un error';
+      final error = companyProvider.errorMessage ?? 'Ocurrió un error inesperado al guardar.';
       CustomAlert.show(context, message: error, isSuccess: false);
     }
   }
@@ -212,7 +219,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isEditing ? 'Editar Empresa' : 'Nueva Empresa',
+                                isEditing ? 'Editar negocio aliado' : 'Nuevo negocio aliado',
                                 style: GoogleFonts.outfit(
                                   color: themeColors.textPrimary,
                                   fontSize: 28,
@@ -221,7 +228,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Registre o modifique la información de la empresa multicliente.',
+                                'Registre o modifique la información del negocio aliado en la plataforma.',
                                 style: GoogleFonts.inter(
                                   color: themeColors.textSecondary,
                                   fontSize: 14,
@@ -246,8 +253,8 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                   setState(() => _isActive = value);
                                 },
                                 activeColor: const Color(0xFF4ECDC4),
-                                inactiveTrackColor: Colors.white.withValues(alpha: 
-                                  0.1,
+                                inactiveTrackColor: Colors.white.withValues(
+                                  alpha: 0.1,
                                 ),
                               ),
                               Text(
@@ -293,11 +300,13 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                     width: 90,
                                     height: 90,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.05),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       borderRadius: BorderRadius.circular(18),
                                       border: Border.all(
-                                        color: AppColors.primary.withValues(alpha: 
-                                          0.5,
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.5,
                                         ),
                                         width: 2,
                                       ),
@@ -347,43 +356,43 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                           ),
                           const SizedBox(height: 24),
 
-                          _buildLabel('Nombre de la Empresa'),
+                          _buildLabel('Nombre comercial *'),
                           const SizedBox(height: 8),
                           CustomTextField(
                             controller: _nameController,
                             hint: 'Ej: Droguería La Sultana',
                             icon: Icons.business_rounded,
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'El nombre es requerido'
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'El nombre comercial es obligatorio.'
                                 : null,
                           ),
                           const SizedBox(height: 24),
 
-                          _buildLabel('NIT de la empresa'),
+                          _buildLabel('NIT de la empresa *'),
                           const SizedBox(height: 8),
                           CustomTextField(
                             controller: _nitController,
-                            hint: 'Ej: NIT 1.020.020-1',
+                            hint: 'Ej: 900123456',
                             icon: Icons.numbers_rounded,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(15),
                             ],
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'El NIT es requerido'
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'El NIT de la empresa es obligatorio.'
                                 : null,
                           ),
                           const SizedBox(height: 24),
 
-                          _buildLabel('Razon Social'),
+                          _buildLabel('Razón social *'),
                           const SizedBox(height: 8),
                           CustomTextField(
                             controller: _razonSocialController,
-                            hint: 'Ej: Droguería La Sultana Ltda.',
+                            hint: 'Ej: Droguería La Sultana S.A.S.',
                             icon: Icons.description_rounded,
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'La razon social es requerida'
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'La razón social es obligatoria.'
                                 : null,
                           ),
 
@@ -393,7 +402,11 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                const Icon(Icons.person_add_rounded, color: AppColors.primary, size: 20),
+                                const Icon(
+                                  Icons.person_add_rounded,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Cuenta del Validador de Negocio (Opcional)',
@@ -405,8 +418,44 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            _buildLabel('Correo Electrónico del Validador'),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFF59E0B,
+                                  ).withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline_rounded,
+                                    color: Color(0xFFF59E0B),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Importante: Con este usuario validador (business_validator), el negocio aliado ingresará a la plataforma para validar redenciones de clientes y gestionar/pagar la membresía de la empresa en Conexiate.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: themeColors.textPrimary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _buildLabel('Correo electrónico del validador'),
                             const SizedBox(height: 8),
                             CustomTextField(
                               controller: _validatorEmailController,
@@ -415,7 +464,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                               keyboardType: TextInputType.emailAddress,
                             ),
                             const SizedBox(height: 16),
-                            _buildLabel('Contraseña de Acceso'),
+                            _buildLabel('Contraseña de acceso'),
                             const SizedBox(height: 8),
                             CustomTextField(
                               controller: _validatorPasswordController,
@@ -428,12 +477,14 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildLabel('Nombre Encargado'),
+                                      _buildLabel('Nombre del encargado'),
                                       const SizedBox(height: 8),
                                       CustomTextField(
-                                        controller: _validatorFirstNameController,
+                                        controller:
+                                            _validatorFirstNameController,
                                         hint: 'Ej: Carlos',
                                         icon: Icons.person_rounded,
                                       ),
@@ -443,12 +494,14 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      _buildLabel('Apellido Encargado'),
+                                      _buildLabel('Apellido del encargado'),
                                       const SizedBox(height: 8),
                                       CustomTextField(
-                                        controller: _validatorLastNameController,
+                                        controller:
+                                            _validatorLastNameController,
                                         hint: 'Ej: Pérez',
                                         icon: Icons.person_outline_rounded,
                                       ),
@@ -487,11 +540,10 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                         ),
                         const SizedBox(width: 16),
                         GradientButton(
-                          label: 'Guardar Cambios',
+                          label: isEditing ? 'Guardar cambios' : 'Crear negocio aliado',
                           icon: Icons.save_rounded,
                           isLoading: companyProvider.isLoading,
                           onPressed: _handleSave,
-
                           width: 200,
                         ),
                       ],

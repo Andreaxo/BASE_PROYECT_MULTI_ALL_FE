@@ -7,6 +7,7 @@ import 'core/theme/theme_provider.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/company/screens/company_list_screen.dart';
+import 'features/company/screens/business_welcome_screen.dart';
 import 'features/menu/screens/menu_list_screen.dart';
 import 'features/role/screens/role_list_screen.dart';
 import 'features/users/screens/user_list_screen.dart';
@@ -19,6 +20,7 @@ import 'features/referidos/screens/mis_referidos_screen.dart';
 import 'features/referidos/screens/referido_admin_screen.dart';
 import 'features/rifas/screens/rifa_user_screen.dart';
 import 'features/rifas/screens/rifa_admin_screen.dart';
+import 'features/membresia/screens/membresia_screen.dart';
 
 class MulticlienteApp extends StatelessWidget {
   final bool isLoggedIn;
@@ -44,7 +46,7 @@ class MulticlienteApp extends StatelessWidget {
     String initialRoute = '/login';
     if (currentIsLoggedIn) {
       if (currentRoleCode == 'business_validator' || currentRoleCode == 'negocio') {
-        initialRoute = '/redemptions';
+        initialRoute = '/business-home';
       } else if (currentRoleCode == 'user' || currentRoleCode == 'user_member') {
         initialRoute = '/referidos';
       } else {
@@ -77,6 +79,10 @@ class MulticlienteApp extends StatelessWidget {
           case '/login':
             builder = const LoginScreen();
             break;
+          case '/business-home':
+          case '/negocio':
+            builder = const BusinessWelcomeScreen();
+            break;
           case '/users':
             builder = const UserListScreen();
             break;
@@ -96,7 +102,12 @@ class MulticlienteApp extends StatelessWidget {
           case '/benefits':
           case '/negocios-aliados':
           case '/aliados':
-            builder = const BenefitListScreen();
+            // Role Guard: Business validator cannot access global administration benefits table
+            if (currentRoleCode == 'business_validator' || currentRoleCode == 'negocio') {
+              builder = const MyCompanyBenefitsScreen();
+            } else {
+              builder = const BenefitListScreen();
+            }
             break;
           case '/company-benefits':
           case '/mis-beneficios':
@@ -134,6 +145,10 @@ class MulticlienteApp extends StatelessWidget {
             builder = isAdmin
                 ? const RifaAdminScreen()
                 : const RifaUserScreen();
+            break;
+          case '/membresia':
+          case '/mi-membresia':
+            builder = const MembresiaScreen();
             break;
           default:
             final isUser =

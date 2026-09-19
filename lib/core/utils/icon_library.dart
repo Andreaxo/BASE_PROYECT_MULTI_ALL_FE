@@ -122,11 +122,12 @@ class IconLibrary {
     'star_rounded': Icons.star_rounded,
     'favorite_rounded': Icons.favorite_rounded,
     'thumb_up_rounded': Icons.thumb_up_rounded,
-    'work_rounded': Icons.work_rounded,
-    'assessment_rounded': Icons.assessment_rounded,
     'spa_rounded': Icons.spa_rounded,
     'eco_rounded': Icons.eco_rounded,
     'lightbulb_rounded': Icons.lightbulb_rounded,
+    'workspace_premium_rounded': Icons.workspace_premium_rounded,
+    'card_membership_rounded': Icons.card_membership_rounded,
+    'diamond_rounded': Icons.diamond_rounded,
   };
 
   static IconData getIcon(String name) {

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -11,11 +11,14 @@ import '../../../core/widgets/header_filter.dart';
 import '../../../core/widgets/info_card.dart';
 import '../../../core/widgets/stat_card.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/widgets/membership_gate_banner.dart';
+import '../../../core/widgets/custom_pagination_footer.dart';
 import 'package:flutter/services.dart';
 import '../../company/models/company_model.dart';
 import '../../company/providers/company_provider.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../membresia/providers/membresia_provider.dart';
 import '../models/benefit_model.dart';
 import '../models/redemption_model.dart';
 import '../providers/benefit_provider.dart';
@@ -48,6 +51,10 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.roleCode == 'user' || authProvider.roleCode == 'user_member') {
+        context.read<MembresiaProvider>().loadMiMembresia();
+      }
       context.read<BenefitProvider>().loadBenefits();
       context.read<RedemptionProvider>().loadMyRedemptions();
       // Asegurar que las empresas estén cargadas para resolución de nombres
@@ -620,10 +627,10 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                           child: Row(
                             children: [
                               Expanded(flex: 1, child: HeaderFilter(title: context.tr('id'), onChanged: (v) => setState(() { _idFilter = v; _currentPage = 1; }))),
-                              Expanded(flex: 3, child: HeaderFilter(title: 'Nombre del Beneficio', onChanged: (v) => setState(() { _nameFilter = v; _currentPage = 1; }))),
-                              Expanded(flex: 3, child: HeaderFilter(title: 'Empresa', onChanged: (v) => setState(() { _companyFilter = v; _currentPage = 1; }))),
+                              Expanded(flex: 3, child: HeaderFilter(title: context.tr('benefit'), onChanged: (v) => setState(() { _nameFilter = v; _currentPage = 1; }))),
+                              Expanded(flex: 3, child: HeaderFilter(title: context.tr('company'), onChanged: (v) => setState(() { _companyFilter = v; _currentPage = 1; }))),
                               Expanded(flex: 2, child: HeaderFilter(title: context.tr('status'), onChanged: (v) => setState(() { _statusFilter = v; _currentPage = 1; }))),
-                              if (canEdit) const SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text('Acciones'))),
+                              if (canEdit) SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text(context.tr('actions')))),
                             ],
                           ),
                         ),
@@ -646,9 +653,15 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
             );
           },
         ),
-        _buildPaginationFooter(
+        CustomPaginationFooter(
           totalItems: totalBenefits,
-          totalPages: safeTotalPages,
+          currentPage: _currentPage,
+          rowsPerPage: _rowsPerPage,
+          onPageChanged: (newPage) => setState(() => _currentPage = newPage),
+          onRowsPerPageChanged: (newSize) => setState(() {
+            _rowsPerPage = newSize;
+            _currentPage = 1;
+          }),
         ),
       ],
     );
@@ -681,95 +694,6 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     );
   }
 
-  Widget _buildPaginationFooter({
-    required int totalItems,
-    required int totalPages,
-  }) {
-    final themeColors =
-        Theme.of(context).extension<AppThemeColors>() ??
-        AppTheme.darkThemeColors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        color: themeColors.textPrimary.withValues(alpha: 0.01),
-        border: Border(top: BorderSide(color: themeColors.borderColor)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '${context.tr('total')}: $totalItems ${context.tr('benefits').toLowerCase()}',
-            style: GoogleFonts.inter(
-              color: themeColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-            ),
-          ),
-          Row(
-            children: [
-              Text(
-                context.tr('rows_per_page'),
-                style: GoogleFonts.inter(
-                  color: themeColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              DropdownButton<int>(
-                value: _rowsPerPage,
-                dropdownColor: themeColors.cardBackground,
-                underline: const SizedBox.shrink(),
-                iconEnabledColor: themeColors.textSecondary,
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary,
-                  fontSize: 12,
-                ),
-                items: [5, 8, 10, 15].map((size) {
-                  return DropdownMenuItem<int>(
-                    value: size,
-                    child: Text('  $size  '),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _rowsPerPage = val;
-                      _currentPage = 1;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(width: 14),
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage > 1
-                    ? () => setState(() => _currentPage--)
-                    : null,
-              ),
-              Text(
-                '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
-                style: GoogleFonts.inter(
-                  color: themeColors.textPrimary,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded),
-                color: themeColors.textPrimary,
-                disabledColor: themeColors.textSecondary.withValues(alpha: 0.3),
-                onPressed: _currentPage < totalPages
-                    ? () => setState(() => _currentPage++)
-                    : null,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildEmptyWidget() {
     return Center(
@@ -798,6 +722,22 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
   }
 
   Widget _buildErrorWidget(BenefitProvider provider) {
+    final authProvider = context.read<AuthProvider>();
+    final msg = provider.errorMessage ?? '';
+    final isMembership = msg.toLowerCase().contains('membresía') ||
+        msg.toLowerCase().contains('membresia') ||
+        msg.toLowerCase().contains('membership');
+
+    if (isMembership && !authProvider.isAdminOrSuperAdmin) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.0),
+        child: MembershipGateBanner(
+          featureName: 'los beneficios y descuentos de comercios aliados',
+          fullPaywall: true,
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -948,6 +888,14 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     required String userName,
   }) {
     final redemptionProvider = context.watch<RedemptionProvider>();
+    final membresiaProvider = context.watch<MembresiaProvider>();
+    final authProvider = context.watch<AuthProvider>();
+
+    final isMembershipInactive = !authProvider.isAdminOrSuperAdmin && (!membresiaProvider.hasActiveMembership ||
+        (benefitProvider.errorMessage != null &&
+            (benefitProvider.errorMessage!.toLowerCase().contains('membresía') ||
+             benefitProvider.errorMessage!.toLowerCase().contains('membresia') ||
+             benefitProvider.errorMessage!.toLowerCase().contains('membership'))));
 
     if (benefitProvider.isLoading && benefitProvider.benefits.isEmpty) {
       return const Center(
@@ -957,6 +905,21 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
         ),
       );
     }
+
+    if (isMembershipInactive && benefitProvider.benefits.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWelcomingBanner(themeColors, userName),
+          const SizedBox(height: 24),
+          const MembershipGateBanner(
+            featureName: 'los beneficios y descuentos de comercios aliados',
+            fullPaywall: true,
+          ),
+        ],
+      );
+    }
+
     if (benefitProvider.errorMessage != null && benefitProvider.benefits.isEmpty) {
       return _buildErrorWidget(benefitProvider);
     }
@@ -964,6 +927,11 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Gating Banner para membresía inactiva
+        const MembershipGateBanner(
+          featureName: 'los beneficios y descuentos de comercios aliados',
+        ),
+
         // Banner de Bienvenida
         _buildWelcomingBanner(themeColors, userName),
         const SizedBox(height: 24),

@@ -1,14 +1,17 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/membership_gate_banner.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../membresia/providers/membresia_provider.dart';
 import '../models/referido_model.dart';
 import '../providers/referido_provider.dart';
+import '../../../core/widgets/custom_pagination_footer.dart';
 
 class MisReferidosScreen extends StatefulWidget {
   const MisReferidosScreen({super.key});
@@ -21,13 +24,14 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int _currentPage = 1;
-  final int _rowsPerPage = 8;
+  int _rowsPerPage = 10;
 
   @override
   void initState() {
     super.initState();
     context.read<ReferidoProvider>().resetSilent();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MembresiaProvider>().loadMiMembresia();
       context.read<ReferidoProvider>().loadMisReferidos();
     });
     _searchController.addListener(_onSearchChanged);
@@ -48,6 +52,62 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
   }
 
   void _showInviteDialog() {
+    final authProvider = context.read<AuthProvider>();
+    final membresiaProvider = context.read<MembresiaProvider>();
+    if (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership) {
+      showDialog(
+        context: context,
+        builder: (ctx) {
+          final themeColors =
+              Theme.of(ctx).extension<AppThemeColors>() ??
+              AppTheme.darkThemeColors;
+          return AlertDialog(
+            backgroundColor: themeColors.cardBackground,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.lock_rounded, color: AppColors.primary, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  'Membresía Requerida',
+                  style: GoogleFonts.outfit(
+                    color: themeColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'Para invitar referidos y generar recompensas por cada nuevo afiliado, necesitas contar con una membresía activa en Conexiate.',
+              style: GoogleFonts.inter(
+                color: themeColors.textSecondary,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Cerrar', style: GoogleFonts.inter(color: themeColors.textSecondary)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).pushNamed('/mi-membresia');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text('Activar Membresía', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     final emailCtrl = TextEditingController();
     final nombreCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -359,6 +419,8 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ReferidoProvider>();
+    final membresiaProvider = context.watch<MembresiaProvider>();
+    final authProvider = context.watch<AuthProvider>();
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
@@ -477,6 +539,11 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                   ),
                   const SizedBox(height: 24),
 
+                  // ── Gating Banner ──
+                  const MembershipGateBanner(
+                    featureName: 'las recompensas de referidos',
+                  ),
+
                   // ── Code Refer Card ──
                   Container(
                     width: double.infinity,
@@ -545,56 +612,54 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(alpha: 0.3),
+                        if (provider.codeRefer.isNotEmpty)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.tag_rounded,
+                                          color: AppColors.primary, size: 20),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        provider.codeRefer,
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.white,
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 6,
+                                          shadows: [
+                                            Shadow(
+                                              color: AppColors.accent.withValues(alpha: 0.5),
+                                              blurRadius: 12,
+                                            ),
+                                            Shadow(
+                                              color: AppColors.primary.withValues(alpha: 0.4),
+                                              blurRadius: 24,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.tag_rounded,
-                                        color: AppColors.primary, size: 20),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      provider.codeRefer.isNotEmpty
-                                          ? provider.codeRefer
-                                          : '—',
-                                      style: GoogleFonts.outfit(
-                                        color: Colors.white,
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 6,
-                                        shadows: [
-                                          Shadow(
-                                            color: AppColors.accent.withValues(alpha: 0.5),
-                                            blurRadius: 12,
-                                          ),
-                                          Shadow(
-                                            color: AppColors.primary.withValues(alpha: 0.4),
-                                            blurRadius: 24,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: () {
-                                  if (provider.codeRefer.isNotEmpty) {
+                              const SizedBox(width: 12),
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
                                     Clipboard.setData(
                                       ClipboardData(text: provider.codeRefer),
                                     );
@@ -604,26 +669,108 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                           'Código copiado al portapapeles',
                                       isSuccess: true,
                                     );
-                                  }
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primary,
-                                        AppColors.accent,
-                                      ],
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.primary,
+                                          AppColors.accent,
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
+                                    child: const Icon(Icons.copy_rounded,
+                                        color: Colors.white, size: 20),
                                   ),
-                                  child: const Icon(Icons.copy_rounded,
-                                      color: Colors.white, size: 20),
                                 ),
                               ),
+                            ],
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: AppColors.accent.withValues(alpha: 0.3),
+                              ),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.lock_clock_rounded,
+                                    color: AppColors.accent,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Código disponible con membresía activa',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pushNamed('/mi-membresia');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.flash_on_rounded, size: 16),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Activar',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -773,9 +920,11 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                             padding: const EdgeInsets.all(40),
                             child: Center(
                               child: Text(
-                                filtered.isEmpty && _searchQuery.isEmpty
-                                    ? 'Aún no has invitado a nadie.\n¡Comparte tu código para empezar!'
-                                    : 'No se encontraron resultados',
+                                (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership)
+                                    ? 'Tu red de referidos se activará con tu membresía.\n¡Actívala hoy y comienza a invitar a tus conocidos!'
+                                    : (filtered.isEmpty && _searchQuery.isEmpty
+                                        ? 'Aún no has invitado a nadie.\n¡Comparte tu código para empezar!'
+                                        : 'No se encontraron resultados'),
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   color: themeColors.textSecondary,
@@ -787,8 +936,17 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                         ...pageItems.map((r) => _buildRow(r, themeColors)),
 
                         // Pagination
-                        if (totalItems > _rowsPerPage)
-                          _buildPagination(safeTotalPages, themeColors),
+                        CustomPaginationFooter(
+                          totalItems: totalItems,
+                          currentPage: _currentPage,
+                          rowsPerPage: _rowsPerPage,
+                          onPageChanged: (newPage) =>
+                              setState(() => _currentPage = newPage),
+                          onRowsPerPageChanged: (newSize) => setState(() {
+                            _rowsPerPage = newSize;
+                            _currentPage = 1;
+                          }),
+                        ),
                       ],
                     ),
                   ),
@@ -823,44 +981,6 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     );
   }
 
-  Widget _buildPagination(int totalPages, AppThemeColors themeColors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Text(
-            '${context.tr('page')} $_currentPage ${context.tr('of')} $totalPages',
-            style: GoogleFonts.inter(
-              color: themeColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: Icon(Icons.chevron_left_rounded,
-                color: _currentPage > 1
-                    ? themeColors.textPrimary
-                    : themeColors.textSecondary),
-            onPressed:
-                _currentPage > 1 ? () => setState(() => _currentPage--) : null,
-            iconSize: 20,
-          ),
-          IconButton(
-            icon: Icon(Icons.chevron_right_rounded,
-                color: _currentPage < totalPages
-                    ? themeColors.textPrimary
-                    : themeColors.textSecondary),
-            onPressed: _currentPage < totalPages
-                ? () => setState(() => _currentPage++)
-                : null,
-            iconSize: 20,
-          ),
-        ],
-      ),
-    );
-  }
 
   String _formatDate(String dateStr) {
     try {
