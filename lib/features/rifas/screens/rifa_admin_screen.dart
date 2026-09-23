@@ -7,6 +7,7 @@ import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
 import '../../../core/widgets/header_filter.dart';
 import '../../../core/widgets/stat_card.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../users/providers/user_provider.dart';
 import '../models/rifa_model.dart';
 import '../providers/rifa_provider.dart';
@@ -111,7 +112,6 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
     final nombreCtrl = TextEditingController(text: existingRifa?.nombre ?? '');
     final descCtrl = TextEditingController(text: existingRifa?.descripcion ?? '');
     final premioCtrl = TextEditingController(text: existingRifa?.premio ?? '');
-    final imgUrlCtrl = TextEditingController(text: existingRifa?.imagenUrl ?? '');
 
     DateTime fechaInicio = existingRifa?.fechaInicio ?? DateTime.now();
     DateTime fechaFin = existingRifa?.fechaFin ?? DateTime.now().add(const Duration(days: 30));
@@ -176,12 +176,6 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                           maxLines: 2,
                           style: GoogleFonts.inter(color: themeColors.textPrimary),
                           decoration: _inputDecoration('Descripción (opcional)', Icons.description_rounded, themeColors),
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: imgUrlCtrl,
-                          style: GoogleFonts.inter(color: themeColors.textPrimary),
-                          decoration: _inputDecoration('URL de Imagen (opcional)', Icons.image_rounded, themeColors),
                         ),
                         const SizedBox(height: 16),
                         // Dates
@@ -249,7 +243,6 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                           nombre: nombreCtrl.text.trim(),
                           descripcion: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
                           premio: premioCtrl.text.trim(),
-                          imagenUrl: imgUrlCtrl.text.trim().isEmpty ? null : imgUrlCtrl.text.trim(),
                           fechaInicio: fInicioStr,
                           fechaFin: fFinStr,
                           fechaSorteo: fSorteoStr,
@@ -268,7 +261,6 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                           nombre: nombreCtrl.text.trim(),
                           descripcion: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
                           premio: premioCtrl.text.trim(),
-                          imagenUrl: imgUrlCtrl.text.trim().isEmpty ? null : imgUrlCtrl.text.trim(),
                           fechaInicio: fInicioStr,
                           fechaFin: fFinStr,
                           fechaSorteo: fSorteoStr,
@@ -840,6 +832,9 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
     final endIndex = (startIndex + _rowsPerPage).clamp(0, totalItems);
     final pageItems = totalItems > 0 ? filtered.sublist(startIndex, endIndex) : <Rifa>[];
 
+    final authProvider = context.watch<AuthProvider>();
+    final canCreateRifa = authProvider.roleCode != 'operador';
+
     return DashboardShell(
       title: 'Gestión de Rifas',
       child: provider.isLoadingAll
@@ -860,28 +855,75 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                   const SizedBox(height: 12),
 
                   // Header Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  LayoutBuilder(
+                    builder: (context, headerConstraints) {
+                      final isMobileHeader = headerConstraints.maxWidth < 650;
+                      if (isMobileHeader) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Gestión de Rifas',
+                              style: GoogleFonts.outfit(
+                                color: themeColors.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Crea, activa y gestiona sorteos, participaciones y ganadores',
+                              style: GoogleFonts.inter(
+                                color: themeColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (canCreateRifa) ...[
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _showCreateOrEditDialog(),
+                                  icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                                  label: Text('Nueva Rifa', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      }
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Gestión de Rifas', style: GoogleFonts.outfit(color: themeColors.textPrimary, fontSize: 28, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Text('Crea, activa y gestiona sorteos, participaciones y ganadores', style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14)),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Gestión de Rifas', style: GoogleFonts.outfit(color: themeColors.textPrimary, fontSize: 28, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text('Crea, activa y gestiona sorteos, participaciones y ganadores', style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                          if (canCreateRifa)
+                            ElevatedButton.icon(
+                              onPressed: () => _showCreateOrEditDialog(),
+                              icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                              label: Text('Nueva Rifa', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
                         ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showCreateOrEditDialog(),
-                        icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
-                        label: Text('Nueva Rifa', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -928,56 +970,76 @@ class _RifaAdminScreenState extends State<RifaAdminScreen> {
                   const SizedBox(height: 16),
 
                   // Table
-                  Container(
-                    decoration: BoxDecoration(
-                      color: themeColors.cardBackground,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: themeColors.borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        // Header
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.tableHeaderBg,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(flex: 1, child: HeaderFilter(title: 'ID', onChanged: (v) => setState(() => _idFilter = v))),
-                              Expanded(flex: 3, child: HeaderFilter(title: 'Nombre', onChanged: (v) => setState(() => _nombreFilter = v))),
-                              Expanded(flex: 3, child: HeaderFilter(title: 'Premio', onChanged: (v) => setState(() => _premioFilter = v))),
-                              Expanded(flex: 2, child: HeaderFilter(title: 'Estado', onChanged: (v) => setState(() => _estadoFilter = v))),
-                              const SizedBox(width: 250), // Actions column
-                            ],
-                          ),
-                        ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final minTableWidth = 850.0;
+                      final tableWidth = constraints.maxWidth > minTableWidth
+                          ? constraints.maxWidth
+                          : minTableWidth;
 
-                        // Rows
-                        if (pageItems.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(40),
-                            child: Center(
-                              child: Text('No se encontraron rifas', style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14)),
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: themeColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: themeColors.borderColor),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: tableWidth,
+                                child: Column(
+                                  children: [
+                                    // Header
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.tableHeaderBg,
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(flex: 1, child: HeaderFilter(title: 'ID', onChanged: (v) => setState(() => _idFilter = v))),
+                                          Expanded(flex: 3, child: HeaderFilter(title: 'Nombre', onChanged: (v) => setState(() => _nombreFilter = v))),
+                                          Expanded(flex: 3, child: HeaderFilter(title: 'Premio', onChanged: (v) => setState(() => _premioFilter = v))),
+                                          Expanded(flex: 2, child: HeaderFilter(title: 'Estado', onChanged: (v) => setState(() => _estadoFilter = v))),
+                                          const SizedBox(width: 250), // Actions column
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Rows
+                                    if (pageItems.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.all(40),
+                                        child: Center(
+                                          child: Text('No se encontraron rifas', style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14)),
+                                        ),
+                                      ),
+                                    ...pageItems.map((r) => _buildRow(r, themeColors)),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ...pageItems.map((r) => _buildRow(r, themeColors)),
 
-                        // Pagination
-                        CustomPaginationFooter(
-                          totalItems: totalItems,
-                          currentPage: _currentPage,
-                          rowsPerPage: _rowsPerPage,
-                          onPageChanged: (newPage) =>
-                              setState(() => _currentPage = newPage),
-                          onRowsPerPageChanged: (newSize) => setState(() {
-                            _rowsPerPage = newSize;
-                            _currentPage = 1;
-                          }),
+                            // Pagination
+                            CustomPaginationFooter(
+                              totalItems: totalItems,
+                              currentPage: _currentPage,
+                              rowsPerPage: _rowsPerPage,
+                              onPageChanged: (newPage) =>
+                                  setState(() => _currentPage = newPage),
+                              onRowsPerPageChanged: (newSize) => setState(() {
+                                _rowsPerPage = newSize;
+                                _currentPage = 1;
+                              }),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),

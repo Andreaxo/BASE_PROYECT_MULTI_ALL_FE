@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -8,6 +8,7 @@ class CustomAlert {
     BuildContext context, {
     required String message,
     bool isSuccess = true,
+    Duration duration = const Duration(seconds: 4),
   }) {
     final overlayState = Overlay.of(context);
     final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
@@ -30,8 +31,8 @@ class CustomAlert {
 
     overlayState.insert(overlayEntry);
 
-    // Auto dismiss after 4 seconds
-    Future.delayed(const Duration(seconds: 4), () {
+    // Auto dismiss after specified duration (default: 4s)
+    Future.delayed(duration, () {
       if (overlayEntry.mounted) {
         overlayEntry.remove();
       }

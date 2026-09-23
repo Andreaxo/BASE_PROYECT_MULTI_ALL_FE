@@ -16,12 +16,16 @@ class AuthProvider extends ChangeNotifier {
   List<Company> _userCompanies = [];
   Company? _activeCompany;
   User? _currentUser;
+  bool _isAccountLocked = false;
+  int _lockMinutes = 15;
 
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String? get errorMessage => _errorMessage;
   String get userName => _userName;
   String get roleCode => _roleCode;
+  bool get isAccountLocked => _isAccountLocked;
+  int get lockMinutes => _lockMinutes;
   bool get isSuperAdmin =>
       _roleCode.toLowerCase().trim() == 'superadmin' ||
       _roleCode.toLowerCase().trim() == 'super_admin';
@@ -40,6 +44,8 @@ class AuthProvider extends ChangeNotifier {
       case 'user':
       case 'user_member':
         return 'Miembro Conexiate';
+      case 'operador':
+        return 'Operador';
       default:
         if (_roleCode.isEmpty) return 'Usuario';
         return _roleCode
@@ -168,12 +174,85 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
+    } on AccountLockedException catch (e) {
+      _isAccountLocked = true;
+      _lockMinutes = e.minutes;
+      _errorMessage = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _isAccountLocked = false;
+      _errorMessage = _mapAuthError(e);
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  /// Clears active error message smoothly
+  void clearError() {
+    if (_errorMessage != null || _isAccountLocked) {
+      _errorMessage = null;
+      _isAccountLocked = false;
+      notifyListeners();
+    }
+  }
+
+  /// Maps raw technical errors or API responses into human-friendly, polite messages.
+  String _mapAuthError(dynamic error) {
+    final raw = error.toString().replaceAll('Exception: ', '').trim();
+    final lower = raw.toLowerCase();
+
+    // Credential errors
+    if (lower.contains('credenciales inválidas') ||
+        lower.contains('invalid credentials') ||
+        lower.contains('credenciales invalidas') ||
+        lower.contains('correo electrónico o la contraseña son incorrectos') ||
+        lower.contains('correo o la contraseña son incorrectos')) {
+      return 'El correo electrónico o la contraseña son incorrectos. Por favor, verifica tus datos e inténtalo de nuevo.';
+    }
+
+    // Inactive account errors
+    if (lower.contains('inactiva') || lower.contains('inactive')) {
+      return 'Tu cuenta se encuentra inactiva. Por favor, revisa tu correo para activarla o ponte en contacto con soporte.';
+    }
+
+    // User not found
+    if (lower.contains('no encontrado') ||
+        lower.contains('not found') ||
+        lower.contains('no existe ningún usuario')) {
+      return 'No encontramos una cuenta asociada a este correo electrónico.';
+    }
+
+    // Duplicate email
+    if (lower.contains('ya se encuentra registrado') ||
+        lower.contains('already registered') ||
+        lower.contains('duplicate')) {
+      return 'Este correo electrónico ya está registrado. Por favor inicia sesión o recupera tu contraseña.';
+    }
+
+    // Network & connection errors
+    if (lower.contains('socketexception') ||
+        lower.contains('connection refused') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable') ||
+        lower.contains('connection timed out') ||
+        lower.contains('clientexception')) {
+      return 'No fue posible conectar con el servidor. Por favor, comprueba tu conexión a internet o intenta más tarde.';
+    }
+
+    // Timeout
+    if (lower.contains('timeout')) {
+      return 'El servidor tardó demasiado en responder. Por favor, intenta de nuevo en unos momentos.';
+    }
+
+    // Clean API message
+    if (raw.isNotEmpty && !raw.contains('Instance of') && !raw.contains('Error:')) {
+      return raw;
+    }
+
+    return 'Ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.';
   }
 
   /// Perform registration with optional referral code and company code, plus auto-login.
@@ -250,7 +329,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = _mapAuthError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -329,8 +408,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Logout and clear stored data.
+  /// Logout and clear stored data both locally and on server.
   Future<void> logout() async {
+    try {
+      await AuthApiService.logout();
+    } catch (_) {}
     await AuthStorage.clear();
     _isLoggedIn = false;
     _userName = '';
@@ -339,6 +421,7 @@ class AuthProvider extends ChangeNotifier {
     _activeCompany = null;
     _currentUser = null;
     _errorMessage = null;
+    _isAccountLocked = false;
     notifyListeners();
   }
 }

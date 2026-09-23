@@ -17,10 +17,12 @@ class MembresiaProvider extends ChangeNotifier {
 
   bool get hasActiveMembership => _miMembresia?.isActiva ?? false;
 
-  Future<void> loadMiMembresia() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+  Future<void> loadMiMembresia({bool silent = false}) async {
+    if (!silent) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    }
 
     try {
       _miMembresia = await MembresiaApiService.getMiMembresia();
@@ -28,7 +30,9 @@ class MembresiaProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
-      _isLoading = false;
+      if (!silent) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }
@@ -39,7 +43,7 @@ class MembresiaProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = redirectUrl ?? 'http://localhost:3000/membership-result';
+      final url = redirectUrl ?? '';
       final response = await MembresiaApiService.iniciarPago(url);
       _errorMessage = null;
       return response;

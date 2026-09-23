@@ -15,6 +15,7 @@ import 'features/users/providers/user_provider.dart';
 import 'features/referidos/providers/referido_provider.dart';
 import 'features/rifas/providers/rifa_provider.dart';
 import 'features/membresia/providers/membresia_provider.dart';
+import 'features/notificaciones/providers/notificacion_provider.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -43,6 +44,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReferidoProvider()),
         ChangeNotifierProvider(create: (_) => RifaProvider()),
         ChangeNotifierProvider(create: (_) => MembresiaProvider()),
+        ChangeNotifierProvider(create: (_) => NotificacionProvider()),
       ],
       child: MulticlienteApp(isLoggedIn: isLoggedIn, roleCode: roleCode),
     ),

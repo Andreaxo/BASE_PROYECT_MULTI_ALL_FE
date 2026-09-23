@@ -631,23 +631,29 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                       const Icon(Icons.tag_rounded,
                                           color: AppColors.primary, size: 20),
                                       const SizedBox(width: 12),
-                                      Text(
-                                        provider.codeRefer,
-                                        style: GoogleFonts.outfit(
-                                          color: Colors.white,
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 6,
-                                          shadows: [
-                                            Shadow(
-                                              color: AppColors.accent.withValues(alpha: 0.5),
-                                              blurRadius: 12,
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            provider.codeRefer,
+                                            style: GoogleFonts.outfit(
+                                              color: Colors.white,
+                                              fontSize: 26,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 6,
+                                              shadows: [
+                                                Shadow(
+                                                  color: AppColors.accent.withValues(alpha: 0.5),
+                                                  blurRadius: 12,
+                                                ),
+                                                Shadow(
+                                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                                  blurRadius: 24,
+                                                ),
+                                              ],
                                             ),
-                                            Shadow(
-                                              color: AppColors.primary.withValues(alpha: 0.4),
-                                              blurRadius: 24,
-                                            ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -699,47 +705,10 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                 color: AppColors.accent.withValues(alpha: 0.3),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.lock_clock_rounded,
-                                    color: AppColors.accent,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Código disponible con membresía activa',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white70,
-                                          fontSize: 12,
-                                          height: 1.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton(
+                            child: LayoutBuilder(
+                              builder: (context, cardConstraints) {
+                                final isCompact = cardConstraints.maxWidth < 550;
+                                final activateButton = ElevatedButton(
                                   onPressed: () {
                                     Navigator.of(context).pushNamed('/mi-membresia');
                                   },
@@ -755,6 +724,7 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       const Icon(Icons.flash_on_rounded, size: 16),
                                       const SizedBox(width: 4),
@@ -767,8 +737,98 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                );
+
+                                if (isCompact) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.accent.withValues(alpha: 0.15),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.lock_clock_rounded,
+                                              color: AppColors.accent,
+                                              size: 22,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Código disponible con membresía activa',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      activateButton,
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accent.withValues(alpha: 0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.lock_clock_rounded,
+                                        color: AppColors.accent,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Código disponible con membresía activa',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white70,
+                                              fontSize: 12,
+                                              height: 1.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    activateButton,
+                                  ],
+                                );
+                              },
                             ),
                           ),
                       ],
@@ -834,37 +894,35 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                   const SizedBox(height: 24),
 
                   // ── Header: search + invite button ──
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: themeColors.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: themeColors.borderColor),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            style: GoogleFonts.inter(
-                                color: themeColors.textPrimary, fontSize: 14),
-                            decoration: InputDecoration(
-                              hintText: 'Buscar por email, nombre o estado...',
-                              hintStyle: GoogleFonts.inter(
-                                  color: themeColors.textSecondary,
-                                  fontSize: 14),
-                              prefixIcon: Icon(Icons.search_rounded,
-                                  color: themeColors.textSecondary),
-                              border: InputBorder.none,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 12),
-                            ),
+                  LayoutBuilder(
+                    builder: (context, searchConstraints) {
+                      final isNarrow = searchConstraints.maxWidth < 500;
+                      final searchField = Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: themeColors.cardBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: themeColors.borderColor),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: GoogleFonts.inter(
+                              color: themeColors.textPrimary, fontSize: 14),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar por email, nombre o estado...',
+                            hintStyle: GoogleFonts.inter(
+                                color: themeColors.textSecondary,
+                                fontSize: 14),
+                            prefixIcon: Icon(Icons.search_rounded,
+                                color: themeColors.textSecondary),
+                            border: InputBorder.none,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
+                      );
+
+                      final inviteButton = ElevatedButton.icon(
                         onPressed: _showInviteDialog,
                         icon: const Icon(Icons.person_add_alt_1_rounded,
                             size: 18),
@@ -881,74 +939,113 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ),
-                    ],
+                      );
+
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            searchField,
+                            const SizedBox(height: 10),
+                            inviteButton,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: searchField),
+                          const SizedBox(width: 12),
+                          inviteButton,
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 16),
 
                   // ── Table ──
-                  Container(
-                    decoration: BoxDecoration(
-                      color: themeColors.cardBackground,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: themeColors.borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        // Table header
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.tableHeaderBg,
-                            borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(16)),
-                          ),
-                          child: Row(
-                            children: [
-                              _headerCell('Usuario Referido', flex: 4),
-                              _headerCell('Estado', flex: 2),
-                              _headerCell('Recompensa', flex: 2),
-                              _headerCell('Fecha de Invitación', flex: 2),
-                            ],
-                          ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const minTableWidth = 720.0;
+                      final tableWidth = constraints.maxWidth > minTableWidth
+                          ? constraints.maxWidth
+                          : minTableWidth;
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: themeColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: themeColors.borderColor),
                         ),
-                        // Table rows
-                        if (pageItems.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(40),
-                            child: Center(
-                              child: Text(
-                                (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership)
-                                    ? 'Tu red de referidos se activará con tu membresía.\n¡Actívala hoy y comienza a invitar a tus conocidos!'
-                                    : (filtered.isEmpty && _searchQuery.isEmpty
-                                        ? 'Aún no has invitado a nadie.\n¡Comparte tu código para empezar!'
-                                        : 'No se encontraron resultados'),
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  color: themeColors.textSecondary,
-                                  fontSize: 14,
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: tableWidth,
+                                child: Column(
+                                  children: [
+                                    // Table header
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 14),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.tableHeaderBg,
+                                        borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(16)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          _headerCell('Usuario Referido', flex: 4),
+                                          _headerCell('Estado', flex: 2),
+                                          _headerCell('Recompensa', flex: 2),
+                                          _headerCell('Fecha de Invitación', flex: 2),
+                                        ],
+                                      ),
+                                    ),
+                                    // Table rows
+                                    if (pageItems.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.all(40),
+                                        child: Center(
+                                          child: Text(
+                                            (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership)
+                                                ? 'Tu red de referidos se activará con tu membresía.\n¡Actívala hoy y comienza a invitar a tus conocidos!'
+                                                : (filtered.isEmpty && _searchQuery.isEmpty
+                                                    ? 'Aún no has invitado a nadie.\n¡Comparte tu código para empezar!'
+                                                    : 'No se encontraron resultados'),
+                                            textAlign: TextAlign.center,
+                                            style: GoogleFonts.inter(
+                                              color: themeColors.textSecondary,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ...pageItems.map((r) => _buildRow(r, themeColors)),
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                        ...pageItems.map((r) => _buildRow(r, themeColors)),
 
-                        // Pagination
-                        CustomPaginationFooter(
-                          totalItems: totalItems,
-                          currentPage: _currentPage,
-                          rowsPerPage: _rowsPerPage,
-                          onPageChanged: (newPage) =>
-                              setState(() => _currentPage = newPage),
-                          onRowsPerPageChanged: (newSize) => setState(() {
-                            _rowsPerPage = newSize;
-                            _currentPage = 1;
-                          }),
+                            // Pagination
+                            CustomPaginationFooter(
+                              totalItems: totalItems,
+                              currentPage: _currentPage,
+                              rowsPerPage: _rowsPerPage,
+                              onPageChanged: (newPage) =>
+                                  setState(() => _currentPage = newPage),
+                              onRowsPerPageChanged: (newSize) => setState(() {
+                                _rowsPerPage = newSize;
+                                _currentPage = 1;
+                              }),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -20,16 +22,35 @@ class MembresiaScreen extends StatefulWidget {
   State<MembresiaScreen> createState() => _MembresiaScreenState();
 }
 
-class _MembresiaScreenState extends State<MembresiaScreen> {
+class _MembresiaScreenState extends State<MembresiaScreen>
+    with WidgetsBindingObserver {
+  Timer? _pollingTimer;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MembresiaProvider>().loadMiMembresia();
     });
   }
 
-  Future<void> _handlePayment(BuildContext context) async {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User switched back to this window after completing payment in Wompi tab
+      context.read<MembresiaProvider>().loadMiMembresia();
+    }
+  }
+
+  Future<void> _handlePayment() async {
     final provider = context.read<MembresiaProvider>();
     final resp = await provider.iniciarPago();
 
@@ -44,220 +65,46 @@ class _MembresiaScreenState extends State<MembresiaScreen> {
       }
 
       if (mounted) {
-        _showPaymentModal(context, resp);
+        _showPaymentModal(resp);
       }
     } else {
       final error = provider.errorMessage ?? 'Error al generar orden de pago';
-      CustomAlert.show(context, message: error, isSuccess: false);
+      if (mounted) {
+        CustomAlert.show(context, message: error, isSuccess: false);
+      }
     }
   }
 
-  void _showPaymentModal(BuildContext context, IniciarPagoResponse resp) {
-    final themeColors =
-        Theme.of(context).extension<AppThemeColors>() ??
-        AppTheme.darkThemeColors;
-
+  void _showPaymentModal(IniciarPagoResponse resp) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: themeColors.cardBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: AppColors.accent.withValues(alpha: 0.3),
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.credit_card_rounded,
-                color: AppColors.accent,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Pasarela de Pago Wompi',
-                style: GoogleFonts.outfit(
-                  color: themeColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tu orden de pago ha sido generada exitosamente.',
-              style: GoogleFonts.inter(
-                color: themeColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: themeColors.cardBackground.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: themeColors.borderColor,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Referencia:',
-                        style: GoogleFonts.inter(
-                          color: themeColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        resp.referencia,
-                        style: GoogleFonts.inter(
-                          color: themeColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Monto:',
-                        style: GoogleFonts.inter(
-                          color: themeColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        r'$25.000 COP',
-                        style: GoogleFonts.inter(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.science_rounded,
-                    color: Color(0xFF10B981),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Modo Sandbox: Puedes simular la aprobación inmediata de la tarjeta oficial (4242...) con el botón de abajo o abrir el checkout de Wompi si tienes tus llaves reales en .env.',
-                      style: GoogleFonts.inter(
-                        color: themeColors.textPrimary,
-                        fontSize: 11.5,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        actions: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  'Cerrar',
-                  style: GoogleFonts.inter(color: themeColors.textSecondary),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  final success = await context.read<MembresiaProvider>().simularPago(status: 'APPROVED');
-                  if (mounted) {
-                    if (success) {
-                      CustomAlert.show(
-                        context,
-                        message: '¡Pago aprobado con éxito! Tu membresía está activa por 30 días.',
-                        isSuccess: true,
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.check_circle_rounded, size: 16),
-                label: const Text('Simular Pago Aprobado (4242)'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              if (resp.checkoutUrl.isNotEmpty)
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    final uri = Uri.tryParse(resp.checkoutUrl);
-                    if (uri != null && await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
-                  },
-                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                  label: const Text('Abrir Wompi Oficial'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (ctx) => _WompiPaymentModalDialog(
+        resp: resp,
+        onRetry: () {
+          _handlePayment();
+        },
+        onCompleted: () {
+          if (mounted) {
+            context.read<MembresiaProvider>().loadMiMembresia();
+            CustomAlert.show(
+              context,
+              message:
+                  '🎉 ¡Pago confirmado con éxito! Tu membresía ya está activa y tienes acceso a todos los beneficios exclusivos.',
+              isSuccess: true,
+              duration: const Duration(seconds: 8),
+            );
+          }
+        },
       ),
-    );
+    ).then((_) {
+      if (mounted) {
+        context.read<MembresiaProvider>().loadMiMembresia();
+      }
+    });
   }
 
-  Future<void> _handleCancelRenewal(BuildContext context) async {
+  Future<void> _handleCancelRenewal() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -310,7 +157,7 @@ class _MembresiaScreenState extends State<MembresiaScreen> {
         AppTheme.darkThemeColors;
     final provider = context.watch<MembresiaProvider>();
     final authProvider = context.watch<AuthProvider>();
-    final isAdminOrSuperAdmin = authProvider.isAdminOrSuperAdmin;
+    final isAdminOrSuperAdmin = authProvider.isAdminOrSuperAdmin || authProvider.roleCode == 'operador';
     final isValidator =
         authProvider.roleCode == 'business_validator' ||
         authProvider.roleCode == 'negocio';
@@ -689,7 +536,7 @@ class _MembresiaScreenState extends State<MembresiaScreen> {
                       : r'Pagar y Activar Membresía ($25.000 COP)',
                   icon: Icons.payment_rounded,
                   isLoading: isPaying,
-                  onPressed: isPaying ? null : () => _handlePayment(context),
+                  onPressed: isPaying ? null : _handlePayment,
                 ),
                 if (isActiva)
                   Text(
@@ -766,7 +613,7 @@ class _MembresiaScreenState extends State<MembresiaScreen> {
           ),
           if (isAutoRenew)
             TextButton(
-              onPressed: () => _handleCancelRenewal(context),
+              onPressed: _handleCancelRenewal,
               child: Text(
                 'Desactivar',
                 style: GoogleFonts.inter(
@@ -920,6 +767,623 @@ class _MembresiaScreenState extends State<MembresiaScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MODAL DE PAGO WOMPI REDISEÑADO (MODERNO, SEGURO Y CON AUTO-SINCRONIZACIÓN)
+// ---------------------------------------------------------------------------
+
+enum PaymentModalStatus { waiting, approved, declined }
+
+class _WompiPaymentModalDialog extends StatefulWidget {
+  final IniciarPagoResponse resp;
+  final VoidCallback? onRetry;
+  final VoidCallback onCompleted;
+
+  const _WompiPaymentModalDialog({
+    required this.resp,
+    this.onRetry,
+    required this.onCompleted,
+  });
+
+  @override
+  State<_WompiPaymentModalDialog> createState() =>
+      _WompiPaymentModalDialogState();
+}
+
+class _WompiPaymentModalDialogState extends State<_WompiPaymentModalDialog> {
+  Timer? _pollTimer;
+  PaymentModalStatus _status = PaymentModalStatus.waiting;
+  bool _copied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPolling();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer =
+        Timer.periodic(const Duration(milliseconds: 2500), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final provider = context.read<MembresiaProvider>();
+      await provider.loadMiMembresia(silent: true);
+      if (!mounted) return;
+
+      if (provider.hasActiveMembership ||
+          provider.miMembresia?.isUltimoPagoAprobado == true) {
+        timer.cancel();
+        setState(() {
+          _status = PaymentModalStatus.approved;
+        });
+      } else if (provider.miMembresia?.isUltimoPagoRechazado == true) {
+        timer.cancel();
+        setState(() {
+          _status = PaymentModalStatus.declined;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  void _copyReference() {
+    Clipboard.setData(ClipboardData(text: widget.resp.referencia));
+    setState(() => _copied = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Container(
+          decoration: BoxDecoration(
+            color: themeColors.cardBackground,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: 0.25),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 14, 16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: themeColors.borderColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.accent.withValues(alpha: 0.2),
+                            AppColors.primary.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.verified_user_rounded,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Pasarela Wompi',
+                                style: GoogleFonts.outfit(
+                                  color: themeColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981)
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.4),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Bancolombia',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF10B981),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Transacción cifrada y protegida',
+                            style: GoogleFonts.inter(
+                              color: themeColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: themeColors.textSecondary,
+                        size: 20,
+                      ),
+                      tooltip: 'Cerrar ventana',
+                      onPressed: () {
+                        _pollTimer?.cancel();
+                        Navigator.of(context).pop();
+                        widget.onCompleted();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Body based on status
+              Padding(
+                padding: const EdgeInsets.all(22),
+                child: _buildBody(themeColors),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(AppThemeColors themeColors) {
+    switch (_status) {
+      case PaymentModalStatus.waiting:
+        return _buildWaitingView(themeColors);
+      case PaymentModalStatus.approved:
+        return _buildApprovedView(themeColors);
+      case PaymentModalStatus.declined:
+        return _buildDeclinedView(themeColors);
+    }
+  }
+
+  Widget _buildWaitingView(AppThemeColors themeColors) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Order details card
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: themeColors.cardBackground.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: themeColors.borderColor.withValues(alpha: 0.6),
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Suscripción:',
+                    style: GoogleFonts.inter(
+                      color: themeColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    'Membresía Mensual',
+                    style: GoogleFonts.inter(
+                      color: themeColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Referencia:',
+                    style: GoogleFonts.inter(
+                      color: themeColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: _copyReference,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            widget.resp.referencia,
+                            style: GoogleFonts.inter(
+                              color: themeColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 11,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            _copied
+                                ? Icons.check_circle_rounded
+                                : Icons.copy_rounded,
+                            size: 14,
+                            color: _copied
+                                ? const Color(0xFF10B981)
+                                : themeColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(
+                  color: themeColors.borderColor.withValues(alpha: 0.5),
+                  height: 1,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total a pagar:',
+                    style: GoogleFonts.inter(
+                      color: themeColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    r'$25.000 COP',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // Live status container
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Sincronizando pago en tiempo real...',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF10B981),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Al completar la transacción en la pasarela de Wompi, tus beneficios se activarán automáticamente sin que tengas que presionar nada.',
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Reabrir pasarela
+        if (widget.resp.checkoutUrl.isNotEmpty) ...[
+          ElevatedButton.icon(
+            onPressed: () async {
+              final uri = Uri.tryParse(widget.resp.checkoutUrl);
+              if (uri != null && await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            icon: const Icon(Icons.open_in_new_rounded, size: 16),
+            label: const Text('Reabrir pestaña de Wompi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        TextButton(
+          onPressed: () {
+            _pollTimer?.cancel();
+            Navigator.of(context).pop();
+            widget.onCompleted();
+          },
+          child: Text(
+            'Cerrar ventana (puedes continuar navegando)',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: themeColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildApprovedView(AppThemeColors themeColors) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF10B981).withValues(alpha: 0.4),
+              width: 2,
+            ),
+          ),
+          child: const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 38,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '¡Pago Confirmado con Éxito!',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.outfit(
+            color: themeColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Tu membresía Conexiate ya está activa. Tienes acceso inmediato a todos los descuentos y beneficios exclusivos.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            color: themeColors.textSecondary,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.stars_rounded,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Vigencia: 30 días de beneficios activos',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF10B981),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.onCompleted();
+            },
+            icon: const Icon(Icons.celebration_rounded, size: 18),
+            label: const Text('¡Comenzar a disfrutar!'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeclinedView(AppThemeColors themeColors) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: Colors.redAccent.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.redAccent.withValues(alpha: 0.4),
+              width: 2,
+            ),
+          ),
+          child: const Icon(
+            Icons.cancel_rounded,
+            color: Colors.redAccent,
+            size: 38,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Transacción No Procesada',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.outfit(
+            color: themeColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'La entidad financiera o Wompi no pudo autorizar el pago. Revisa los fondos o intenta con otra tarjeta o método de pago.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            color: themeColors.textSecondary,
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onCompleted();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: themeColors.textSecondary,
+                  side: BorderSide(color: themeColors.borderColor),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Cerrar'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onRetry?.call();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Reintentar'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

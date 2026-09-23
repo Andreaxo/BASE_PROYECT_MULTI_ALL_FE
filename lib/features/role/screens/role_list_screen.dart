@@ -140,6 +140,7 @@ class _RoleListScreenState extends State<RoleListScreen> {
     );
     if (result == true && mounted) {
       context.read<RoleProvider>().loadRoles();
+      context.read<MenuProvider>().loadMyMenus();
       CustomAlert.show(
         context,
         message: 'Rol guardado correctamente',

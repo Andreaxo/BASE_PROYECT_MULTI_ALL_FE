@@ -7,6 +7,7 @@ class MembresiaModel {
   final bool renovacionAutomatica;
   final bool tieneMetodoPago;
   final DateTime? createAt;
+  final String? ultimoPagoEstado;
 
   MembresiaModel({
     required this.id,
@@ -17,12 +18,31 @@ class MembresiaModel {
     required this.renovacionAutomatica,
     required this.tieneMetodoPago,
     this.createAt,
+    this.ultimoPagoEstado,
   });
 
   bool get isActiva => estado.toLowerCase() == 'activa';
   bool get isInactiva => estado.toLowerCase() == 'inactiva';
   bool get isVencida => estado.toLowerCase() == 'vencida';
   bool get isCancelada => estado.toLowerCase() == 'cancelada';
+  bool get isUltimoPagoRechazado {
+    final s = ultimoPagoEstado?.toLowerCase();
+    return s == 'rechazado' ||
+        s == 'declined' ||
+        s == 'error' ||
+        s == 'voided' ||
+        s == 'fallido';
+  }
+
+  bool get isUltimoPagoAprobado {
+    final s = ultimoPagoEstado?.toLowerCase();
+    return s == 'aprobado' || s == 'approved';
+  }
+
+  bool get isUltimoPagoPendiente {
+    final s = ultimoPagoEstado?.toLowerCase();
+    return s == 'pendiente' || s == 'pending';
+  }
 
   int get diasRestantes {
     if (fechaFin == null) return 0;
@@ -48,6 +68,7 @@ class MembresiaModel {
       createAt: json['create_at'] != null
           ? DateTime.tryParse(json['create_at'].toString())
           : null,
+      ultimoPagoEstado: json['ultimo_pago_estado']?.toString(),
     );
   }
 

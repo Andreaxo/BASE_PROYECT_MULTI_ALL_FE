@@ -330,81 +330,164 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
             const SizedBox(height: 12),
 
             // ── Encabezado ──────────────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Gestión de Beneficios',
-                  style: GoogleFonts.outfit(
-                    color: themeColors.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (canEdit)
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () => _navigateToForm(),
-                      icon: const Icon(
-                        Icons.add_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        context.tr('new_button'),
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
+            LayoutBuilder(
+              builder: (context, headerConstraints) {
+                final isMobile = headerConstraints.maxWidth < 650;
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Gestión de Beneficios',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
-                        shape: RoundedRectangleBorder(
+                      ),
+                      if (canEdit) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () => _navigateToForm(),
+                            icon: const Icon(
+                              Icons.add_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              context.tr('new_button'),
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                }
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Gestión de Beneficios',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (canEdit)
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _navigateToForm(),
+                          icon: const Icon(
+                            Icons.add_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            context.tr('new_button'),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // ── Tarjetas de métricas ────────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final cards = [
+                  StatCard(
                     label: 'Beneficios Activos',
                     value: activeBenefits.toString(),
                     icon: Icons.card_giftcard_rounded,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: 'Total Beneficios',
                     value: benefitProvider.benefits.length.toString(),
                     icon: Icons.list_alt_rounded,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: 'Empresas con Beneficios',
                     value: uniqueCompanies.toString(),
                     icon: Icons.business_rounded,
                   ),
-                ),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: cards
+                        .map(
+                          (c) => Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: c,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  );
+                } else {
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: cards
+                        .map(
+                          (c) => SizedBox(
+                            width: constraints.maxWidth > 400
+                                ? (constraints.maxWidth - 12) / 2
+                                : constraints.maxWidth,
+                            child: c,
+                          ),
+                        )
+                        .toList(),
+                  );
+                }
+              },
             ),
             const SizedBox(height: 24),
 
@@ -421,91 +504,111 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                   // Barra de búsqueda y exportación
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: themeColors.borderColor,
-                              ),
+                    child: LayoutBuilder(
+                      builder: (context, searchConstraints) {
+                        final isCompact = searchConstraints.maxWidth < 700;
+                        final searchField = Container(
+                          decoration: BoxDecoration(
+                            color: themeColors.textPrimary.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: themeColors.borderColor,
                             ),
-                            child: TextField(
-                              controller: _searchController,
-                              style: GoogleFonts.inter(
-                                color: themeColors.textPrimary,
-                                fontSize: 14,
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: GoogleFonts.inter(
+                              color: themeColors.textPrimary,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Buscar por nombre, empresa o ID...',
+                              hintStyle: GoogleFonts.inter(
+                                color: themeColors.textSecondary.withValues(alpha: 0.5),
                               ),
-                              decoration: InputDecoration(
-                                hintText: 'Buscar por nombre, empresa o ID...',
-                                hintStyle: GoogleFonts.inter(
-                                  color: themeColors.textSecondary.withValues(alpha: 
-                                    0.5,
-                                  ),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  color: themeColors.textSecondary.withValues(alpha: 
-                                    0.5,
-                                  ),
-                                  size: 20,
-                                ),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: Icon(
-                                          Icons.close_rounded,
-                                          color: themeColors.textSecondary
-                                              .withValues(alpha: 0.5),
-                                          size: 18,
-                                        ),
-                                        onPressed: () =>
-                                            _searchController.clear(),
-                                      )
-                                    : null,
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: themeColors.textSecondary.withValues(alpha: 0.5),
+                                size: 20,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.close_rounded,
+                                        color: themeColors.textSecondary.withValues(alpha: 0.5),
+                                        size: 18,
+                                      ),
+                                      onPressed: () => _searchController.clear(),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildExportButton(
-                          label: 'Excel',
-                          icon: Icons.table_chart_rounded,
-                          color: const Color(0xFF107C41),
-                          onPressed: () => _exportData(
-                            format: 'excel',
-                            data: filteredBenefits,
-                            companies: companies,
+                        );
+
+                        final exportRow = SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: isCompact ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            children: [
+                              _buildExportButton(
+                                label: 'Excel',
+                                icon: Icons.table_chart_rounded,
+                                color: const Color(0xFF107C41),
+                                onPressed: () => _exportData(
+                                  format: 'excel',
+                                  data: filteredBenefits,
+                                  companies: companies,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: 'PDF',
+                                icon: Icons.picture_as_pdf_rounded,
+                                color: const Color(0xFFE02424),
+                                onPressed: () => _exportData(
+                                  format: 'pdf',
+                                  data: filteredBenefits,
+                                  companies: companies,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: context.tr('print'),
+                                icon: Icons.print_rounded,
+                                color: AppColors.primary,
+                                onPressed: () => _exportData(
+                                  format: 'print',
+                                  data: filteredBenefits,
+                                  companies: companies,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: 'PDF',
-                          icon: Icons.picture_as_pdf_rounded,
-                          color: const Color(0xFFE02424),
-                          onPressed: () => _exportData(
-                            format: 'pdf',
-                            data: filteredBenefits,
-                            companies: companies,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: context.tr('print'),
-                          icon: Icons.print_rounded,
-                          color: AppColors.primary,
-                          onPressed: () => _exportData(
-                            format: 'print',
-                            data: filteredBenefits,
-                            companies: companies,
-                          ),
-                        ),
-                      ],
+                        );
+
+                        if (isCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              searchField,
+                              const SizedBox(height: 12),
+                              exportRow,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: searchField),
+                            const SizedBox(width: 12),
+                            exportRow,
+                          ],
+                        );
+                      },
                     ),
                   ),
                   Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),

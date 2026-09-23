@@ -24,8 +24,8 @@ class MembershipGateBanner extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final role = authProvider.roleCode;
 
-    // Superadmin, admin and business_validator are exempt from affiliate membership
-    if (authProvider.isAdminOrSuperAdmin || (role != 'user' && role != 'user_member')) {
+    // Superadmin, admin, operador and business_validator are exempt from affiliate membership
+    if (authProvider.isAdminOrSuperAdmin || role == 'operador' || (role != 'user' && role != 'user_member')) {
       return const SizedBox.shrink();
     }
 

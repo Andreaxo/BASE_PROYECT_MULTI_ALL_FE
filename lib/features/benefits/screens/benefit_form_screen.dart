@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/config/api_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/custom_text_field.dart';
@@ -56,11 +56,19 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
         companyProvider.loadCompanies();
       }
       final authProvider = context.read<AuthProvider>();
-      final userEmpresaId = authProvider.currentUser?.empresaId;
-      if (_selectedCompanyId == null && userEmpresaId != null && userEmpresaId > 0) {
-        setState(() {
-          _selectedCompanyId = userEmpresaId;
-        });
+      if (_selectedCompanyId == null) {
+        final autoCompId = authProvider.activeCompany?.id ??
+            authProvider.currentUser?.empresaId ??
+            (authProvider.userCompanies.isNotEmpty
+                ? authProvider.userCompanies.first.id
+                : (authProvider.isAdminOrSuperAdmin && companyProvider.companies.isNotEmpty
+                    ? companyProvider.companies.first.id
+                    : null));
+        if (autoCompId != null && autoCompId > 0) {
+          setState(() {
+            _selectedCompanyId = autoCompId;
+          });
+        }
       }
     });
   }
@@ -72,20 +80,57 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
     super.dispose();
   }
 
-  /// Resuelve el nombre visible de una empresa a partir de su ID.
-  /// Prioriza la razón social; si no la tiene, usa el nombre.
+  /// Resuelve el nombre visible de una empresa a partir de su objeto.
+  /// Prioriza la razón social; si no la tiene, usa el nombre comercial.
   String _resolveCompanyLabel(Company company) {
     final razon = company.razonSocial?.trim();
     if (razon != null && razon.isNotEmpty) return razon;
     return company.name;
   }
 
+  /// Resuelve la empresa asociada para mostrar sus datos y asegurar que el beneficio
+  /// quede estrictamente asignado a ella.
+  Company? _resolveTargetCompany(
+    AuthProvider authProvider,
+    CompanyProvider companyProvider,
+  ) {
+    final compId = _selectedCompanyId ??
+        widget.benefit?.companyBenefits ??
+        authProvider.activeCompany?.id ??
+        authProvider.currentUser?.empresaId ??
+        (authProvider.userCompanies.isNotEmpty
+            ? authProvider.userCompanies.first.id
+            : null);
+
+    if (compId == null) {
+      return authProvider.activeCompany;
+    }
+
+    if (authProvider.activeCompany?.id == compId) {
+      return authProvider.activeCompany;
+    }
+
+    final inUser = authProvider.userCompanies.where((c) => c.id == compId);
+    if (inUser.isNotEmpty) return inUser.first;
+
+    final inAll = companyProvider.companies.where((c) => c.id == compId);
+    if (inAll.isNotEmpty) return inAll.first;
+
+    return authProvider.activeCompany;
+  }
+
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedCompanyId == null || _selectedCompanyId == 0) {
+
+    final authProvider = context.read<AuthProvider>();
+    final companyProvider = context.read<CompanyProvider>();
+    final targetCompany = _resolveTargetCompany(authProvider, companyProvider);
+    final targetCompanyId = targetCompany?.id ?? _selectedCompanyId;
+
+    if (targetCompanyId == null || targetCompanyId == 0) {
       CustomAlert.show(
         context,
-        message: 'Debes seleccionar una empresa',
+        message: 'No se ha detectado una empresa vinculada para registrar este beneficio',
         isSuccess: false,
       );
       return;
@@ -100,7 +145,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
         UpdateBenefitRequest(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
-          companyBenefits: _selectedCompanyId,
+          companyBenefits: targetCompanyId,
           isActive: _isActive,
         ),
       );
@@ -109,7 +154,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
         CreateBenefitRequest(
           name: _nameController.text.trim(),
           description: _descriptionController.text.trim(),
-          companyBenefits: _selectedCompanyId ?? 0,
+          companyBenefits: targetCompanyId,
         ),
       );
     }
@@ -215,6 +260,13 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
   Widget build(BuildContext context) {
     final benefitProvider = context.watch<BenefitProvider>();
     final companyProvider = context.watch<CompanyProvider>();
+    final authProvider = context.watch<AuthProvider>();
+    final isSuperAdmin = authProvider.isAdminOrSuperAdmin;
+    final targetCompany = _resolveTargetCompany(authProvider, companyProvider);
+    if (_selectedCompanyId == null && targetCompany != null) {
+      _selectedCompanyId = targetCompany.id;
+    }
+
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
@@ -306,7 +358,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                                 value: _isActive,
                                 onChanged: (value) =>
                                     setState(() => _isActive = value),
-                                activeColor: const Color(0xFF4ECDC4),
+                                activeThumbColor: const Color(0xFF4ECDC4),
                                 inactiveTrackColor:
                                     Colors.white.withValues(alpha: 0.1),
                               ),
@@ -394,12 +446,20 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                           const SizedBox(height: 22),
 
                           // Empresa vinculada
-                          _buildLabel('Empresa vinculada *'),
+                          _buildLabel('Empresa Vinculada'),
                           const SizedBox(height: 8),
-                          _buildCompanyDropdown(
-                            companyProvider,
+                          _buildCompanyInfoCard(
+                            targetCompany,
                             themeColors,
+                            isSuperAdmin,
                           ),
+                          if (isSuperAdmin && !isEditing) ...[
+                            const SizedBox(height: 12),
+                            _buildSuperAdminCompanySelector(
+                              companyProvider,
+                              themeColors,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -409,9 +469,8 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                     InfoCard(
                       title: 'Beneficios por Empresa',
                       content:
-                          'Cada beneficio está asociado a una empresa específica. '
-                          'El nombre o razón social de la empresa aparecerá en la lista '
-                          'de beneficios para facilitar su identificación.',
+                          'Los beneficios quedan registrados de forma exclusiva bajo la razón social de tu empresa. '
+                          'Los miembros afiliados podrán encontrarlos y redimirlos identificando tu negocio.',
                       icon: Icons.info_outline_rounded,
                       iconColor: const Color(0xFF4ECDC4),
                     ),
@@ -504,137 +563,361 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
     );
   }
 
-  Widget _buildCompanyDropdown(
+  // ── Tarjeta de información exclusiva de la empresa (sin select para negocios) ──
+
+  Widget _buildCompanyInfoCard(
+    Company? company,
+    AppThemeColors themeColors,
+    bool isSuperAdmin,
+  ) {
+    if (company == null) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: themeColors.textPrimary.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: themeColors.borderColor),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.business_outlined, color: Colors.amber, size: 28),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                'No se ha detectado una empresa vinculada a tu cuenta. Comunícate con soporte.',
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final label = _resolveCompanyLabel(company);
+    final commercialName = company.name.trim();
+    final hasRazonSocial =
+        company.razonSocial != null && company.razonSocial!.trim().isNotEmpty;
+    final photoUrl = company.photoUrl.trim();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF6C63FF).withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6C63FF).withValues(alpha: 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar o Logo
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6C63FF).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: photoUrl.isNotEmpty
+                    ? Image.network(
+                        photoUrl.startsWith('http')
+                            ? photoUrl
+                            : '${ApiConfig.serverUrl}$photoUrl',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(
+                            label.isNotEmpty ? label[0].toUpperCase() : 'E',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          label.isNotEmpty ? label[0].toUpperCase() : 'E',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 14),
+
+              // Información
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: themeColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.verified_rounded,
+                                size: 12,
+                                color: Color(0xFF10B981),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isSuperAdmin ? 'Empresa Seleccionada' : 'Tu Empresa',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF10B981),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (hasRazonSocial && commercialName != label) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Nombre comercial: $commercialName',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: themeColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 6,
+                      children: [
+                        _buildDetailChip(
+                          Icons.badge_outlined,
+                          'NIT: ${company.nit}',
+                          themeColors,
+                        ),
+                        if (company.codigoEmpresa != null &&
+                            company.codigoEmpresa!.isNotEmpty)
+                          _buildDetailChip(
+                            Icons.tag_rounded,
+                            'Código: ${company.codigoEmpresa}',
+                            themeColors,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: themeColors.textPrimary.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: themeColors.borderColor.withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.lock_rounded,
+                  size: 14,
+                  color: themeColors.textSecondary.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isSuperAdmin
+                        ? 'Modo Administrador: El beneficio se asociará a la empresa seleccionada arriba.'
+                        : 'Seguridad: Los beneficios se vinculan automáticamente a tu empresa y no pueden transferirse a terceros.',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: themeColors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailChip(
+    IconData icon,
+    String text,
+    AppThemeColors themeColors,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 13,
+          color: themeColors.textSecondary.withValues(alpha: 0.7),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: themeColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Selector exclusivo de SuperAdmin para asociar beneficios a cualquier empresa
+  Widget _buildSuperAdminCompanySelector(
     CompanyProvider companyProvider,
     AppThemeColors themeColors,
   ) {
     final companies = companyProvider.companies;
     final isLoadingCompanies = companyProvider.isLoading && companies.isEmpty;
 
-    final hasValidSelection = _selectedCompanyId != null && companies.any((c) => c.id == _selectedCompanyId);
-    final dropdownValue = hasValidSelection ? _selectedCompanyId : null;
-
     return Container(
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: themeColors.textPrimary.withValues(alpha: 0.05),
+        color: themeColors.textPrimary.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: dropdownValue == null
-              ? themeColors.borderColor
-              : const Color(0xFF6C63FF).withValues(alpha: 0.5),
+          color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
         ),
       ),
-      child: isLoadingCompanies
-          ? const Padding(
-              padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Text('Cargando empresas...'),
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.admin_panel_settings_rounded,
+                size: 16,
+                color: Color(0xFF6C63FF),
               ),
-            )
-          : DropdownButtonHideUnderline(
-              child: ButtonTheme(
-                alignedDropdown: true,
-                child: DropdownButton<int>(
-                  value: dropdownValue,
-                  isExpanded: true,
-                  dropdownColor: themeColors.cardBackground,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: themeColors.textSecondary,
-                  ),
-                  hint: Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.business_rounded,
-                        color: themeColors.textSecondary.withValues(alpha: 0.5),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Selecciona una empresa...',
-                        style: GoogleFonts.inter(
-                          color: themeColors.textSecondary.withValues(alpha: 0.5),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  items: companies.map((company) {
-                    final label = _resolveCompanyLabel(company);
-                    return DropdownMenuItem<int>(
-                      value: company.id,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 14,
-                              backgroundColor: company.isActive
-                                  ? const Color(0xFF6C63FF).withValues(alpha: 0.15)
-                                  : Colors.white.withValues(alpha: 0.08),
-                              child: Text(
-                                label.isNotEmpty
-                                    ? label[0].toUpperCase()
-                                    : '?',
-                                style: GoogleFonts.outfit(
-                                  color: company.isActive
-                                      ? const Color(0xFF4ECDC4)
-                                      : Colors.white38,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    label,
-                                    style: GoogleFonts.inter(
-                                      color: themeColors.textPrimary,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    'NIT: ${company.nit}',
-                                    style: GoogleFonts.inter(
-                                      color:
-                                          themeColors.textSecondary
-                                              .withValues(alpha: 0.6),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedCompanyId = value);
-                  },
+              const SizedBox(width: 6),
+              Text(
+                'Cambiar Empresa (Exclusivo SuperAdmin)',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF6C63FF),
                 ),
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          isLoadingCompanies
+              ? const Row(
+                  children: [
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 8),
+                    Text('Cargando empresas del sistema...'),
+                  ],
+                )
+              : DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedCompanyId,
+                    isExpanded: true,
+                    dropdownColor: themeColors.cardBackground,
+                    icon: Icon(
+                      Icons.swap_horiz_rounded,
+                      color: themeColors.textSecondary,
+                    ),
+                    hint: Text(
+                      'Selecciona otra empresa...',
+                      style: GoogleFonts.inter(
+                        color: themeColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                    items: companies.map((comp) {
+                      final name = _resolveCompanyLabel(comp);
+                      return DropdownMenuItem<int>(
+                        value: comp.id,
+                        child: Text(
+                          '$name (NIT: ${comp.nit})',
+                          style: GoogleFonts.inter(
+                            color: themeColors.textPrimary,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _selectedCompanyId = val);
+                      }
+                    },
+                  ),
+                ),
+        ],
+      ),
     );
   }
 }

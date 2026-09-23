@@ -595,108 +595,128 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                   const SizedBox(height: 16),
 
                   // ── Table ──
-                  Container(
-                    decoration: BoxDecoration(
-                      color: themeColors.cardBackground,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: themeColors.borderColor),
-                    ),
-                    child: Column(
-                      children: [
-                        // Table header with filters
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.tableHeaderBg,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                          ),
-                          child: DefaultTextStyle.merge(
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                            child: Row(
-                            children: [
-                              Expanded(
-                                child: HeaderFilter(
-                                  title: 'ID',
-                                  onChanged: (v) =>
-                                      setState(() => _idFilter = v),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: HeaderFilter(
-                                  title: 'Referente',
-                                  onChanged: (v) =>
-                                      setState(() => _referenteFilter = v),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: HeaderFilter(
-                                  title: 'Email Referido',
-                                  onChanged: (v) =>
-                                      setState(() => _emailFilter = v),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: HeaderFilter(
-                                  title: 'Estado',
-                                  onChanged: (v) =>
-                                      setState(() => _estadoFilter = v),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: HeaderFilter(
-                                  title: 'Recompensa',
-                                  onChanged: (v) =>
-                                      setState(() => _recompensaFilter = v),
-                                ),
-                              ),
-                              const SizedBox(width: 110), // Actions column
-                            ],
-                          ),
-                          ),
-                        ),
-                        // Table rows
-                        if (pageItems.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(40),
-                            child: Center(
-                              child: Text(
-                                'No se encontraron referidos',
-                                style: GoogleFonts.inter(
-                                  color: themeColors.textSecondary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ...pageItems.map((r) => _buildAdminRow(r, themeColors)),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final minTableWidth = 850.0;
+                      final tableWidth = constraints.maxWidth > minTableWidth
+                          ? constraints.maxWidth
+                          : minTableWidth;
 
-                        // Pagination
-                        CustomPaginationFooter(
-                          totalItems: totalItems,
-                          currentPage: _currentPage,
-                          rowsPerPage: _rowsPerPage,
-                          onPageChanged: (newPage) =>
-                              setState(() => _currentPage = newPage),
-                          onRowsPerPageChanged: (newSize) => setState(() {
-                            _rowsPerPage = newSize;
-                            _currentPage = 1;
-                          }),
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: themeColors.cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: themeColors.borderColor),
                         ),
-                      ],
-                    ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: tableWidth,
+                                child: Column(
+                                  children: [
+                                    // Table header with filters
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.tableHeaderBg,
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(16),
+                                        ),
+                                      ),
+                                      child: DefaultTextStyle.merge(
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: HeaderFilter(
+                                                title: 'ID',
+                                                onChanged: (v) =>
+                                                    setState(() => _idFilter = v),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: HeaderFilter(
+                                                title: 'Referente',
+                                                onChanged: (v) =>
+                                                    setState(() => _referenteFilter = v),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: HeaderFilter(
+                                                title: 'Email Referido',
+                                                onChanged: (v) =>
+                                                    setState(() => _emailFilter = v),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: HeaderFilter(
+                                                title: 'Estado',
+                                                onChanged: (v) =>
+                                                    setState(() => _estadoFilter = v),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: HeaderFilter(
+                                                title: 'Recompensa',
+                                                onChanged: (v) =>
+                                                    setState(() => _recompensaFilter = v),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 110), // Actions column
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    // Table rows
+                                    if (pageItems.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.all(40),
+                                        child: Center(
+                                          child: Text(
+                                            'No se encontraron referidos',
+                                            style: GoogleFonts.inter(
+                                              color: themeColors.textSecondary,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ...pageItems.map((r) => _buildAdminRow(r, themeColors)),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // Pagination
+                            CustomPaginationFooter(
+                              totalItems: totalItems,
+                              currentPage: _currentPage,
+                              rowsPerPage: _rowsPerPage,
+                              onPageChanged: (newPage) =>
+                                  setState(() => _currentPage = newPage),
+                              onRowsPerPageChanged: (newSize) => setState(() {
+                                _rowsPerPage = newSize;
+                                _currentPage = 1;
+                              }),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

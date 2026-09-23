@@ -11,6 +11,7 @@ import '../../company/providers/company_provider.dart';
 import '../../role/providers/role_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 
@@ -118,6 +119,14 @@ class _UserFormScreenState extends State<UserFormScreen> {
     final roleProvider = context.watch<RoleProvider>();
     final companyProvider = context.watch<CompanyProvider>();
     final userProvider = context.watch<UserProvider>();
+    final authProvider = context.watch<AuthProvider>();
+    final isSuperAdmin = authProvider.isSuperAdmin;
+    final allowedRoles = roleProvider.roles.where((r) {
+      if (!isSuperAdmin && (r.code == 'superadmin' || r.id == 1)) {
+        return false;
+      }
+      return true;
+    }).toList();
     final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     return Scaffold(
@@ -388,7 +397,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                 onChanged: (val) {
                                   setState(() => _selectedRoleId = val);
                                 },
-                                items: roleProvider.roles.map((r) {
+                                items: allowedRoles.map((r) {
                                   return DropdownMenuItem<int>(
                                     value: r.id,
                                     child: Text(r.name, style: GoogleFonts.inter(color: themeColors.textPrimary)),

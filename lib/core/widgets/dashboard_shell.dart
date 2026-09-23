@@ -12,6 +12,8 @@ import '../../features/menu/models/menu_model.dart';
 import '../../features/menu/providers/menu_provider.dart';
 import '../../features/referidos/providers/referido_provider.dart';
 import '../../features/rifas/providers/rifa_provider.dart';
+import '../../features/notificaciones/providers/notificacion_provider.dart';
+import '../../features/notificaciones/widgets/notificacion_bell.dart';
 
 /// Premium layout wrapper providing dynamic left sidebar (desktop) or Drawer (mobile),
 /// an active company switcher, a language switcher (ES/EN), and dynamic menu loading.
@@ -36,8 +38,10 @@ class _DashboardShellState extends State<DashboardShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final menuProvider = context.read<MenuProvider>();
-      if (menuProvider.myMenus.isEmpty) {
-        menuProvider.loadMyMenus();
+      menuProvider.loadMyMenus();
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.roleCode == 'superadmin') {
+        context.read<NotificacionProvider>().startPolling();
       }
     });
   }
@@ -239,7 +243,8 @@ class _DashboardShellState extends State<DashboardShell> {
     final isMember = authProvider.roleCode == 'user' || authProvider.roleCode == 'user_member';
     final showUnifiedBranding = isMember ||
         authProvider.roleCode == 'business_validator' ||
-        authProvider.roleCode == 'superadmin';
+        authProvider.roleCode == 'superadmin' ||
+        authProvider.roleCode == 'operador';
 
     final rawMenus = menuProvider.myMenus;
     final menus = <AllowedMenu>[];
@@ -413,7 +418,7 @@ class _DashboardShellState extends State<DashboardShell> {
       );
     }
 
-    if (authProvider.isLoggedIn && !hasRifas && !isBusinessValidator) {
+    if (authProvider.isLoggedIn && isMember && !hasRifas) {
       menus.add(
         AllowedMenu(
           id: 997,
@@ -429,7 +434,7 @@ class _DashboardShellState extends State<DashboardShell> {
       );
     }
 
-    if (authProvider.isLoggedIn && !hasBeneficios && !isBusinessValidator) {
+    if (authProvider.isLoggedIn && isMember && !hasBeneficios) {
       menus.add(
         AllowedMenu(
           id: 998,
@@ -445,7 +450,7 @@ class _DashboardShellState extends State<DashboardShell> {
       );
     }
 
-    if (authProvider.isLoggedIn && !hasReferidos && !isBusinessValidator) {
+    if (authProvider.isLoggedIn && isMember && !hasReferidos) {
       menus.add(
         AllowedMenu(
           id: 999,
@@ -461,13 +466,27 @@ class _DashboardShellState extends State<DashboardShell> {
       );
     }
 
-    if (authProvider.isLoggedIn && !isBusinessValidator) {
+    if (authProvider.isLoggedIn && isMember) {
       menus.add(
         AllowedMenu(
           id: 992,
-          label: authProvider.isAdminOrSuperAdmin ? 'Membresías' : 'Mi Membresía',
-          labelEn: authProvider.isAdminOrSuperAdmin ? 'Memberships' : 'My Membership',
-          labelFr: authProvider.isAdminOrSuperAdmin ? 'Adhésions' : 'Mon Adhésion',
+          label: 'Mi Membresía',
+          labelEn: 'My Membership',
+          labelFr: 'Mon Adhésion',
+          route: '/membresia',
+          icon: 'workspace_premium_rounded',
+          sortOrder: 105,
+          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+          submenus: const [],
+        ),
+      );
+    } else if (authProvider.isLoggedIn && authProvider.isAdminOrSuperAdmin) {
+      menus.add(
+        AllowedMenu(
+          id: 992,
+          label: 'Membresías',
+          labelEn: 'Memberships',
+          labelFr: 'Adhésions',
           route: '/membresia',
           icon: 'workspace_premium_rounded',
           sortOrder: 105,
@@ -723,6 +742,12 @@ class _DashboardShellState extends State<DashboardShell> {
             ),
           ],
 
+          // Superadmin & admin payment notifications bell
+          if (authProvider.roleCode == 'superadmin' || authProvider.roleCode == 'admin') ...[
+            const NotificacionBell(),
+            const SizedBox(width: 8),
+          ],
+
           // Language switcher
           Center(
             child: Container(
@@ -771,11 +796,12 @@ class _DashboardShellState extends State<DashboardShell> {
             tooltip: context.tr('logout'),
             onPressed: () async {
               menuProvider.clearMyMenus();
+              context.read<NotificacionProvider>().stopPolling();
               context.read<ReferidoProvider>().resetSilent();
               context.read<RifaProvider>().resetSilent();
               await authProvider.logout();
               if (mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
               }
             },
           ),
