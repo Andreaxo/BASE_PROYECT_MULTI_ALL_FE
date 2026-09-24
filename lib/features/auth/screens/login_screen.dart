@@ -9,6 +9,10 @@ import '../../referidos/providers/referido_provider.dart';
 import '../../rifas/providers/rifa_provider.dart';
 import '../../menu/providers/menu_provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/legal/legal_constants.dart';
+import '../../../core/legal/legal_modal.dart';
+import '../../../core/legal/legal_footer.dart';
+import '../../../core/legal/cookie_banner.dart';
 
 enum AuthTab {
   login,
@@ -61,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen>
   String? _validatedCompanyName;
   String? _companyValidationError;
   Timer? _companyDebounceTimer;
+  bool _termsAccepted = false; // Required by Ley 1581 de 2012 (Habeas Data)
 
   // Animations
   late AnimationController _animController;
@@ -439,6 +444,21 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
+    if (!_termsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Debes aceptar los Términos y la Política de Tratamiento de Datos Personales (Ley 1581) para registrarte.',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w500, fontSize: 13),
+          ),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
     if (_referralType == 'company' &&
         _companyCodeCtrl.text.trim().isNotEmpty &&
         _validatedCompanyName == null) {
@@ -517,12 +537,19 @@ class _LoginScreenState extends State<LoginScreen>
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
-                                vertical: 32,
+                                vertical: 28,
                               ),
-                              child: _buildAuthCard(
-                                context,
-                                size,
-                                themeProvider,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildAuthCard(
+                                    context,
+                                    size,
+                                    themeProvider,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const LegalFooter(compact: true),
+                                ],
                               ),
                             ),
                           ),
@@ -537,12 +564,19 @@ class _LoginScreenState extends State<LoginScreen>
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
-                          vertical: 28,
+                          vertical: 24,
                         ),
-                        child: _buildAuthCard(
-                          context,
-                          size,
-                          themeProvider,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildAuthCard(
+                              context,
+                              size,
+                              themeProvider,
+                            ),
+                            const SizedBox(height: 16),
+                            const LegalFooter(compact: true),
+                          ],
                         ),
                       ),
                     ),
@@ -631,6 +665,9 @@ class _LoginScreenState extends State<LoginScreen>
                   ],
                 ),
               ),
+
+              // Floating Cookie Consent Banner (SIC compliant)
+              const CookieBanner(),
             ],
           ),
         ),
@@ -1563,16 +1600,107 @@ class _LoginScreenState extends State<LoginScreen>
         _buildReferralSection(isDark, themeProvider),
         const SizedBox(height: 20),
 
-        // Terms notice
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            'Al registrarte, aceptas los Términos de Servicio y la Política de Privacidad de Conexiate.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 11.5,
-              color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+        // Terms & Habeas Data consent checkbox (Ley 1581 de 2012)
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFFE2E8F0),
             ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Checkbox(
+                  value: _termsAccepted,
+                  activeColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  onChanged: (val) {
+                    setState(() {
+                      _termsAccepted = val ?? false;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      height: 1.45,
+                      color: isDark
+                          ? const Color(0xFFE2E8F0)
+                          : const Color(0xFF334155),
+                    ),
+                    children: [
+                      const TextSpan(text: 'He leído y acepto los '),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: InkWell(
+                          onTap: () => LegalModal.show(
+                            context,
+                            initialTab: LegalTab.terms,
+                          ),
+                          child: Text(
+                            'Términos y Condiciones',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF3B82F6),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const TextSpan(text: ', la '),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
+                        child: InkWell(
+                          onTap: () => LegalModal.show(
+                            context,
+                            initialTab: LegalTab.privacy,
+                          ),
+                          child: Text(
+                            'Política de Privacidad',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF3B82F6),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            ' y autorizo el tratamiento de mis datos personales a ',
+                      ),
+                      const TextSpan(
+                        text: '${LegalConstants.companyName} (${LegalConstants.brandName})',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const TextSpan(
+                        text: ' conforme a la Ley 1581 de 2012.',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 18),

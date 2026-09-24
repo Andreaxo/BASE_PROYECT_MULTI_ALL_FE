@@ -14,6 +14,8 @@ import '../../features/referidos/providers/referido_provider.dart';
 import '../../features/rifas/providers/rifa_provider.dart';
 import '../../features/notificaciones/providers/notificacion_provider.dart';
 import '../../features/notificaciones/widgets/notificacion_bell.dart';
+import '../legal/legal_constants.dart';
+import '../legal/legal_modal.dart';
 
 /// Premium layout wrapper providing dynamic left sidebar (desktop) or Drawer (mobile),
 /// an active company switcher, a language switcher (ES/EN), and dynamic menu loading.
@@ -664,6 +666,45 @@ class _DashboardShellState extends State<DashboardShell> {
                 ),
               ),
             ),
+            Divider(color: themeColors.borderColor.withValues(alpha: 0.5), height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => LegalModal.show(context),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.gavel_rounded, size: 12, color: themeColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Aspectos Legales',
+                            style: GoogleFonts.inter(
+                              color: themeColors.textSecondary,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'NIT: ${LegalConstants.nit}',
+                    style: GoogleFonts.inter(
+                      color: themeColors.textSecondary.withValues(alpha: 0.7),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -788,6 +829,17 @@ class _DashboardShellState extends State<DashboardShell> {
             ),
             tooltip: themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
             onPressed: () => themeProvider.toggleTheme(),
+          ),
+
+          // Legal information modal button
+          IconButton(
+            icon: Icon(
+              Icons.gavel_rounded,
+              color: themeColors.textSecondary,
+              size: 20,
+            ),
+            tooltip: 'Centro Legal y Transparencia',
+            onPressed: () => LegalModal.show(context),
           ),
 
           // Logout button
