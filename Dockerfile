@@ -32,9 +32,5 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Expose HTTP port 80
 EXPOSE 80
 
-# Healthcheck monitoring for Dokploy & Docker
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/healthz || exit 1
-
 # Start Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
