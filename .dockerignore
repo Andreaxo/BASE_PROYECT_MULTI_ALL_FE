@@ -1,0 +1,31 @@
+# Version control
+.git
+.gitignore
+
+# Flutter local build & cache
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+
+# Mobile & Desktop native platforms (not needed for web build)
+android/
+ios/
+windows/
+macos/
+linux/
+
+# Tests & analysis
+test/
+analysis_options.yaml
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Documentation & logs
+*.md
+*.log

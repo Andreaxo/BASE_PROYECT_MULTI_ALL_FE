@@ -7,7 +7,7 @@ class ApiConfig {
   // flutter build web --release --dart-define=API_URL=https://api.tudominio.com/api
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://localhost:8080/api',
+    defaultValue: 'https://api.conexiate.co/api',
   );
 
   // Base server URL (without /api) to load uploaded images
