@@ -33,6 +33,22 @@ class MembresiaApiService {
     }
   }
 
+  /// Confirm transaction status directly using Wompi transaction ID
+  static Future<MembresiaModel> confirmarTransaccion(String transactionId) async {
+    final response = await ApiService.post(
+      ApiConfig.confirmarTransaccionMembresiaEndpoint,
+      {'transaction_id': transactionId},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return MembresiaModel.fromJson(data);
+    } else {
+      final body = jsonDecode(response.body) as Map<String, dynamic>?;
+      throw Exception(body?['error'] ?? 'Error al confirmar transacción en Wompi');
+    }
+  }
+
   /// Cancel automatic renewal
   static Future<MembresiaModel> cancelarRenovacion() async {
     final response = await ApiService.put(

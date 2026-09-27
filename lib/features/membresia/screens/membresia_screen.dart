@@ -31,8 +31,35 @@ class _MembresiaScreenState extends State<MembresiaScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MembresiaProvider>().loadMiMembresia();
+      _checkWompiRedirectAndLoad();
     });
+  }
+
+  void _checkWompiRedirectAndLoad() async {
+    final provider = context.read<MembresiaProvider>();
+    String? txId = Uri.base.queryParameters['id'];
+    if (txId == null && Uri.base.fragment.contains('id=')) {
+      final fragmentUri = Uri.tryParse('dummy:///${Uri.base.fragment}');
+      txId = fragmentUri?.queryParameters['id'];
+    }
+
+    if (txId != null && txId.isNotEmpty) {
+      final success = await provider.confirmarTransaccion(txId);
+      if (mounted && success) {
+        CustomAlert.show(
+          context,
+          message:
+              '🎉 ¡Pago confirmado con éxito! Tu membresía ya se encuentra activa.',
+          isSuccess: true,
+          duration: const Duration(seconds: 8),
+        );
+        return;
+      }
+    }
+
+    if (mounted) {
+      await provider.loadMiMembresia();
+    }
   }
 
   @override
@@ -806,6 +833,79 @@ class _WompiPaymentModalDialogState extends State<_WompiPaymentModalDialog> {
   void initState() {
     super.initState();
     _startPolling();
+    _checkRedirectId();
+  }
+
+  void _checkRedirectId() {
+    String? txId = Uri.base.queryParameters['id'];
+    if (txId == null && Uri.base.fragment.contains('id=')) {
+      final fragmentUri = Uri.tryParse('dummy:///${Uri.base.fragment}');
+      txId = fragmentUri?.queryParameters['id'];
+    }
+    if (txId != null && txId.isNotEmpty) {
+      _verifyTransaction(txId);
+    }
+  }
+
+  Future<void> _verifyTransaction(String txId) async {
+    final provider = context.read<MembresiaProvider>();
+    final ok = await provider.confirmarTransaccion(txId);
+    if (!mounted) return;
+    if (ok) {
+      _pollTimer?.cancel();
+      setState(() {
+        _status = PaymentModalStatus.approved;
+      });
+    } else {
+      if (provider.errorMessage != null) {
+        CustomAlert.show(context, message: provider.errorMessage!, isSuccess: false);
+      }
+    }
+  }
+
+  void _showManualIdDialog() {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Verificar con ID de Wompi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ingresa el ID de la transacción generado por Wompi (lo puedes consultar en tu comprobante o pantalla de Wompi):',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              decoration: const InputDecoration(
+                labelText: 'ID de transacción Wompi',
+                hintText: 'Ej: 15324-171829102-4821',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final id = textController.text.trim();
+              Navigator.pop(ctx);
+              if (id.isNotEmpty) {
+                _verifyTransaction(id);
+              }
+            },
+            child: const Text('Validar y Activar'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startPolling() {
@@ -1191,6 +1291,23 @@ class _WompiPaymentModalDialogState extends State<_WompiPaymentModalDialog> {
           ),
           const SizedBox(height: 8),
         ],
+
+        OutlinedButton.icon(
+          onPressed: _showManualIdDialog,
+          icon: const Icon(Icons.receipt_long_rounded, size: 16),
+          label: const Text('¿Ya pagaste? Ingresar ID de Wompi'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.accent,
+            side: BorderSide(
+              color: AppColors.accent.withValues(alpha: 0.5),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
 
         TextButton(
           onPressed: () {

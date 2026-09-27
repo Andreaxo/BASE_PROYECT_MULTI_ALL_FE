@@ -33,6 +33,7 @@ class ApiConfig {
   static const String rifasEndpoint = '$baseUrl/rifas';
   static const String miMembresiaEndpoint = '$baseUrl/membresia/mi-membresia';
   static const String iniciarPagoMembresiaEndpoint = '$baseUrl/membresia/iniciar-pago';
+  static const String confirmarTransaccionMembresiaEndpoint = '$baseUrl/membresia/confirmar-transaccion';
   static const String simularPagoMembresiaEndpoint = '$baseUrl/membresia/simular-pago';
   static const String cancelarRenovacionMembresiaEndpoint = '$baseUrl/membresia/cancelar-renovacion';
   static const String adminMembresiasEndpoint = '$baseUrl/membresia/admin/todas';
