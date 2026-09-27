@@ -52,7 +52,11 @@ class _MembresiaScreenState extends State<MembresiaScreen>
 
   Future<void> _handlePayment() async {
     final provider = context.read<MembresiaProvider>();
-    final resp = await provider.iniciarPago();
+    // When in HTTPS (production web), pass the redirect URL explicitly so Wompi redirects back to the app
+    final redirectUrl = (Uri.base.scheme == 'https')
+        ? '${Uri.base.origin}/#/membresia'
+        : null;
+    final resp = await provider.iniciarPago(redirectUrl: redirectUrl);
 
     if (!mounted) return;
 
