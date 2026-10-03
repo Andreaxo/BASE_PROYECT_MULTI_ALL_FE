@@ -263,6 +263,10 @@ class AuthProvider extends ChangeNotifier {
     required String lastName,
     String? refCode,
     String? codigoEmpresa,
+    bool? familiaresExterior,
+    String? viviendaTipo,
+    bool? esEmprendedor,
+    String? descripcionEmprendimiento,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -281,6 +285,10 @@ class AuthProvider extends ChangeNotifier {
         lastName: lastName,
         refCode: refCode,
         codigoEmpresa: codigoEmpresa,
+        familiaresExterior: familiaresExterior,
+        viviendaTipo: viviendaTipo,
+        esEmprendedor: esEmprendedor,
+        descripcionEmprendimiento: descripcionEmprendimiento,
       );
 
       await AuthStorage.saveAuthData(

@@ -432,13 +432,13 @@ class _RoleListScreenState extends State<RoleListScreen> {
                                                   // Custom Header
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                                    decoration: const BoxDecoration(
-                                                      color: AppColors.tableHeaderBg,
+                                                    decoration: BoxDecoration(
+                                                       color: themeColors.tableHeaderBg,
                                                       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                                                     ),
                                                     child: DefaultTextStyle.merge(
                                                       style: GoogleFonts.inter(
-                                                        color: Colors.white,
+                                                        color: themeColors.tableHeaderFg,
                                                         fontWeight: FontWeight.bold,
                                                         fontSize: 13,
                                                       ),

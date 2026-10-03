@@ -10,6 +10,7 @@ class Rifa {
   final DateTime fechaFin;
   final DateTime fechaSorteo;
   final String estado; // 'activa', 'cerrada', 'sorteada', 'cancelada'
+  final bool esPremioMayor;
   final int? createBy;
   final DateTime createAt;
   final int? updateBy;
@@ -25,6 +26,7 @@ class Rifa {
     required this.fechaFin,
     required this.fechaSorteo,
     required this.estado,
+    this.esPremioMayor = false,
     this.createBy,
     required this.createAt,
     this.updateBy,
@@ -48,6 +50,7 @@ class Rifa {
           ? (DateTime.tryParse(json['fecha_sorteo'].toString()) ?? DateTime.now())
           : DateTime.now(),
       estado: (json['estado'] as String?) ?? 'activa',
+      esPremioMayor: json['es_premio_mayor'] == true,
       createBy: (json['create_by'] as num?)?.toInt(),
       createAt: json['create_at'] != null
           ? (DateTime.tryParse(json['create_at'].toString()) ?? DateTime.now())
@@ -70,6 +73,7 @@ class Rifa {
       'fecha_fin': fechaFin.toIso8601String().split('T').first,
       'fecha_sorteo': fechaSorteo.toIso8601String().split('T').first,
       'estado': estado,
+      'es_premio_mayor': esPremioMayor,
       'create_by': createBy,
       'create_at': createAt.toIso8601String(),
       'update_by': updateBy,
@@ -228,6 +232,7 @@ class CreateRifaRequest {
   final String fechaInicio; // YYYY-MM-DD
   final String fechaFin; // YYYY-MM-DD
   final String fechaSorteo; // YYYY-MM-DD
+  final bool? esPremioMayor;
 
   CreateRifaRequest({
     required this.nombre,
@@ -237,6 +242,7 @@ class CreateRifaRequest {
     required this.fechaInicio,
     required this.fechaFin,
     required this.fechaSorteo,
+    this.esPremioMayor,
   });
 
   Map<String, dynamic> toJson() => {
@@ -248,6 +254,7 @@ class CreateRifaRequest {
         'fecha_inicio': fechaInicio,
         'fecha_fin': fechaFin,
         'fecha_sorteo': fechaSorteo,
+        if (esPremioMayor != null) 'es_premio_mayor': esPremioMayor,
       };
 }
 
@@ -259,6 +266,7 @@ class UpdateRifaRequest {
   final String? fechaInicio;
   final String? fechaFin;
   final String? fechaSorteo;
+  final bool? esPremioMayor;
 
   UpdateRifaRequest({
     this.nombre,
@@ -268,6 +276,7 @@ class UpdateRifaRequest {
     this.fechaInicio,
     this.fechaFin,
     this.fechaSorteo,
+    this.esPremioMayor,
   });
 
   Map<String, dynamic> toJson() => {
@@ -278,6 +287,7 @@ class UpdateRifaRequest {
         if (fechaInicio != null) 'fecha_inicio': fechaInicio,
         if (fechaFin != null) 'fecha_fin': fechaFin,
         if (fechaSorteo != null) 'fecha_sorteo': fechaSorteo,
+        if (esPremioMayor != null) 'es_premio_mayor': esPremioMayor,
       };
 }
 

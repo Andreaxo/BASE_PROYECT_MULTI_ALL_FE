@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppThemeColors extends ThemeExtension<AppThemeColors> {
@@ -8,6 +8,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
   final Color borderColor;
   final List<Color> gradientBg;
   final Color sidebarBg;
+  final Color tableHeaderBg;
+  final Color tableHeaderFg;
 
   AppThemeColors({
     required this.cardBackground,
@@ -16,6 +18,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     required this.borderColor,
     required this.gradientBg,
     required this.sidebarBg,
+    required this.tableHeaderBg,
+    required this.tableHeaderFg,
   });
 
   @override
@@ -26,6 +30,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     Color? borderColor,
     List<Color>? gradientBg,
     Color? sidebarBg,
+    Color? tableHeaderBg,
+    Color? tableHeaderFg,
   }) {
     return AppThemeColors(
       cardBackground: cardBackground ?? this.cardBackground,
@@ -34,6 +40,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       borderColor: borderColor ?? this.borderColor,
       gradientBg: gradientBg ?? this.gradientBg,
       sidebarBg: sidebarBg ?? this.sidebarBg,
+      tableHeaderBg: tableHeaderBg ?? this.tableHeaderBg,
+      tableHeaderFg: tableHeaderFg ?? this.tableHeaderFg,
     );
   }
 
@@ -47,6 +55,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       borderColor: Color.lerp(borderColor, other.borderColor, t)!,
       gradientBg: t < 0.5 ? gradientBg : other.gradientBg,
       sidebarBg: Color.lerp(sidebarBg, other.sidebarBg, t)!,
+      tableHeaderBg: Color.lerp(tableHeaderBg, other.tableHeaderBg, t)!,
+      tableHeaderFg: Color.lerp(tableHeaderFg, other.tableHeaderFg, t)!,
     );
   }
 }
@@ -59,6 +69,8 @@ class AppTheme {
     borderColor: Colors.white.withValues(alpha: 0.08),
     gradientBg: const [Color(0xFF0F0C29), Color(0xFF1A1A2E)],
     sidebarBg: const Color.fromARGB(111, 4, 47, 71), // AppColors.cardBg equivalent
+    tableHeaderBg: const Color(0xFF181530),
+    tableHeaderFg: Colors.white,
   );
 
   static final lightThemeColors = AppThemeColors(
@@ -68,6 +80,8 @@ class AppTheme {
     borderColor: const Color(0xFFE2E8F0),
     gradientBg: const [Color(0xFFF1F5F9), Color(0xFFE2E8F0)],
     sidebarBg: const Color(0xFFF8FAFC),
+    tableHeaderBg: const Color(0xFFF1F5F9),
+    tableHeaderFg: const Color(0xFF1E1E2E),
   );
 
   static ThemeData get darkTheme {

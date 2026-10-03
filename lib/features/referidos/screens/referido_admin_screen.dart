@@ -215,6 +215,7 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Filter
     final filtered = provider.allReferidos.where((r) {
@@ -340,22 +341,31 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF0F0C29),
-                          Color(0xFF302B63),
-                          Color(0xFF24243E),
-                        ],
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? const [
+                                Color(0xFF0F0C29),
+                                Color(0xFF302B63),
+                                Color(0xFF24243E),
+                              ]
+                            : [
+                                Colors.white,
+                                const Color(0xFFF1F5F9),
+                              ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: isDark
+                            ? AppColors.primary.withValues(alpha: 0.3)
+                            : AppColors.primary.withValues(alpha: 0.2),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: isDark
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary.withValues(alpha: 0.06),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -388,16 +398,21 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                   Text(
                                     'Tu código de referido',
                                     style: GoogleFonts.inter(
-                                      color: Colors.white70,
-                                      fontSize: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : themeColors.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Comparte tu código personal para invitar a nuevos usuarios',
                                     style: GoogleFonts.inter(
-                                      color: Colors.white38,
-                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : themeColors.textSecondary,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
@@ -415,11 +430,23 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                   vertical: 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: AppColors.primary.withValues(alpha: 0.3),
+                                    width: 1.5,
                                   ),
+                                  boxShadow: isDark
+                                      ? null
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.04),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                 ),
                                 child: Row(
                                   children: [
@@ -434,7 +461,9 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                           ? provider.codeRefer
                                           : '—',
                                       style: GoogleFonts.outfit(
-                                        color: Colors.white,
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF1E1B4B),
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
                                         letterSpacing: 4,
@@ -623,15 +652,15 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                         horizontal: 16,
                                         vertical: 12,
                                       ),
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.tableHeaderBg,
+                                      decoration: BoxDecoration(
+                                         color: themeColors.tableHeaderBg,
                                         borderRadius: BorderRadius.vertical(
                                           top: Radius.circular(16),
                                         ),
                                       ),
                                       child: DefaultTextStyle.merge(
                                         style: GoogleFonts.inter(
-                                          color: Colors.white,
+                                          color: themeColors.tableHeaderFg,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),

@@ -66,28 +66,31 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
   }
 
   void _showDeleteDialog(Company company) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Eliminar empresa',
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: themeColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
           '¿Estás seguro de que deseas eliminar la empresa ${company.name}?',
-          style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7)),
+          style: GoogleFonts.inter(color: themeColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
+              style: GoogleFonts.inter(color: themeColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -569,13 +572,13 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                                           // Custom Header
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.tableHeaderBg,
+                                            decoration: BoxDecoration(
+                                               color: themeColors.tableHeaderBg,
                                               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                                             ),
                                             child: DefaultTextStyle.merge(
                                               style: GoogleFonts.inter(
-                                                color: Colors.white,
+                                                color: themeColors.tableHeaderFg,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13,
                                               ),
@@ -944,10 +947,10 @@ class _CompanyRowState extends State<_CompanyRow> {
         break;
       case 'prueba':
       default:
-        bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.15);
-        textColor = const Color(0xFFF59E0B);
-        label = 'Prueba';
-        icon = Icons.timer_outlined;
+        bgColor = const Color(0xFF10B981).withValues(alpha: 0.15);
+        textColor = const Color(0xFF10B981);
+        label = 'Prueba (1 Año)';
+        icon = Icons.card_giftcard_rounded;
         break;
     }
 

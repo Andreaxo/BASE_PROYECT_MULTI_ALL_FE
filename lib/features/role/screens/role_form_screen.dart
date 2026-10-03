@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -289,7 +289,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                         children: [
                           Text(
                             'Estado: ',
-                            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                            style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14),
                           ),
                           Switch(
                             value: _isActive,
@@ -297,7 +297,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+                            inactiveTrackColor: themeColors.borderColor,
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -325,9 +325,9 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: themeColors.cardBackground,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Theme.of(context).dividerColor),
+                            border: Border.all(color: themeColors.borderColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                               Text(
                                 'Información Básica',
                                 style: GoogleFonts.outfit(
-                                  color: Colors.white,
+                                  color: themeColors.textPrimary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -441,9 +441,9 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                     final rightColumn = Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(color: themeColors.borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,12 +454,12 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.lock_person_rounded, color: Colors.white70, size: 20),
+                                  Icon(Icons.lock_person_rounded, color: themeColors.textSecondary, size: 20),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Permisos y Reglas',
                                     style: GoogleFonts.outfit(
-                                      color: Colors.white,
+                                      color: themeColors.textPrimary,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -480,7 +480,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                     onPressed: () => _clearAll(menus),
                                     child: Text(
                                       'Limpiar',
-                                      style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+                                      style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 13),
                                     ),
                                   ),
                                 ],
@@ -559,7 +559,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                       shrinkWrap: true,
                                       physics: const NeverScrollableScrollPhysics(),
                                       itemCount: parentMenus.length,
-                                      separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.03), height: 1),
+                                      separatorBuilder: (_, __) => Divider(color: themeColors.borderColor.withValues(alpha: 0.5), height: 1),
                                       itemBuilder: (context, idx) {
                                         final parent = parentMenus[idx];
                                         final children = filteredMenus.where((m) => m.parentId == parent.id).toList();
@@ -594,14 +594,14 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                     ),
                           
                           const SizedBox(height: 16),
-                          Divider(color: Colors.white.withValues(alpha: 0.05)),
+                          Divider(color: themeColors.borderColor),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 '${_selectedPermissions.length} de ${menus.length * 4} permisos seleccionados',
-                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                                style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 13),
                               ),
                               Row(
                                 children: [
@@ -616,7 +616,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                                   const SizedBox(width: 6),
                                   Text(
                                     'Autoguardado de borrador activo',
-                                    style: GoogleFonts.inter(color: Colors.white30, fontSize: 11),
+                                    style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.7), fontSize: 11),
                                   ),
                                 ],
                               ),
@@ -649,7 +649,7 @@ class _RoleFormScreenState extends State<RoleFormScreen> {
                 const SizedBox(height: 40),
 
                 // Bottom Buttons Bar
-                Divider(color: Colors.white.withValues(alpha: 0.05)),
+                Divider(color: themeColors.borderColor),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

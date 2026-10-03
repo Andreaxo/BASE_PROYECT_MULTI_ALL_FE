@@ -789,7 +789,8 @@ class _DashboardShellState extends State<DashboardShell> {
             const SizedBox(width: 8),
           ],
 
-          // Language switcher
+          // Language switcher (Ocultado visualmente a petición del usuario; funcionalidad e infraestructura preservada)
+          /*
           Center(
             child: Container(
               margin: const EdgeInsets.only(right: 12),
@@ -820,6 +821,7 @@ class _DashboardShellState extends State<DashboardShell> {
               ),
             ),
           ),
+          */
 
           // Theme mode switcher
           IconButton(

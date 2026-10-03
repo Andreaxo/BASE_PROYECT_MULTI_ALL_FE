@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 class HeaderFilter extends StatefulWidget {
   final String title;
@@ -28,6 +29,10 @@ class _HeaderFilterState extends State<HeaderFilter> {
 
   @override
   Widget build(BuildContext context) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
+
     if (_isSearchOpen || _controller.text.isNotEmpty) {
       return Align(
         alignment: Alignment.centerLeft,
@@ -37,16 +42,23 @@ class _HeaderFilterState extends State<HeaderFilter> {
           child: TextField(
             controller: _controller,
             autofocus: true,
-            style: GoogleFonts.inter(fontSize: 11, color: Colors.white),
+            style: GoogleFonts.inter(fontSize: 11, color: themeColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Filtrar...',
-              hintStyle: const TextStyle(color: Colors.white24, fontSize: 11),
+              hintStyle: TextStyle(
+                color: themeColors.textSecondary.withValues(alpha: 0.5),
+                fontSize: 11,
+              ),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.04),
+              fillColor: themeColors.textPrimary.withValues(alpha: 0.05),
               suffixIcon: IconButton(
-                icon: const Icon(Icons.close_rounded, size: 12, color: Colors.white54),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 12,
+                  color: themeColors.textSecondary,
+                ),
                 onPressed: () {
                   setState(() {
                     _controller.clear();
@@ -59,7 +71,7 @@ class _HeaderFilterState extends State<HeaderFilter> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                borderSide: BorderSide(color: themeColors.borderColor),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
@@ -75,13 +87,19 @@ class _HeaderFilterState extends State<HeaderFilter> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+          widget.title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: themeColors.tableHeaderFg,
+          ),
+        ),
         const SizedBox(width: 6),
         IconButton(
           icon: Icon(
             Icons.search_rounded,
             size: 16,
-            color: Colors.white.withValues(alpha: 0.4),
+            color: themeColors.textSecondary.withValues(alpha: 0.7),
           ),
           onPressed: () {
             setState(() {
@@ -90,7 +108,7 @@ class _HeaderFilterState extends State<HeaderFilter> {
           },
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
-          hoverColor: Colors.white10,
+          hoverColor: themeColors.textPrimary.withValues(alpha: 0.06),
           splashRadius: 16,
         ),
       ],

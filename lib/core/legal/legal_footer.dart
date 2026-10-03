@@ -84,8 +84,8 @@ class LegalFooter extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Icon(Icons.open_in_new_rounded, size: 12, color: linkColor),
                       const SizedBox(width: 4),

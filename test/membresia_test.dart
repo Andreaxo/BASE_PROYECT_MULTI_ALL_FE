@@ -43,5 +43,66 @@ void main() {
         expect(response.referencia, 'MEMB-1-12345678');
       },
     );
+    test(
+      'MembresiaModel should correctly parse trial membership (prueba) for allied businesses',
+      () {
+        final now = DateTime.now();
+        final oneYearLater = now.add(const Duration(days: 365));
+        final json = {
+          'id': 2,
+          'usuario_id': 25,
+          'estado': 'prueba',
+          'fecha_inicio': now.toIso8601String(),
+          'fecha_fin': oneYearLater.toIso8601String(),
+          'renovacion_automatica': false,
+          'tiene_metodo_pago': false,
+        };
+
+        final model = MembresiaModel.fromJson(json);
+
+        expect(model.id, 2);
+        expect(model.usuarioId, 25);
+        expect(model.isPrueba, true);
+        expect(model.isVigente, true);
+        expect(model.isInactiva, false);
+        expect(model.isActiva, false);
+        expect(model.renovacionAutomatica, false);
+        expect(model.diasRestantes, greaterThan(360));
+      },
+    );
+
+    test(
+      'MembresiaModel isVigente is true for both activa and prueba, false for inactiva',
+      () {
+        final trial = MembresiaModel(
+          id: 3,
+          usuarioId: 30,
+          estado: 'prueba',
+          renovacionAutomatica: false,
+          tieneMetodoPago: false,
+        );
+        final active = MembresiaModel(
+          id: 4,
+          usuarioId: 31,
+          estado: 'activa',
+          renovacionAutomatica: true,
+          tieneMetodoPago: true,
+        );
+        final inactive = MembresiaModel(
+          id: 5,
+          usuarioId: 32,
+          estado: 'inactiva',
+          renovacionAutomatica: false,
+          tieneMetodoPago: false,
+        );
+
+        expect(trial.isVigente, true);
+        expect(trial.isPrueba, true);
+        expect(active.isVigente, true);
+        expect(active.isActiva, true);
+        expect(inactive.isVigente, false);
+        expect(inactive.isInactiva, true);
+      },
+    );
   });
 }

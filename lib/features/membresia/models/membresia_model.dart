@@ -22,6 +22,8 @@ class MembresiaModel {
   });
 
   bool get isActiva => estado.toLowerCase() == 'activa';
+  bool get isPrueba => estado.toLowerCase() == 'prueba';
+  bool get isVigente => isActiva || isPrueba;
   bool get isInactiva => estado.toLowerCase() == 'inactiva';
   bool get isVencida => estado.toLowerCase() == 'vencida';
   bool get isCancelada => estado.toLowerCase() == 'cancelada';

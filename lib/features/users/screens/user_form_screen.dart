@@ -194,7 +194,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                         children: [
                           Text(
                             'Estado: ',
-                            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                            style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14),
                           ),
                           Switch(
                             value: _isActive,
@@ -202,7 +202,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+                            inactiveTrackColor: themeColors.borderColor,
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -230,9 +230,9 @@ class _UserFormScreenState extends State<UserFormScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: themeColors.cardBackground,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Theme.of(context).dividerColor),
+                            border: Border.all(color: themeColors.borderColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

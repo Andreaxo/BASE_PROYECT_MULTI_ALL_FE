@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/custom_text_field.dart';
@@ -181,7 +181,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                         children: [
                           Text(
                             'Estado: ',
-                            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                            style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14),
                           ),
                           Switch(
                             value: _isActive,
@@ -189,7 +189,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                               setState(() => _isActive = value);
                             },
                             activeColor: const Color(0xFF4ECDC4),
-                            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
+                            inactiveTrackColor: themeColors.borderColor,
                           ),
                           Text(
                             _isActive ? 'Activo' : 'Inactivo',
@@ -217,9 +217,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: themeColors.cardBackground,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Theme.of(context).dividerColor),
+                            border: Border.all(color: themeColors.borderColor),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,9 +297,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                     final rightColumn = Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(color: themeColors.borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +307,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                           Text(
                             'Propiedades de Jerarquía e Ícono',
                             style: GoogleFonts.outfit(
-                              color: Colors.white,
+                              color: themeColors.textPrimary,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -319,17 +319,17 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              border: Border.all(color: themeColors.borderColor),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<int>(
                                 value: _selectedParentId,
-                                hint: Text('Ninguno (Menú Raíz)', style: GoogleFonts.inter(color: Colors.white30, fontSize: 14)),
-                                dropdownColor: const Color(0xFF1E1E2E),
-                                icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                                style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+                                hint: Text('Ninguno (Menú Raíz)', style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.6), fontSize: 14)),
+                                dropdownColor: themeColors.cardBackground,
+                                icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary),
+                                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 15),
                                 isExpanded: true,
                                 onChanged: (val) {
                                   setState(() => _selectedParentId = val);
@@ -359,8 +359,8 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.04),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                                color: themeColors.textPrimary.withValues(alpha: 0.04),
+                                border: Border.all(color: themeColors.borderColor),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -385,7 +385,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                                         Text(
                                           _selectedIcon.replaceAll('_rounded', '').replaceAll('_', ' ').toUpperCase(),
                                           style: GoogleFonts.inter(
-                                            color: Colors.white,
+                                            color: themeColors.textPrimary,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
                                           ),
@@ -394,14 +394,14 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                                         Text(
                                           'Hacer clic para cambiar ícono',
                                           style: GoogleFonts.inter(
-                                            color: Colors.white30,
+                                            color: themeColors.textSecondary,
                                             fontSize: 11,
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const Icon(Icons.chevron_right_rounded, color: Colors.white30),
+                                  Icon(Icons.chevron_right_rounded, color: themeColors.textSecondary),
                                 ],
                               ),
                             ),
@@ -433,7 +433,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                 const SizedBox(height: 40),
 
                 // Action buttons
-                Divider(color: Theme.of(context).extension<AppThemeColors>()?.borderColor ?? Colors.white.withValues(alpha: 0.05)),
+                Divider(color: themeColors.borderColor),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -463,6 +463,9 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
   }
 
   void _showIconPicker() {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) {
@@ -474,28 +477,28 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
             }).toList();
 
             return AlertDialog(
-              backgroundColor: const Color(0xFF1E1E2E),
+              backgroundColor: themeColors.cardBackground,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Seleccionar Ícono',
-                    style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: GoogleFonts.outfit(color: themeColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: themeColors.textPrimary.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      border: Border.all(color: themeColors.borderColor),
                     ),
                     child: TextField(
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                      style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Buscar ícono...',
-                        hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white30, size: 18),
+                        hintStyle: TextStyle(color: themeColors.textSecondary.withValues(alpha: 0.6), fontSize: 13),
+                        prefixIcon: Icon(Icons.search_rounded, color: themeColors.textSecondary, size: 18),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -516,7 +519,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                     ? Center(
                         child: Text(
                           'No se encontraron íconos',
-                          style: GoogleFonts.inter(color: Colors.white30, fontSize: 13),
+                          style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 13),
                         ),
                       )
                     : GridView.builder(
@@ -541,16 +544,16 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF6C63FF).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.04),
+                                  color: isSelected ? const Color(0xFF6C63FF).withValues(alpha: 0.2) : themeColors.textPrimary.withValues(alpha: 0.04),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF4ECDC4) : Colors.white.withValues(alpha: 0.08),
+                                    color: isSelected ? const Color(0xFF4ECDC4) : themeColors.borderColor,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
                                   entry.value,
-                                  color: isSelected ? const Color(0xFF4ECDC4) : Colors.white70,
+                                  color: isSelected ? const Color(0xFF4ECDC4) : themeColors.textSecondary,
                                   size: 24,
                                 ),
                               ),
@@ -562,7 +565,7 @@ class _MenuFormScreenState extends State<MenuFormScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text('Cerrar', style: GoogleFonts.inter(color: Colors.white54)),
+                  child: Text('Cerrar', style: GoogleFonts.inter(color: themeColors.textSecondary)),
                 ),
               ],
             );

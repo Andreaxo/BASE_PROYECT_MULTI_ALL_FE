@@ -6,7 +6,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
-import '../../../core/widgets/membership_gate_banner.dart';
 import '../../../core/widgets/stat_card.dart';
 import '../../referidos/providers/referido_provider.dart';
 import '../models/rifa_model.dart';
@@ -285,9 +284,57 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
               ),
               const SizedBox(height: 24),
 
-              // ── Gating Banner ──
-              const MembershipGateBanner(
-                featureName: 'las rifas y sorteos exclusivos',
+              // ── Condición de Entrega de Premios ──
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.verified_user_rounded,
+                        color: Color(0xFF60A5FA),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Participación abierta para todos los registrados',
+                            style: GoogleFonts.outfit(
+                              color: themeColors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Todos los usuarios de Conexiate participan en el sorteo. Para reclamar y recibir la entrega de cualquier premio en caso de resultar ganador, tu membresía debe encontrarse activa y al día en la fecha del sorteo.',
+                            style: GoogleFonts.inter(
+                              color: themeColors.textSecondary,
+                              fontSize: 12.5,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               // ── Active Rifa Hero Banner ──
@@ -450,15 +497,22 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
   }
 
   Widget _buildActiveRifaHero(Rifa rifa, int totalBoletosUser, AppThemeColors themeColors) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F172A),
-            Color(0xFF1E1B4B),
-            Color(0xFF312E81),
-          ],
+        gradient: LinearGradient(
+          colors: isDark
+              ? const [
+                  Color(0xFF0F172A),
+                  Color(0xFF1E1B4B),
+                  Color(0xFF312E81),
+                ]
+              : [
+                  themeColors.cardBackground,
+                  const Color(0xFFF1F5F9),
+                  const Color(0xFFEEF2FF),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -581,6 +635,39 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
                             ],
                           ),
                         ),
+                        if (rifa.esPremioMayor)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.amber.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 14),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'PREMIO MAYOR',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -610,7 +697,7 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
                     Text(
                       rifa.nombre,
                       style: GoogleFonts.outfit(
-                        color: Colors.white,
+                        color: isDark ? Colors.white : themeColors.textPrimary,
                         fontSize: isCompact ? 22 : 26,
                         fontWeight: FontWeight.bold,
                       ),
@@ -624,6 +711,33 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
                         style: GoogleFonts.inter(
                           color: Colors.white70,
                           fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    if (rifa.esPremioMayor) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.stars_rounded, color: Colors.amber, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '¡Este es un Premio Mayor! Los participantes con más referidos registrados durante este ciclo tienen mayores posibilidades de ganar.',
+                                style: GoogleFonts.inter(
+                                  color: Colors.amber.shade200,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -666,19 +780,19 @@ class _RifaUserScreenState extends State<RifaUserScreen> with SingleTickerProvid
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: isDark ? Colors.white.withValues(alpha: 0.1) : themeColors.textPrimary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24),
+                            border: Border.all(color: isDark ? Colors.white24 : themeColors.borderColor),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.confirmation_number_rounded, color: Colors.white, size: 18),
+                              Icon(Icons.confirmation_number_rounded, color: isDark ? Colors.white : themeColors.textPrimary, size: 18),
                               const SizedBox(width: 8),
                               Text(
                                 '$totalBoletosUser boletos en juego',
                                 style: GoogleFonts.inter(
-                                  color: Colors.white,
+                                  color: isDark ? Colors.white : themeColors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),

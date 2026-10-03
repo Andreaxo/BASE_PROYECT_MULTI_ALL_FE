@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -202,6 +202,54 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                 ),
               ),
 
+              if (companyBenefits.any((b) => b.isDeshabilitadoFaltaPago)) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFF59E0B),
+                        size: 26,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Membresía Empresarial Inactiva o Vencida',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: const Color(0xFFF59E0B),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Los beneficios de tu empresa se encuentran deshabilitados y ocultos para los usuarios hasta que la suscripción de la empresa sea renovada.',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: themeColors.textPrimary.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 24),
 
               // Search Bar
@@ -352,8 +400,13 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                                       ),
                                     ),
                                     StatusBadge(
-                                      label: benefit.isActive ? 'Activo' : 'Inactivo',
-                                      isActive: benefit.isActive,
+                                      label: benefit.isDeshabilitadoFaltaPago
+                                          ? 'Deshabilitado (Pago Pendiente)'
+                                          : (benefit.isActive ? 'Activo' : 'Inactivo'),
+                                      isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
+                                      color: benefit.isDeshabilitadoFaltaPago
+                                          ? const Color(0xFFF59E0B)
+                                          : null,
                                     ),
                                   ],
                                 ),
@@ -450,8 +503,13 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   StatusBadge(
-                                    label: benefit.isActive ? 'Activo' : 'Inactivo',
-                                    isActive: benefit.isActive,
+                                    label: benefit.isDeshabilitadoFaltaPago
+                                        ? 'Deshabilitado (Pago Pendiente)'
+                                        : (benefit.isActive ? 'Activo' : 'Inactivo'),
+                                    isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
+                                    color: benefit.isDeshabilitadoFaltaPago
+                                        ? const Color(0xFFF59E0B)
+                                        : null,
                                   ),
                                   const SizedBox(width: 16),
                                   Container(

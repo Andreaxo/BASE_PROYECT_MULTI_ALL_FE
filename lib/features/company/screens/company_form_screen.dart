@@ -243,7 +243,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                               Text(
                                 'Estado: ',
                                 style: GoogleFonts.inter(
-                                  color: Colors.white54,
+                                  color: themeColors.textSecondary,
                                   fontSize: 14,
                                 ),
                               ),
@@ -253,9 +253,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                   setState(() => _isActive = value);
                                 },
                                 activeColor: const Color(0xFF4ECDC4),
-                                inactiveTrackColor: Colors.white.withValues(
-                                  alpha: 0.1,
-                                ),
+                                inactiveTrackColor: themeColors.borderColor,
                               ),
                               Text(
                                 _isActive ? 'Activo' : 'Inactivo',
@@ -278,10 +276,10 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Theme.of(context).dividerColor,
+                          color: themeColors.borderColor,
                         ),
                       ),
                       child: Column(
@@ -331,7 +329,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                                   ? Icons
                                                         .domain_verification_rounded
                                                   : Icons.domain_add_rounded,
-                                              color: Colors.white70,
+                                              color: themeColors.textSecondary,
                                               size: 32,
                                             ),
                                     ),

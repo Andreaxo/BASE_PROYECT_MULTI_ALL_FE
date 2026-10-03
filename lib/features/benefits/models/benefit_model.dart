@@ -8,6 +8,7 @@ class Benefit {
   final String description;
   final int companyBenefits; // ID de la empresa vinculada
   final bool isActive;
+  final String estado;
   final int? createBy;
   final String? createAt;
   final String? createByName;
@@ -21,6 +22,7 @@ class Benefit {
     required this.description,
     required this.companyBenefits,
     this.isActive = true,
+    this.estado = 'activo',
     this.createBy,
     this.createAt,
     this.createByName,
@@ -29,10 +31,15 @@ class Benefit {
     this.updateByName,
   });
 
+  bool get isDeshabilitadoFaltaPago =>
+      estado == 'deshabilitado_falta_pago' ||
+      estado == 'deshabilitado' ||
+      estado.contains('falta_pago');
+
   factory Benefit.fromJson(Map<String, dynamic> json) {
-    final estadoStr = (json['estado'] as String?)?.toLowerCase();
+    final estadoStr = (json['estado'] as String?)?.toLowerCase() ?? 'activo';
     final bool isActiveFromBool = (json['is_active'] as bool?) ?? true;
-    final bool isActiveFromEstado = estadoStr == null || estadoStr == '' || estadoStr == 'activo';
+    final bool isActiveFromEstado = estadoStr == 'activo' || estadoStr == '';
 
     return Benefit(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -42,6 +49,7 @@ class Benefit {
           (json['company_benefit'] as num?)?.toInt() ??
           0,
       isActive: isActiveFromBool && isActiveFromEstado,
+      estado: estadoStr,
       createBy: (json['create_by'] as num?)?.toInt(),
       createAt: json['create_at']?.toString(),
       createByName: json['create_by_name']?.toString(),

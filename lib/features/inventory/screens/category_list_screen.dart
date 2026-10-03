@@ -63,15 +63,18 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
   }
 
   void _showDeleteDialog(Category category) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           context.tr('delete_category_title'),
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: themeColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -80,7 +83,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               .replaceAll('{name}', category.name)
               .replaceAll('{id}', category.id.toString()),
           style: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: themeColors.textSecondary,
           ),
         ),
         actions: [
@@ -88,7 +91,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
+              style: GoogleFonts.inter(color: themeColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -206,7 +209,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     return DashboardShell(
       title: context.tr('category_list_title'),
       child: !canView
-          ? _buildAccessDeniedWidget()
+          ? _buildAccessDeniedWidget(themeColors)
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -358,7 +361,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                             ],
                           ),
                         ),
-                        Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                        Divider(color: themeColors.borderColor, height: 1),
 
                         categoryProvider.isLoading && categoryProvider.categories.isEmpty
                             ? const Center(
@@ -370,9 +373,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                 ),
                               )
                             : categoryProvider.errorMessage != null && categoryProvider.categories.isEmpty
-                                ? _buildErrorWidget(categoryProvider)
+                                ? _buildErrorWidget(categoryProvider, themeColors)
                                 : filteredCategories.isEmpty
-                                    ? _buildEmptyWidget()
+                                    ? _buildEmptyWidget(themeColors)
                                     : Column(
                                         children: [
                                           LayoutBuilder(
@@ -389,10 +392,10 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                                     ),
                                                     child: DataTable(
                                                       headingRowColor: WidgetStateProperty.all(
-                                                        themeColors.textPrimary.withValues(alpha: 0.03),
+                                                        themeColors.tableHeaderBg,
                                                       ),
                                                       headingTextStyle: GoogleFonts.inter(
-                                                        color: themeColors.textPrimary,
+                                                        color: themeColors.tableHeaderFg,
                                                         fontWeight: FontWeight.bold,
                                                         fontSize: 13,
                                                       ),
@@ -422,13 +425,13 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                                                                   radius: 12,
                                                                   backgroundColor: category.isActive
                                                                       ? const Color(0xFF6C63FF).withValues(alpha: 0.2)
-                                                                      : Colors.white.withValues(alpha: 0.1),
+                                                                      : themeColors.textPrimary.withValues(alpha: 0.08),
                                                                   child: Text(
                                                                     category.name.isNotEmpty ? category.name[0].toUpperCase() : '',
                                                                     style: GoogleFonts.outfit(
                                                                       color: category.isActive
                                                                           ? const Color(0xFF4ECDC4)
-                                                                          : Colors.white60,
+                                                                          : themeColors.textSecondary,
                                                                       fontWeight: FontWeight.bold,
                                                                       fontSize: 11,
                                                                     ),
@@ -519,7 +522,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
   }
 
 
-  Widget _buildEmptyWidget() {
+  Widget _buildEmptyWidget(AppThemeColors themeColors) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -529,13 +532,13 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withValues(alpha: 0.15),
+              color: themeColors.textSecondary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 14),
             Text(
               context.tr('no_results'),
               style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.4),
+                color: themeColors.textSecondary,
                 fontSize: 14,
               ),
             ),
@@ -545,7 +548,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     );
   }
 
-  Widget _buildErrorWidget(CategoryProvider provider) {
+  Widget _buildErrorWidget(CategoryProvider provider, AppThemeColors themeColors) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -559,7 +562,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
           Text(
             provider.errorMessage!,
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: themeColors.textSecondary,
             ),
           ),
           const SizedBox(height: 14),
@@ -576,7 +579,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     );
   }
 
-  Widget _buildAccessDeniedWidget() {
+  Widget _buildAccessDeniedWidget(AppThemeColors themeColors) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -585,12 +588,12 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
           const SizedBox(height: 16),
           Text(
             'Acceso Denegado',
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.outfit(color: themeColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'No tienes permisos para visualizar este catálogo.',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14),
           ),
         ],
       ),

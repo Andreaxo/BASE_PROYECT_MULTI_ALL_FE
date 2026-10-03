@@ -112,10 +112,13 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
 
   void _showDeleteDialog(Benefit benefit, List<Company> companies) {
     final companyName = _resolveCompanyName(benefit.companyBenefits, companies);
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Eliminar beneficio',
@@ -264,6 +267,22 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
         final statusText = benefit.isActive ? 'activo' : 'inactivo';
         if (!statusText.contains(_statusFilter.toLowerCase())) return false;
       }
+
+      // Si es un usuario miembro, validar estrictamente que el beneficio esté activo
+      // y que la empresa asociada tenga membresía vigente (no vencida ni suspendida)
+      if (isMember) {
+        if (!benefit.isActive || benefit.isDeshabilitadoFaltaPago) {
+          return false;
+        }
+        final matchCompany = companies.where((c) => c.id == benefit.companyBenefits);
+        if (matchCompany.isNotEmpty) {
+          final s = matchCompany.first.suscripcionEstado.toLowerCase();
+          if (s == 'vencida' || s == 'suspendida') {
+            return false;
+          }
+        }
+      }
+
       return true;
     }).toList();
 
@@ -717,13 +736,13 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                       // Custom Header
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: const BoxDecoration(
-                          color: AppColors.tableHeaderBg,
+                        decoration: BoxDecoration(
+                          color: themeColors.tableHeaderBg,
                           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                         ),
                         child: DefaultTextStyle.merge(
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: themeColors.tableHeaderFg,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -1481,10 +1500,14 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     String benefitName,
     String companyName,
   ) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -1507,7 +1530,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               Text(
                 benefitName,
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: themeColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1517,7 +1540,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               Text(
                 'Establecimiento: $companyName',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: themeColors.textSecondary,
                   fontSize: 13,
                 ),
                 textAlign: TextAlign.center,
@@ -1529,7 +1552,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: themeColors.textPrimary.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: const Color(0xFF4ECDC4).withValues(alpha: 0.5),
@@ -1551,7 +1574,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                     SelectableText(
                       redemption.codigoValidacion,
                       style: GoogleFonts.spaceMono(
-                        color: Colors.white,
+                        color: themeColors.textPrimary,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 4,
@@ -1573,23 +1596,23 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  side: BorderSide(color: themeColors.borderColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
-                icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white),
+                icon: Icon(Icons.copy_rounded, size: 16, color: themeColors.textPrimary),
                 label: Text(
                   'Copiar Código',
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                  style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 13),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Muestra o dicta este código de 8 caracteres al encargado del comercio para aplicar tu beneficio.',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: themeColors.textSecondary,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -1633,10 +1656,13 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
         ? '${redemption.fechaUso!.day.toString().padLeft(2, '0')}/${redemption.fechaUso!.month.toString().padLeft(2, '0')}/${redemption.fechaUso!.year} ${redemption.fechaUso!.hour.toString().padLeft(2, '0')}:${redemption.fechaUso!.minute.toString().padLeft(2, '0')}'
         : '-';
 
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -1652,7 +1678,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               Text(
                 isUsed ? 'Beneficio Ya Canjeado' : 'Código Vencido',
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: themeColors.textPrimary,
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1661,19 +1687,19 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               Text(
                 benefitName,
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: themeColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              Divider(color: Colors.white.withValues(alpha: 0.1)),
+              Divider(color: themeColors.borderColor),
               const SizedBox(height: 8),
               Text(
                 'Código: ${redemption.codigoValidacion}',
                 style: GoogleFonts.spaceMono(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: themeColors.textSecondary,
                   fontSize: 14,
                 ),
               ),
@@ -1683,7 +1709,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                     ? 'Canjeado el: $dateStr'
                     : 'Este beneficio finalizó antes de ser utilizado.',
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: themeColors.textSecondary,
                   fontSize: 12.5,
                 ),
                 textAlign: TextAlign.center,
@@ -1858,7 +1884,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
@@ -1879,7 +1905,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               child: Text(
                 benefit.name,
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: themeColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -1895,12 +1921,12 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               // Detalles de empresa
               Row(
                 children: [
-                  Icon(Icons.business_rounded, color: Colors.white.withValues(alpha: 0.5), size: 18),
+                  Icon(Icons.business_rounded, color: themeColors.textSecondary, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     'Empresa: ',
                     style: GoogleFonts.inter(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: themeColors.textSecondary,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
@@ -1909,7 +1935,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                     child: Text(
                       companyName,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: themeColors.textPrimary,
                         fontSize: 13,
                       ),
                     ),
@@ -1931,8 +1957,13 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                     ),
                   ),
                   StatusBadge(
-                    label: benefit.isActive ? 'Activo' : 'Inactivo',
-                    isActive: benefit.isActive,
+                    label: benefit.isDeshabilitadoFaltaPago
+                        ? 'Deshabilitado (Pago Pendiente)'
+                        : (benefit.isActive ? 'Activo' : 'Inactivo'),
+                    isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
+                    color: benefit.isDeshabilitadoFaltaPago
+                        ? const Color(0xFFF59E0B)
+                        : null,
                   ),
                 ],
               ),
@@ -2103,8 +2134,13 @@ class _BenefitRowState extends State<_BenefitRow> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: StatusBadge(
-                  label: benefit.isActive ? 'Activo' : 'Inactivo',
-                  isActive: benefit.isActive,
+                  label: benefit.isDeshabilitadoFaltaPago
+                      ? 'Deshabilitado (Pago Pendiente)'
+                      : (benefit.isActive ? 'Activo' : 'Inactivo'),
+                  isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
+                  color: benefit.isDeshabilitadoFaltaPago
+                      ? const Color(0xFFF59E0B)
+                      : null,
                 ),
               ),
             ),

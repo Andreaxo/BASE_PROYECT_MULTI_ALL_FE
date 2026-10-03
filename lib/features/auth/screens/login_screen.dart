@@ -13,6 +13,7 @@ import '../../../core/legal/legal_constants.dart';
 import '../../../core/legal/legal_modal.dart';
 import '../../../core/legal/legal_footer.dart';
 import '../../../core/legal/cookie_banner.dart';
+import '../../faq/screens/faq_screen.dart';
 
 enum AuthTab {
   login,
@@ -66,6 +67,12 @@ class _LoginScreenState extends State<LoginScreen>
   String? _companyValidationError;
   Timer? _companyDebounceTimer;
   bool _termsAccepted = false; // Required by Ley 1581 de 2012 (Habeas Data)
+
+  // Survey questions state (Item 4)
+  bool? _familiaresExterior;
+  String? _viviendaTipo;
+  bool? _esEmprendedor;
+  final _descripcionEmprendimientoCtrl = TextEditingController();
 
   // Animations
   late AnimationController _animController;
@@ -131,6 +138,7 @@ class _LoginScreenState extends State<LoginScreen>
     _regConfirmPasswordCtrl.dispose();
     _refCodeCtrl.dispose();
     _companyCodeCtrl.dispose();
+    _descripcionEmprendimientoCtrl.dispose();
     _companyDebounceTimer?.cancel();
     super.dispose();
   }
@@ -480,6 +488,12 @@ class _LoginScreenState extends State<LoginScreen>
               _companyCodeCtrl.text.trim().isNotEmpty
           ? _companyCodeCtrl.text.trim()
           : null,
+      familiaresExterior: _familiaresExterior,
+      viviendaTipo: _viviendaTipo,
+      esEmprendedor: _esEmprendedor,
+      descripcionEmprendimiento: _esEmprendedor == true
+          ? _descripcionEmprendimientoCtrl.text.trim()
+          : null,
     );
 
     if (success && mounted) {
@@ -588,7 +602,8 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Language Dropdown
+                    // Language Dropdown (Ocultado visualmente a petición del usuario; funcionalidad e infraestructura preservada)
+                    /*
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
@@ -636,6 +651,7 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
+                    */
                     // Theme toggle button
                     Container(
                       decoration: BoxDecoration(
@@ -660,6 +676,35 @@ class _LoginScreenState extends State<LoginScreen>
                           size: 20,
                         ),
                         onPressed: () => themeProvider.toggleTheme(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // FAQ button
+                    Container(
+                      decoration: BoxDecoration(
+                        color: themeProvider.isDarkMode
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: themeProvider.isDarkMode
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Preguntas Frecuentes',
+                        icon: const Icon(
+                          Icons.help_outline_rounded,
+                          color: AppColors.accent,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const FaqScreen()),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -1134,6 +1179,41 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(
+                Icons.help_outline_rounded,
+                size: 15,
+                color: isDark ? Colors.white54 : const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 6),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FaqScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Preguntas Frecuentes y Ayuda',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1596,6 +1676,10 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 16),
 
+        // Questionnaire section (Item 4)
+        _buildSurveySection(isDark, themeProvider),
+        const SizedBox(height: 16),
+
         // Referral selector & inputs
         _buildReferralSection(isDark, themeProvider),
         const SizedBox(height: 20),
@@ -1789,8 +1873,9 @@ class _LoginScreenState extends State<LoginScreen>
 
   // ── Switch Back to Login Link ──
   Widget _buildBackToLoginLink(bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           '¿Ya tienes una cuenta? ',
@@ -1821,6 +1906,190 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  // ── Sección de Preguntas de Caracterización (Item 4) ──
+  Widget _buildSurveySection(bool isDark, ThemeProvider themeProvider) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.2)
+            : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.person_pin_circle_rounded,
+                size: 18,
+                color: AppColors.accent,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Cuéntanos un poco sobre ti',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Pregunta 1: Familiares en el exterior
+          Text(
+            '¿Tienes familiares en el exterior?',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _buildSurveyChip(
+                label: 'Sí',
+                isSelected: _familiaresExterior == true,
+                onTap: () => setState(() => _familiaresExterior = true),
+                isDark: isDark,
+              ),
+              const SizedBox(width: 8),
+              _buildSurveyChip(
+                label: 'No',
+                isSelected: _familiaresExterior == false,
+                onTap: () => setState(() => _familiaresExterior = false),
+                isDark: isDark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Pregunta 2: Casa propia o arriendo
+          Text(
+            '¿Casa propia o en arriendo?',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _buildSurveyChip(
+                label: 'Casa propia',
+                isSelected: _viviendaTipo == 'propia',
+                onTap: () => setState(() => _viviendaTipo = 'propia'),
+                isDark: isDark,
+              ),
+              _buildSurveyChip(
+                label: 'Arriendo',
+                isSelected: _viviendaTipo == 'arriendo',
+                onTap: () => setState(() => _viviendaTipo = 'arriendo'),
+                isDark: isDark,
+              ),
+              _buildSurveyChip(
+                label: 'Familiar / Otro',
+                isSelected: _viviendaTipo == 'familiar',
+                onTap: () => setState(() => _viviendaTipo = 'familiar'),
+                isDark: isDark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Pregunta 3: Emprendedor
+          Text(
+            '¿Eres emprendedor?',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _buildSurveyChip(
+                label: 'Sí',
+                isSelected: _esEmprendedor == true,
+                onTap: () => setState(() => _esEmprendedor = true),
+                isDark: isDark,
+              ),
+              const SizedBox(width: 8),
+              _buildSurveyChip(
+                label: 'No',
+                isSelected: _esEmprendedor == false,
+                onTap: () => setState(() => _esEmprendedor = false),
+                isDark: isDark,
+              ),
+            ],
+          ),
+
+          // Pregunta 4 condicional: De qué es tu emprendimiento
+          if (_esEmprendedor == true) ...[
+            const SizedBox(height: 12),
+            _buildTextField(
+              themeProvider: themeProvider,
+              controller: _descripcionEmprendimientoCtrl,
+              label: '¿De qué es tu emprendimiento?',
+              icon: Icons.storefront_rounded,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSurveyChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.18)
+              : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primary
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFCBD5E1)),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected
+                ? AppColors.accent
+                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Sección de Código / Vinculación Opcional ──
   Widget _buildReferralSection(bool isDark, ThemeProvider themeProvider) {
     return Container(
@@ -1847,12 +2116,14 @@ class _LoginScreenState extends State<LoginScreen>
                 color: AppColors.accent,
               ),
               const SizedBox(width: 8),
-              Text(
-                '¿Tienes un código de vinculación? (Opcional)',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+              Expanded(
+                child: Text(
+                  '¿Tienes un código de vinculación? (Opcional)',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
                 ),
               ),
             ],
@@ -1860,22 +2131,22 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 12),
 
           // Chips de opciones
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildOptionChip(
                 label: 'Sin código',
                 value: 'none',
                 isDark: isDark,
               ),
-              const SizedBox(width: 8),
               _buildOptionChip(
                 label: 'Amigo',
                 value: 'friend',
                 isDark: isDark,
               ),
-              const SizedBox(width: 8),
               _buildOptionChip(
-                label: 'Empresa',
+                label: 'Empresa (NIT / Código)',
                 value: 'company',
                 isDark: isDark,
               ),
@@ -1908,7 +2179,7 @@ class _LoginScreenState extends State<LoginScreen>
             _buildTextField(
               themeProvider: themeProvider,
               controller: _companyCodeCtrl,
-              label: 'Código de empresa aliada',
+              label: 'NIT o Código de Empresa Aliada',
               icon: Icons.business_rounded,
               textCapitalization: TextCapitalization.characters,
               onChanged: _onCompanyCodeChanged,
@@ -1984,39 +2255,37 @@ class _LoginScreenState extends State<LoginScreen>
   }) {
     final isSelected = _referralType == value;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _referralType = value;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _referralType = value;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : (isDark ? Colors.white10 : Colors.white),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : (isDark ? Colors.white10 : Colors.white),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.primary
-                  : (isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : const Color(0xFFCBD5E1)),
-            ),
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : const Color(0xFFCBD5E1)),
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? Colors.white
-                  : (isDark ? Colors.white70 : const Color(0xFF475569)),
-            ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : const Color(0xFF475569)),
           ),
         ),
       ),

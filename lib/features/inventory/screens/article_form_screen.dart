@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -158,9 +158,9 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Theme.of(context).dividerColor),
+                        border: Border.all(color: themeColors.borderColor),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,17 +199,17 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
+                              color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              border: Border.all(color: themeColors.borderColor),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<int>(
                                 value: _selectedCategoryId,
-                                hint: Text(context.tr('select_category_hint'), style: GoogleFonts.inter(color: Colors.white30, fontSize: 14)),
-                                dropdownColor: const Color(0xFF1E1E2E),
-                                icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
-                                style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+                                hint: Text(context.tr('select_category_hint'), style: GoogleFonts.inter(color: themeColors.textSecondary.withValues(alpha: 0.6), fontSize: 14)),
+                                dropdownColor: themeColors.cardBackground,
+                                icon: Icon(Icons.arrow_drop_down, color: themeColors.textSecondary),
+                                style: GoogleFonts.inter(color: themeColors.textPrimary, fontSize: 15),
                                 isExpanded: true,
                                 onChanged: (val) {
                                   setState(() => _selectedCategoryId = val);
@@ -217,7 +217,7 @@ class _ArticleFormScreenState extends State<ArticleFormScreen> {
                                 items: categoryProvider.categories.map((c) {
                                   return DropdownMenuItem<int>(
                                     value: c.id,
-                                    child: Text(c.name),
+                                    child: Text(c.name, style: GoogleFonts.inter(color: themeColors.textPrimary)),
                                   );
                                 }).toList(),
                               ),

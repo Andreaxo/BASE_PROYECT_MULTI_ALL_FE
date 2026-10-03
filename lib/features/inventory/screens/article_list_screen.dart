@@ -62,15 +62,18 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   }
 
   void _showDeleteDialog(Article article) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           context.tr('delete_article_title'),
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: themeColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -79,7 +82,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               .replaceAll('{name}', article.name)
               .replaceAll('{id}', article.id.toString()),
           style: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: themeColors.textSecondary,
           ),
         ),
         actions: [
@@ -87,7 +90,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancelar',
-              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
+              style: GoogleFonts.inter(color: themeColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -207,7 +210,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     return DashboardShell(
       title: context.tr('article_list_title'),
       child: !canView
-          ? _buildAccessDeniedWidget()
+          ? _buildAccessDeniedWidget(themeColors)
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -359,7 +362,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                             ],
                           ),
                         ),
-                        Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
+                        Divider(color: themeColors.borderColor, height: 1),
 
                         articleProvider.isLoading && articleProvider.articles.isEmpty
                             ? const Center(
@@ -371,9 +374,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                 ),
                               )
                             : articleProvider.errorMessage != null && articleProvider.articles.isEmpty
-                                ? _buildErrorWidget(articleProvider)
+                                ? _buildErrorWidget(articleProvider, themeColors)
                                 : filteredArticles.isEmpty
-                                    ? _buildEmptyWidget()
+                                    ? _buildEmptyWidget(themeColors)
                                     : Column(
                                         children: [
                                           LayoutBuilder(
@@ -390,10 +393,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                                                     ),
                                                     child: DataTable(
                                                       headingRowColor: WidgetStateProperty.all(
-                                                        themeColors.textPrimary.withValues(alpha: 0.03),
+                                                        themeColors.tableHeaderBg,
                                                       ),
                                                       headingTextStyle: GoogleFonts.inter(
-                                                        color: themeColors.textPrimary,
+                                                        color: themeColors.tableHeaderFg,
                                                         fontWeight: FontWeight.bold,
                                                         fontSize: 13,
                                                       ),
@@ -535,7 +538,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   }
 
 
-  Widget _buildEmptyWidget() {
+  Widget _buildEmptyWidget(AppThemeColors themeColors) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -545,13 +548,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             Icon(
               Icons.search_off_rounded,
               size: 48,
-              color: Colors.white.withValues(alpha: 0.15),
+              color: themeColors.textSecondary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 14),
             Text(
               context.tr('no_results'),
               style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.4),
+                color: themeColors.textSecondary,
                 fontSize: 14,
               ),
             ),
@@ -561,7 +564,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
   }
 
-  Widget _buildErrorWidget(ArticleProvider provider) {
+  Widget _buildErrorWidget(ArticleProvider provider, AppThemeColors themeColors) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -575,7 +578,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           Text(
             provider.errorMessage!,
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: themeColors.textSecondary,
             ),
           ),
           const SizedBox(height: 14),
@@ -592,7 +595,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
   }
 
-  Widget _buildAccessDeniedWidget() {
+  Widget _buildAccessDeniedWidget(AppThemeColors themeColors) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -601,18 +604,17 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           const SizedBox(height: 16),
           Text(
             'Acceso Denegado',
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.outfit(color: themeColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'No tienes permisos para visualizar este catálogo.',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            style: GoogleFonts.inter(color: themeColors.textSecondary, fontSize: 14),
           ),
         ],
       ),
     );
   }
-
   String _formatDate(String? dateStr) {
     if (dateStr == null || dateStr.isEmpty) return '-';
     try {

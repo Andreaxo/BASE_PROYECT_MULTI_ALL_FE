@@ -350,7 +350,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                               Text(
                                 'Estado',
                                 style: GoogleFonts.inter(
-                                  color: Colors.white54,
+                                  color: themeColors.textSecondary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -359,8 +359,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                                 onChanged: (value) =>
                                     setState(() => _isActive = value),
                                 activeThumbColor: const Color(0xFF4ECDC4),
-                                inactiveTrackColor:
-                                    Colors.white.withValues(alpha: 0.1),
+                                inactiveTrackColor: themeColors.borderColor,
                               ),
                               Text(
                                 _isActive ? 'Activo' : 'Inactivo',
@@ -383,10 +382,10 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
+                        color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Theme.of(context).dividerColor,
+                          color: themeColors.borderColor,
                         ),
                       ),
                       child: Column(
@@ -605,7 +604,7 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: themeColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFF6C63FF).withValues(alpha: 0.35),

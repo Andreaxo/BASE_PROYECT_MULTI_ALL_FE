@@ -70,6 +70,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
     final activeBenefits =
         benefitProvider.benefits.where((b) => b.isActive).length;
     final totalRedemptions = redemptionProvider.companyRedemptions.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DashboardShell(
       title: 'Panel de Negocio',
@@ -83,8 +84,10 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF0F172A)],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? const [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF0F172A)]
+                      : [themeColors.cardBackground, const Color(0xFFEEF2FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -139,7 +142,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                             Text(
                               '¡Bienvenido, $userName!',
                               style: GoogleFonts.outfit(
-                                color: Colors.white,
+                                color: isDark ? Colors.white : themeColors.textPrimary,
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.5,
@@ -158,7 +161,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                                   child: Text(
                                     companyName,
                                     style: GoogleFonts.inter(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: isDark ? Colors.white.withValues(alpha: 0.9) : themeColors.textPrimary,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -178,10 +181,10 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.07),
+                      color: isDark ? Colors.white.withValues(alpha: 0.07) : themeColors.textPrimary.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: isDark ? Colors.white.withValues(alpha: 0.12) : themeColors.borderColor,
                       ),
                     ),
                     child: Row(
@@ -196,7 +199,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                           child: Text(
                             'Recuerda que este es tu sitio para administrar los beneficios de tu empresa y validar las redenciones de tus clientes.',
                             style: GoogleFonts.inter(
-                              color: Colors.white.withValues(alpha: 0.95),
+                              color: isDark ? Colors.white.withValues(alpha: 0.95) : themeColors.textSecondary,
                               fontSize: 14,
                               height: 1.35,
                               fontWeight: FontWeight.w500,
@@ -378,10 +381,10 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                         context: context,
                         icon: Icons.workspace_premium_rounded,
                         iconColor: const Color(0xFFA55EEA),
-                        title: 'Suscripción de Empresa',
+                        title: 'Membresía del Negocio Aliado',
                         description:
-                            'Consulta el estado de la suscripción de tu negocio aliado, fechas de corte y canales de pago habilitados.',
-                        buttonText: 'Ver Suscripción',
+                            'Consulta el estado de tu membresía de prueba por 1 año, fechas de vigencia y beneficios habilitados.',
+                        buttonText: 'Ver Membresía',
                         route: '/membresia',
                         themeColors: themeColors,
                       ),
@@ -410,10 +413,10 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
         icon = Icons.check_circle_rounded;
         break;
       case 'prueba':
-        bg = const Color(0xFF3B82F6).withValues(alpha: 0.2);
-        fg = const Color(0xFF60A5FA);
-        label = 'Período de Prueba';
-        icon = Icons.timer_rounded;
+        bg = const Color(0xFF10B981).withValues(alpha: 0.18);
+        fg = const Color(0xFF10B981);
+        label = 'Membresía de Prueba (1 Año)';
+        icon = Icons.card_giftcard_rounded;
         break;
       case 'vencida':
       case 'inactiva':

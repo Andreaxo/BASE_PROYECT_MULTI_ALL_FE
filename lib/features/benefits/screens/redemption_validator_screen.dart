@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -53,10 +53,11 @@ class _RedemptionValidatorScreenState
   }
 
   void _showSuccessDialog(ValidateCodeResponse response) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -80,19 +81,19 @@ class _RedemptionValidatorScreenState
               Text(
                 '¡Código Canjeado con Éxito!',
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: themeColors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              Divider(color: Colors.white.withValues(alpha: 0.1)),
+              Divider(color: themeColors.borderColor),
               const SizedBox(height: 12),
-              _buildDialogDetailRow('Beneficio:', response.benefitName),
+              _buildDialogDetailRow('Beneficio:', response.benefitName, themeColors),
               if (response.usuarioNombre.isNotEmpty)
-                _buildDialogDetailRow('Empleado:', response.usuarioNombre),
-              _buildDialogDetailRow('Estado:', 'USADO'),
+                _buildDialogDetailRow('Empleado:', response.usuarioNombre, themeColors),
+              _buildDialogDetailRow('Estado:', 'USADO', themeColors),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -123,6 +124,7 @@ class _RedemptionValidatorScreenState
   }
 
   void _showDetailedErrorDialog(String rawError) {
+    final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
     String title = 'No se pudo validar';
     String message = rawError;
     IconData icon = Icons.error_outline_rounded;
@@ -164,7 +166,7 @@ class _RedemptionValidatorScreenState
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -184,7 +186,7 @@ class _RedemptionValidatorScreenState
               Text(
                 title,
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: themeColors.textPrimary,
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
                 ),
@@ -194,7 +196,7 @@ class _RedemptionValidatorScreenState
               Text(
                 message,
                 style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: themeColors.textSecondary,
                   fontSize: 13.5,
                   height: 1.4,
                 ),
@@ -229,7 +231,7 @@ class _RedemptionValidatorScreenState
     );
   }
 
-  Widget _buildDialogDetailRow(String label, String value) {
+  Widget _buildDialogDetailRow(String label, String value, AppThemeColors themeColors) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -238,7 +240,7 @@ class _RedemptionValidatorScreenState
           Text(
             label,
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: themeColors.textSecondary,
               fontSize: 13,
             ),
           ),
@@ -246,7 +248,7 @@ class _RedemptionValidatorScreenState
             child: Text(
               value,
               style: GoogleFonts.inter(
-                color: Colors.white,
+                color: themeColors.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 13.5,
               ),
@@ -264,6 +266,7 @@ class _RedemptionValidatorScreenState
     final authProvider = context.watch<AuthProvider>();
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final companyName = authProvider.activeCompany?.name ?? 'Tu Empresa';
 
@@ -279,8 +282,8 @@ class _RedemptionValidatorScreenState
               width: double.infinity,
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1E1E2E), Color(0xFF2D2B42)],
+                gradient: LinearGradient(
+                  colors: isDark ? const [Color(0xFF1E1E2E), Color(0xFF2D2B42)] : [themeColors.cardBackground, const Color(0xFFF1F5F9)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -319,7 +322,7 @@ class _RedemptionValidatorScreenState
                         Text(
                           'Validador de Redenciones',
                           style: GoogleFonts.outfit(
-                            color: Colors.white,
+                            color: isDark ? Colors.white : themeColors.textPrimary,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -328,7 +331,7 @@ class _RedemptionValidatorScreenState
                         Text(
                           'Aliado: $companyName — Ingresa el código alfanumérico dictado por el empleado.',
                           style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: isDark ? Colors.white.withValues(alpha: 0.7) : themeColors.textSecondary,
                             fontSize: 14,
                           ),
                         ),

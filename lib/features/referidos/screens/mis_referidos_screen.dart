@@ -424,6 +424,7 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Filter
     final filtered = provider.misReferidos.where((r) {
@@ -549,22 +550,31 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF0F0C29),
-                          Color(0xFF302B63),
-                          Color(0xFF24243E),
-                        ],
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? const [
+                                Color(0xFF0F0C29),
+                                Color(0xFF302B63),
+                                Color(0xFF24243E),
+                              ]
+                            : [
+                                Colors.white,
+                                const Color(0xFFF1F5F9),
+                              ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: isDark
+                            ? AppColors.primary.withValues(alpha: 0.3)
+                            : AppColors.primary.withValues(alpha: 0.2),
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: isDark
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary.withValues(alpha: 0.06),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -594,16 +604,21 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                   Text(
                                     'Tu código de referido',
                                     style: GoogleFonts.inter(
-                                      color: Colors.white70,
-                                      fontSize: 14,
+                                      color: isDark
+                                          ? Colors.white
+                                          : themeColors.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Comparte tu código para invitar a más personas',
                                     style: GoogleFonts.inter(
-                                      color: Colors.white38,
-                                      fontSize: 12,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : themeColors.textSecondary,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
@@ -620,16 +635,33 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 20, vertical: 14),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppColors.primary.withValues(alpha: 0.3),
+                                      color: isDark
+                                          ? AppColors.primary.withValues(alpha: 0.3)
+                                          : AppColors.primary.withValues(alpha: 0.3),
+                                      width: 1.5,
                                     ),
+                                    boxShadow: isDark
+                                        ? null
+                                        : [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.04),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.tag_rounded,
-                                          color: AppColors.primary, size: 20),
+                                      Icon(Icons.tag_rounded,
+                                          color: isDark
+                                              ? AppColors.accent
+                                              : AppColors.primary,
+                                          size: 20),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: FittedBox(
@@ -638,20 +670,24 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                           child: Text(
                                             provider.codeRefer,
                                             style: GoogleFonts.outfit(
-                                              color: Colors.white,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : const Color(0xFF1E1B4B),
                                               fontSize: 26,
                                               fontWeight: FontWeight.bold,
                                               letterSpacing: 6,
-                                              shadows: [
-                                                Shadow(
-                                                  color: AppColors.accent.withValues(alpha: 0.5),
-                                                  blurRadius: 12,
-                                                ),
-                                                Shadow(
-                                                  color: AppColors.primary.withValues(alpha: 0.4),
-                                                  blurRadius: 24,
-                                                ),
-                                              ],
+                                              shadows: isDark
+                                                  ? [
+                                                      Shadow(
+                                                        color: AppColors.accent.withValues(alpha: 0.5),
+                                                        blurRadius: 12,
+                                                      ),
+                                                      Shadow(
+                                                        color: AppColors.primary.withValues(alpha: 0.4),
+                                                        blurRadius: 24,
+                                                      ),
+                                                    ]
+                                                  : null,
                                             ),
                                           ),
                                         ),
@@ -686,6 +722,13 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primary.withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: const Icon(Icons.copy_rounded,
                                         color: Colors.white, size: 20),
@@ -699,11 +742,22 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 18, vertical: 16),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: AppColors.accent.withValues(alpha: 0.3),
                               ),
+                              boxShadow: isDark
+                                  ? null
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.03),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                             ),
                             child: LayoutBuilder(
                               builder: (context, cardConstraints) {
@@ -762,7 +816,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                             child: Text(
                                               'Código disponible con membresía activa',
                                               style: GoogleFonts.inter(
-                                                color: Colors.white,
+                                                color: isDark
+                                                    ? Colors.white
+                                                    : themeColors.textPrimary,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -774,7 +830,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                       Text(
                                         'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
                                         style: GoogleFonts.inter(
-                                          color: Colors.white70,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : themeColors.textSecondary,
                                           fontSize: 12,
                                           height: 1.3,
                                         ),
@@ -807,7 +865,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                           Text(
                                             'Código disponible con membresía activa',
                                             style: GoogleFonts.inter(
-                                              color: Colors.white,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : themeColors.textPrimary,
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -816,7 +876,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                           Text(
                                             'Activa tu membresía mensual Conexiate para desbloquear tu código de invitación y acumular comisiones.',
                                             style: GoogleFonts.inter(
-                                              color: Colors.white70,
+                                              color: isDark
+                                                  ? Colors.white70
+                                                  : themeColors.textSecondary,
                                               fontSize: 12,
                                               height: 1.3,
                                             ),
@@ -991,17 +1053,17 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 20, vertical: 14),
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.tableHeaderBg,
+                                      decoration: BoxDecoration(
+                                         color: themeColors.tableHeaderBg,
                                         borderRadius: BorderRadius.vertical(
                                             top: Radius.circular(16)),
                                       ),
                                       child: Row(
                                         children: [
-                                          _headerCell('Usuario Referido', flex: 4),
-                                          _headerCell('Estado', flex: 2),
-                                          _headerCell('Recompensa', flex: 2),
-                                          _headerCell('Fecha de Invitación', flex: 2),
+                                          _headerCell('Usuario Referido', themeColors, flex: 4),
+                                          _headerCell('Estado', themeColors, flex: 2),
+                                          _headerCell('Recompensa', themeColors, flex: 2),
+                                          _headerCell('Fecha de Invitación', themeColors, flex: 2),
                                         ],
                                       ),
                                     ),
@@ -1053,13 +1115,13 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     );
   }
 
-  Widget _headerCell(String title, {int flex = 1}) {
+  Widget _headerCell(String title, AppThemeColors themeColors, {int flex = 1}) {
     return Expanded(
       flex: flex,
       child: Text(
         title,
         style: GoogleFonts.inter(
-          color: Colors.white70,
+          color: themeColors.tableHeaderFg,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),

@@ -69,6 +69,10 @@ class AuthApiService {
     required String lastName,
     String? refCode,
     String? codigoEmpresa,
+    bool? familiaresExterior,
+    String? viviendaTipo,
+    bool? esEmprendedor,
+    String? descripcionEmprendimiento,
   }) async {
     final response = await ApiService.post(ApiConfig.registerEndpoint, {
       'email': email,
@@ -79,6 +83,14 @@ class AuthApiService {
         'ref_code': refCode.trim(),
       if (codigoEmpresa != null && codigoEmpresa.trim().isNotEmpty)
         'codigo_empresa': codigoEmpresa.trim(),
+      if (familiaresExterior != null)
+        'familiares_exterior': familiaresExterior,
+      if (viviendaTipo != null && viviendaTipo.trim().isNotEmpty)
+        'vivienda_tipo': viviendaTipo.trim(),
+      if (esEmprendedor != null)
+        'es_emprendedor': esEmprendedor,
+      if (descripcionEmprendimiento != null && descripcionEmprendimiento.trim().isNotEmpty)
+        'descripcion_emprendimiento': descripcionEmprendimiento.trim(),
     }, requiresAuth: false);
 
     if (response.statusCode == 200 || response.statusCode == 201) {

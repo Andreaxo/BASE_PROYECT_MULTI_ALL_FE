@@ -70,28 +70,31 @@ class _UserListScreenState extends State<UserListScreen> {
   }
 
   void _showDeleteDialog(User user) {
+    final themeColors =
+        Theme.of(context).extension<AppThemeColors>() ??
+        AppTheme.darkThemeColors;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E2E),
+        backgroundColor: themeColors.cardBackground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           context.tr('delete_user'),
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: themeColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
           '${context.tr('delete_user_confirm')} (${user.fullName})',
-          style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.7)),
+          style: GoogleFonts.inter(color: themeColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               context.tr('cancel'),
-              style: GoogleFonts.inter(color: Colors.white.withValues(alpha: 0.5)),
+              style: GoogleFonts.inter(color: themeColors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -462,8 +465,8 @@ class _UserListScreenState extends State<UserListScreen> {
                                               horizontal: 16,
                                               vertical: 14,
                                             ),
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.tableHeaderBg,
+                                            decoration: BoxDecoration(
+                                              color: themeColors.tableHeaderBg,
                                               borderRadius:
                                                   BorderRadius.vertical(
                                                     top: Radius.circular(16),
@@ -471,7 +474,7 @@ class _UserListScreenState extends State<UserListScreen> {
                                             ),
                                             child: DefaultTextStyle.merge(
                                               style: GoogleFonts.inter(
-                                                color: Colors.white,
+                                                color: themeColors.tableHeaderFg,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 13,
                                               ),

@@ -15,7 +15,7 @@ class MembresiaProvider extends ChangeNotifier {
   bool get isPaying => _isPaying;
   String? get errorMessage => _errorMessage;
 
-  bool get hasActiveMembership => _miMembresia?.isActiva ?? false;
+  bool get hasActiveMembership => (_miMembresia?.isActiva ?? false) || (_miMembresia?.isPrueba ?? false);
 
   Future<void> loadMiMembresia({bool silent = false}) async {
     if (!silent) {
