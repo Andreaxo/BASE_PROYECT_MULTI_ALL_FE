@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,37 +29,43 @@ class _AdminRedemptionsScreenState extends State<AdminRedemptionsScreen> {
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return DashboardShell(
       title: 'Redenciones Globales',
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Historial Global de Redenciones',
-                      style: GoogleFonts.outfit(
-                        color: themeColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Historial Global de Redenciones',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: isMobile ? 20 : 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Vista administrable de todas las redenciones en la plataforma.',
-                      style: GoogleFonts.inter(
-                        color: themeColors.textSecondary,
-                        fontSize: 14,
+                      const SizedBox(height: 4),
+                      Text(
+                        'Vista administrable de todas las redenciones en la plataforma.',
+                        style: GoogleFonts.inter(
+                          color: themeColors.textSecondary,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(Icons.refresh_rounded, color: themeColors.textSecondary),
                   onPressed: () => context.read<RedemptionProvider>().loadAllRedemptions(),

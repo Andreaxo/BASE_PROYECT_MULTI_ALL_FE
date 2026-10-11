@@ -70,13 +70,13 @@ class CompanyProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteCompany(int id) async {
+  Future<bool> deleteCompany(int id, {bool force = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await CompanyApiService.delete(id);
+      await CompanyApiService.delete(id, force: force);
       _companies.removeWhere((c) => c.id == id);
       _isLoading = false;
       notifyListeners();
@@ -87,5 +87,9 @@ class CompanyProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<Map<String, dynamic>> checkActiveBenefits(int id) async {
+    return await CompanyApiService.checkActiveBenefits(id);
   }
 }

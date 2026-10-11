@@ -15,6 +15,7 @@ import '../providers/user_provider.dart';
 import '../../../core/utils/export_helper.dart';
 import 'package:multicliente_app/core/widgets/header_filter.dart';
 import '../../../core/widgets/custom_pagination_footer.dart';
+import '../../menu/providers/menu_provider.dart';
 import 'user_form_screen.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -43,13 +44,30 @@ class _UserListScreenState extends State<UserListScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = context.read<AuthProvider>();
       final role = authProvider.roleCode;
       if (role == 'user' || role == 'user_member') {
-        Navigator.of(context).pushReplacementNamed('/benefit');
+        Navigator.of(context).pushReplacementNamed('/referidos');
         return;
       }
+      if (role == 'business_validator' || role == 'negocio') {
+        Navigator.of(context).pushReplacementNamed('/business-home');
+        return;
+      }
+      if (!authProvider.isAdminOrSuperAdmin) {
+        final menuProvider = context.read<MenuProvider>();
+        await menuProvider.loadMyMenus();
+        if (!mounted) return;
+        if (menuProvider.findAllowedMenu('/users') == null) {
+          final targetRoute = menuProvider.findAllowedMenu('/benefit') != null
+              ? '/benefit'
+              : (menuProvider.myMenus.isNotEmpty ? menuProvider.myMenus.first.route : '/profile');
+          Navigator.of(context).pushReplacementNamed(targetRoute);
+          return;
+        }
+      }
+      if (!mounted) return;
       context.read<UserProvider>().loadUsers();
     });
     _searchController.addListener(_onSearchChanged);
@@ -104,6 +122,8 @@ class _UserListScreenState extends State<UserListScreen> {
               final success = await provider.deleteUser(user.id);
               if (mounted) {
                 if (success) {
+                  _clearFilters();
+                  setState(() {});
                   CustomAlert.show(
                     context,
                     message: 'Usuario eliminado correctamente',
@@ -135,18 +155,34 @@ class _UserListScreenState extends State<UserListScreen> {
     );
   }
 
+  void _clearFilters() {
+    _searchController.clear();
+    _searchQuery = '';
+    _idFilter = '';
+    _nameFilter = '';
+    _emailFilter = '';
+    _statusFilter = '';
+    _createByFilter = '';
+    _createAtFilter = '';
+    _currentPage = 1;
+  }
+
   void _navigateToForm({User? user}) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => UserFormScreen(user: user)),
     );
     if (result == true && mounted) {
-      context.read<UserProvider>().loadUsers();
-      CustomAlert.show(
-        context,
-        message: 'Usuario guardado correctamente',
-        isSuccess: true,
-      );
+      _clearFilters();
+      await context.read<UserProvider>().loadUsers();
+      if (mounted) {
+        setState(() {});
+        CustomAlert.show(
+          context,
+          message: 'Usuario guardado correctamente',
+          isSuccess: true,
+        );
+      }
     }
   }
 
@@ -160,23 +196,63 @@ class _UserListScreenState extends State<UserListScreen> {
     // 1. Filter users based on query and column filters
     final filteredUsers = userProvider.users.where((user) {
       if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
-        final matchesGlobal =
-            user.id.toString() == query ||
-            user.firstName.toLowerCase().contains(query) ||
-            user.lastName.toLowerCase().contains(query) ||
-            user.email.toLowerCase().contains(query);
-        if (!matchesGlobal) return false;
+        final query = _searchQuery.toLowerCase().trim();
+        final fullName = user.fullName.toLowerCase();
+        final firstName = user.firstName.toLowerCase();
+        final lastName = user.lastName.toLowerCase();
+        final email = user.email.toLowerCase();
+        final idStr = user.id.toString();
+
+        final matchesDirect = idStr == query ||
+            fullName.contains(query) ||
+            firstName.contains(query) ||
+            lastName.contains(query) ||
+            email.contains(query);
+
+        if (!matchesDirect) {
+          final queryTokens =
+              query.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+          final matchesTokens = queryTokens.isNotEmpty &&
+              queryTokens.every(
+                (token) =>
+                    fullName.contains(token) ||
+                    firstName.contains(token) ||
+                    lastName.contains(token) ||
+                    email.contains(token) ||
+                    idStr.contains(token),
+              );
+          if (!matchesTokens) return false;
+        }
       }
 
-      if (_idFilter.isNotEmpty && !user.id.toString().contains(_idFilter))
+      if (_idFilter.isNotEmpty && !user.id.toString().contains(_idFilter)) {
         return false;
-      if (_nameFilter.isNotEmpty &&
-          !user.fullName.toLowerCase().contains(_nameFilter.toLowerCase()))
-        return false;
+      }
+      if (_nameFilter.isNotEmpty) {
+        final nameQuery = _nameFilter.toLowerCase().trim();
+        final fullName = user.fullName.toLowerCase();
+        final firstName = user.firstName.toLowerCase();
+        final lastName = user.lastName.toLowerCase();
+        final matchesDirect = fullName.contains(nameQuery) ||
+            firstName.contains(nameQuery) ||
+            lastName.contains(nameQuery);
+        if (!matchesDirect) {
+          final tokens =
+              nameQuery.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+          final matchesTokens = tokens.isNotEmpty &&
+              tokens.every(
+                (t) =>
+                    fullName.contains(t) ||
+                    firstName.contains(t) ||
+                    lastName.contains(t),
+              );
+          if (!matchesTokens) return false;
+        }
+      }
       if (_emailFilter.isNotEmpty &&
-          !user.email.toLowerCase().contains(_emailFilter.toLowerCase()))
+          !user.email.toLowerCase().contains(_emailFilter.toLowerCase().trim())) {
         return false;
+      }
       if (_statusFilter.isNotEmpty) {
         final statusText = user.isActive ? 'activo' : 'inactivo';
         if (!statusText.contains(_statusFilter.toLowerCase())) return false;
@@ -217,7 +293,9 @@ class _UserListScreenState extends State<UserListScreen> {
     return DashboardShell(
       title: context.tr('users_directory'),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(
+          MediaQuery.sizeOf(context).width < 600 ? 16.0 : 24.0,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -248,18 +326,11 @@ class _UserListScreenState extends State<UserListScreen> {
             const SizedBox(height: 12),
 
             // Header Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  context.tr('users_directory'),
-                  style: GoogleFonts.outfit(
-                    color: themeColors.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
+            LayoutBuilder(
+              builder: (context, headerConstraints) {
+                final isMobile = headerConstraints.maxWidth < 650;
+                final newButton = Container(
+                  width: isMobile ? double.infinity : null,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
@@ -290,38 +361,105 @@ class _UserListScreenState extends State<UserListScreen> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                );
+
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        context.tr('users_directory'),
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      newButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.tr('users_directory'),
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    newButton,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // Stat Cards Row
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final cards = [
+                  StatCard(
                     label: 'Usuarios Activos',
                     value: activeUsersCount.toString(),
                     icon: Icons.shield_outlined,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: 'Usuarios Totales',
                     value: totalUsersCount.toString(),
                     icon: Icons.people_outline_rounded,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: 'Estado de Servidor',
                     value: 'Online',
                     icon: Icons.cloud_done_outlined,
                   ),
-                ),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(child: cards[0]),
+                      const SizedBox(width: 16),
+                      Expanded(child: cards[1]),
+                      const SizedBox(width: 16),
+                      Expanded(child: cards[2]),
+                    ],
+                  );
+                } else if (constraints.maxWidth > 340) {
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: cards[0]),
+                          const SizedBox(width: 12),
+                          Expanded(child: cards[1]),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(width: double.infinity, child: cards[2]),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      cards[0],
+                      const SizedBox(height: 12),
+                      cards[1],
+                      const SizedBox(height: 12),
+                      cards[2],
+                    ],
+                  );
+                }
+              },
             ),
             const SizedBox(height: 24),
 
@@ -338,82 +476,104 @@ class _UserListScreenState extends State<UserListScreen> {
                   // Search bar header inside card
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: themeColors.textPrimary.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: themeColors.borderColor,
-                              ),
+                    child: LayoutBuilder(
+                      builder: (context, searchConstraints) {
+                        final isCompact = searchConstraints.maxWidth < 700;
+                        final searchField = Container(
+                          decoration: BoxDecoration(
+                            color: themeColors.textPrimary.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: themeColors.borderColor,
                             ),
-                            child: TextField(
-                              controller: _searchController,
-                              style: GoogleFonts.inter(
-                                color: themeColors.textPrimary,
-                                fontSize: 14,
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: GoogleFonts.inter(
+                              color: themeColors.textPrimary,
+                              fontSize: 14,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: context.tr('search_hint'),
+                              hintStyle: GoogleFonts.inter(
+                                color: themeColors.textSecondary.withValues(alpha: 0.5),
                               ),
-                              decoration: InputDecoration(
-                                hintText: context.tr('search_hint'),
-                                hintStyle: GoogleFonts.inter(
-                                  color: themeColors.textSecondary.withValues(alpha: 
-                                    0.5,
-                                  ),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  color: themeColors.textSecondary.withValues(alpha: 
-                                    0.5,
-                                  ),
-                                  size: 20,
-                                ),
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? IconButton(
-                                        icon: Icon(
-                                          Icons.close_rounded,
-                                          color: themeColors.textSecondary
-                                              .withValues(alpha: 0.5),
-                                          size: 18,
-                                        ),
-                                        onPressed: () =>
-                                            _searchController.clear(),
-                                      )
-                                    : null,
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: themeColors.textSecondary.withValues(alpha: 0.5),
+                                size: 20,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.close_rounded,
+                                        color: themeColors.textSecondary
+                                            .withValues(alpha: 0.5),
+                                        size: 18,
+                                      ),
+                                      onPressed: () =>
+                                          _searchController.clear(),
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildExportButton(
-                          label: 'Excel',
-                          icon: Icons.table_chart_rounded,
-                          color: const Color(0xFF107C41),
-                          onPressed: () =>
-                              _exportData(format: 'excel', data: filteredUsers),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: 'PDF',
-                          icon: Icons.picture_as_pdf_rounded,
-                          color: const Color(0xFFE02424),
-                          onPressed: () =>
-                              _exportData(format: 'pdf', data: filteredUsers),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: context.tr('print'),
-                          icon: Icons.print_rounded,
-                          color: AppColors.primary,
-                          onPressed: () =>
-                              _exportData(format: 'print', data: filteredUsers),
-                        ),
-                      ],
+                        );
+
+                        final exportRow = SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: isCompact ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            children: [
+                              _buildExportButton(
+                                label: 'Excel',
+                                icon: Icons.table_chart_rounded,
+                                color: const Color(0xFF107C41),
+                                onPressed: () =>
+                                    _exportData(format: 'excel', data: filteredUsers),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: 'PDF',
+                                icon: Icons.picture_as_pdf_rounded,
+                                color: const Color(0xFFE02424),
+                                onPressed: () =>
+                                    _exportData(format: 'pdf', data: filteredUsers),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: context.tr('print'),
+                                icon: Icons.print_rounded,
+                                color: AppColors.primary,
+                                onPressed: () =>
+                                    _exportData(format: 'print', data: filteredUsers),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (isCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              searchField,
+                              const SizedBox(height: 12),
+                              exportRow,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: searchField),
+                            const SizedBox(width: 12),
+                            exportRow,
+                          ],
+                        );
+                      },
                     ),
                   ),
                   Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
@@ -553,8 +713,11 @@ class _UserListScreenState extends State<UserListScreen> {
                                             ),
                                           ),
                                           // Custom Rows
+                                          if (paginatedUsers.isEmpty)
+                                            _buildEmptyWidget(),
                                           ...paginatedUsers.map((user) {
                                             return _UserRow(
+                                              key: ValueKey('user_${user.id}_${user.email}_${user.roleId}_${user.isActive}'),
                                               user: user,
                                               themeColors: themeColors,
                                               actionsWidget: _buildActionsCell(
@@ -591,28 +754,42 @@ class _UserListScreenState extends State<UserListScreen> {
             const SizedBox(height: 24),
 
             // Bottom Info Cards
-            Row(
-              children: [
-                Expanded(
-                  child: InfoCard(
-                    title: 'Directorio de Usuarios',
-                    content:
-                        'Visualice y administre las cuentas de los usuarios asignados al sistema base multicliente. Habilite o deshabilite perfiles de manera instantánea.',
-                    icon: Icons.assignment_ind_outlined,
-                    iconColor: const Color(0xFF4ECDC4),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: InfoCard(
-                    title: 'Control de Seguridad',
-                    content:
-                        'Los usuarios deben poseer roles válidos con permisos asignados para acceder a los módulos de negocio. Los cambios de rol se aplican en la siguiente sesión.',
-                    icon: Icons.admin_panel_settings_outlined,
-                    iconColor: const Color(0xFF6C63FF),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 700;
+                final card1 = InfoCard(
+                  title: 'Directorio de Usuarios',
+                  content:
+                      'Visualice y administre las cuentas de los usuarios asignados al sistema base multicliente. Habilite o deshabilite perfiles de manera instantánea.',
+                  icon: Icons.assignment_ind_outlined,
+                  iconColor: const Color(0xFF4ECDC4),
+                );
+                final card2 = InfoCard(
+                  title: 'Control de Seguridad',
+                  content:
+                      'Los usuarios deben poseer roles válidos con permisos asignados para acceder a los módulos de negocio. Los cambios de rol se aplican en la siguiente sesión.',
+                  icon: Icons.admin_panel_settings_outlined,
+                  iconColor: const Color(0xFF6C63FF),
+                );
+
+                if (isCompact) {
+                  return Column(
+                    children: [
+                      card1,
+                      const SizedBox(height: 16),
+                      card2,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: card1),
+                    const SizedBox(width: 16),
+                    Expanded(child: card2),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -803,11 +980,13 @@ class _UserListScreenState extends State<UserListScreen> {
           rows: rows,
           filename: 'reporte_usuarios_${DateTime.now().millisecondsSinceEpoch}',
         );
-        CustomAlert.show(
-          context,
-          message: context.tr('export_excel_success'),
-          isSuccess: true,
-        );
+        if (mounted) {
+          CustomAlert.show(
+            context,
+            message: context.tr('export_excel_success'),
+            isSuccess: true,
+          );
+        }
       } else {
         final now = DateTime.now();
         final dateStr =
@@ -819,11 +998,13 @@ class _UserListScreenState extends State<UserListScreen> {
         );
       }
     } catch (e) {
-      CustomAlert.show(
-        context,
-        message: '${context.tr('error_occurred')}: $e',
-        isSuccess: false,
-      );
+      if (mounted) {
+        CustomAlert.show(
+          context,
+          message: '${context.tr('error_occurred')}: $e',
+          isSuccess: false,
+        );
+      }
     }
   }
 }
@@ -836,6 +1017,7 @@ class _UserRow extends StatefulWidget {
   final String formattedDate;
 
   const _UserRow({
+    super.key,
     required this.user,
     required this.themeColors,
     required this.actionsWidget,

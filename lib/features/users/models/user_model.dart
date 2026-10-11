@@ -81,6 +81,7 @@ class UserCompanyInfo {
   final String? razonSocial;
   final String? codigoEmpresa;
   final String? fechaFinPrueba;
+  final bool isActive;
 
   UserCompanyInfo({
     required this.id,
@@ -91,6 +92,7 @@ class UserCompanyInfo {
     this.razonSocial,
     this.codigoEmpresa,
     this.fechaFinPrueba,
+    this.isActive = true,
   });
 
   factory UserCompanyInfo.fromJson(Map<String, dynamic> json) {
@@ -103,6 +105,7 @@ class UserCompanyInfo {
       razonSocial: json['razon_social'] as String?,
       codigoEmpresa: json['codigo_empresa'] as String?,
       fechaFinPrueba: json['fecha_fin_prueba']?.toString(),
+      isActive: (json['is_active'] as bool?) ?? true,
     );
   }
 }

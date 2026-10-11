@@ -252,7 +252,7 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                 onChanged: (value) {
                                   setState(() => _isActive = value);
                                 },
-                                activeColor: const Color(0xFF4ECDC4),
+                                activeThumbColor: const Color(0xFF4ECDC4),
                                 inactiveTrackColor: themeColors.borderColor,
                               ),
                               Text(
@@ -393,6 +393,86 @@ class _CompanyFormScreenState extends State<CompanyFormScreen> {
                                 ? 'La razón social es obligatoria.'
                                 : null,
                           ),
+                          if (isEditing) ...[
+                            const SizedBox(height: 24),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: themeColors.cardBackground
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: _isActive
+                                      ? const Color(0xFF10B981)
+                                          .withValues(alpha: 0.4)
+                                      : const Color(0xFFEF4444)
+                                          .withValues(alpha: 0.4),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: (_isActive
+                                              ? const Color(0xFF10B981)
+                                              : const Color(0xFFEF4444))
+                                          .withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _isActive
+                                          ? Icons.check_circle_outline_rounded
+                                          : Icons.cancel_outlined,
+                                      color: _isActive
+                                          ? const Color(0xFF10B981)
+                                          : const Color(0xFFEF4444),
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Estado de la empresa',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: themeColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _isActive
+                                              ? 'La empresa se encuentra activa y habilitada para operar.'
+                                              : 'La empresa se encuentra inactiva. Sus validadores verán su perfil inactivo.',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            color: themeColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _isActive,
+                                    activeThumbColor: const Color(0xFF10B981),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _isActive = val;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
 
                           if (!isEditing) ...[
                             const SizedBox(height: 24),

@@ -209,7 +209,9 @@ class _MenuListScreenState extends State<MenuListScreen> {
     return DashboardShell(
       title: 'Menús',
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(
+          MediaQuery.sizeOf(context).width < 600 ? 16.0 : 24.0,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -240,81 +242,146 @@ class _MenuListScreenState extends State<MenuListScreen> {
             const SizedBox(height: 12),
 
             // Header Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Gestión de Menús',
-                  style: GoogleFonts.outfit(
-                    color: themeColors.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (canCreate)
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () => _navigateToForm(),
-                      icon: const Icon(
-                        Icons.add_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        context.tr('new_button'),
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
+            LayoutBuilder(
+              builder: (context, headerConstraints) {
+                final isMobile = headerConstraints.maxWidth < 650;
+                final newButton = canCreate
+                    ? Container(
+                        width: isMobile ? double.infinity : null,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _navigateToForm(),
+                          icon: const Icon(
+                            Icons.add_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            context.tr('new_button'),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
+
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Gestión de Menús',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (canCreate) ...[
+                        const SizedBox(height: 14),
+                        newButton,
+                      ],
+                    ],
+                  );
+                }
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Gestión de Menús',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                    if (canCreate) ...[
+                      const SizedBox(width: 16),
+                      newButton,
+                    ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
             // Stat Cards Row
-            Row(
-              children: [
-                Expanded(
-                  child: StatCard(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final cards = [
+                  StatCard(
                     label: context.tr('active_menus'),
                     value: activeMenusCount.toString(),
                     icon: Icons.menu_open_rounded,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: context.tr('total_menus'),
                     value: totalMenusCount.toString(),
                     icon: Icons.list_alt_rounded,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: StatCard(
+                  StatCard(
                     label: context.tr('sync'),
                     value: context.tr('sync_complete'),
                     icon: Icons.sync_rounded,
                   ),
-                ),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(child: cards[0]),
+                      const SizedBox(width: 16),
+                      Expanded(child: cards[1]),
+                      const SizedBox(width: 16),
+                      Expanded(child: cards[2]),
+                    ],
+                  );
+                } else if (constraints.maxWidth > 340) {
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: cards[0]),
+                          const SizedBox(width: 12),
+                          Expanded(child: cards[1]),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(width: double.infinity, child: cards[2]),
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      cards[0],
+                      const SizedBox(height: 12),
+                      cards[1],
+                      const SizedBox(height: 12),
+                      cards[2],
+                    ],
+                  );
+                }
+              },
             ),
             const SizedBox(height: 24),
 
@@ -331,10 +398,10 @@ class _MenuListScreenState extends State<MenuListScreen> {
                   // Actions Bar (Search + Exports)
                   Padding(
                     padding: const EdgeInsets.all(20.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
+                    child: LayoutBuilder(
+                      builder: (context, searchConstraints) {
+                        final isCompact = searchConstraints.maxWidth < 700;
+                        final searchField = Container(
                             decoration: BoxDecoration(
                               color: themeColors.textPrimary.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
@@ -380,33 +447,59 @@ class _MenuListScreenState extends State<MenuListScreen> {
                                 ),
                               ),
                             ),
+                          );
+
+                        final exportRow = SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisAlignment: isCompact ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            children: [
+                              _buildExportButton(
+                                label: 'Excel',
+                                icon: Icons.table_chart_rounded,
+                                color: const Color(0xFF107C41),
+                                onPressed: () =>
+                                    _exportData(format: 'excel', data: filteredMenus),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: 'PDF',
+                                icon: Icons.picture_as_pdf_rounded,
+                                color: const Color(0xFFE02424),
+                                onPressed: () =>
+                                    _exportData(format: 'pdf', data: filteredMenus),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildExportButton(
+                                label: 'Imprimir',
+                                icon: Icons.print_rounded,
+                                color: AppColors.primary,
+                                onPressed: () =>
+                                    _exportData(format: 'print', data: filteredMenus),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        _buildExportButton(
-                          label: 'Excel',
-                          icon: Icons.table_chart_rounded,
-                          color: const Color(0xFF107C41),
-                          onPressed: () =>
-                              _exportData(format: 'excel', data: filteredMenus),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: 'PDF',
-                          icon: Icons.picture_as_pdf_rounded,
-                          color: const Color(0xFFE02424),
-                          onPressed: () =>
-                              _exportData(format: 'pdf', data: filteredMenus),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildExportButton(
-                          label: 'Imprimir',
-                          icon: Icons.print_rounded,
-                          color: AppColors.primary,
-                          onPressed: () =>
-                              _exportData(format: 'print', data: filteredMenus),
-                        ),
-                      ],
+                        );
+
+                        if (isCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              searchField,
+                              const SizedBox(height: 12),
+                              exportRow,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: searchField),
+                            const SizedBox(width: 12),
+                            exportRow,
+                          ],
+                        );
+                      },
                     ),
                   ),
                   Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
@@ -509,28 +602,42 @@ class _MenuListScreenState extends State<MenuListScreen> {
             const SizedBox(height: 24),
 
             // Bottom informational cards row
-            Row(
-              children: [
-                Expanded(
-                  child: InfoCard(
-                    title: 'Navegación Dinámica',
-                    content:
-                        'El menú lateral se construye en tiempo real a partir del árbol de menús permitidos según el rol asignado al usuario. Esto permite restringir accesos desde la interfaz.',
-                    icon: Icons.alt_route_rounded,
-                    iconColor: const Color(0xFF4ECDC4),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: InfoCard(
-                    title: 'Asociación de Jerarquías',
-                    content:
-                        'Los menús que poseen un parent ID actúan como submódulos o carpetas colapsables (como Inventario). Al definir un rol, se asocian permisos específicos por módulo.',
-                    icon: Icons.account_tree_outlined,
-                    iconColor: const Color(0xFF6C63FF),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 700;
+                final card1 = InfoCard(
+                  title: 'Navegación Dinámica',
+                  content:
+                      'El menú lateral se construye en tiempo real a partir del árbol de menús permitidos según el rol asignado al usuario. Esto permite restringir accesos desde la interfaz.',
+                  icon: Icons.alt_route_rounded,
+                  iconColor: const Color(0xFF4ECDC4),
+                );
+                final card2 = InfoCard(
+                  title: 'Asociación de Jerarquías',
+                  content:
+                      'Los menús que poseen un parent ID actúan como submódulos o carpetas colapsables (como Inventario). Al definir un rol, se asocian permisos específicos por módulo.',
+                  icon: Icons.account_tree_outlined,
+                  iconColor: const Color(0xFF6C63FF),
+                );
+
+                if (isCompact) {
+                  return Column(
+                    children: [
+                      card1,
+                      const SizedBox(height: 16),
+                      card2,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: card1),
+                    const SizedBox(width: 16),
+                    Expanded(child: card2),
+                  ],
+                );
+              },
             ),
           ],
         ),

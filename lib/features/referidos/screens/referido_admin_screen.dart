@@ -28,7 +28,6 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
   String _referenteFilter = '';
   String _emailFilter = '';
   String _estadoFilter = '';
-  String _recompensaFilter = '';
 
   // Pagination
   int _currentPage = 1;
@@ -61,8 +60,6 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
 
   Color _getEstadoColor(String estado) {
     switch (estado) {
-      case 'pendiente':
-        return AppColors.warning;
       case 'registrado':
         return AppColors.primary;
       case 'afiliado':
@@ -181,34 +178,6 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
     );
   }
 
-  Future<void> _handleAfiliar(Referido referido) async {
-    final provider = context.read<ReferidoProvider>();
-    final success = await provider.afiliarReferido(referido.id);
-    if (mounted) {
-      CustomAlert.show(
-        context,
-        message: success
-            ? 'Referido afiliado correctamente'
-            : provider.errorMessage ?? 'Error al afiliar',
-        isSuccess: success,
-      );
-    }
-  }
-
-  Future<void> _handleRecompensa(Referido referido) async {
-    final provider = context.read<ReferidoProvider>();
-    final success = await provider.otorgarRecompensa(referido.id);
-    if (mounted) {
-      CustomAlert.show(
-        context,
-        message: success
-            ? 'Recompensa otorgada correctamente'
-            : provider.errorMessage ?? 'Error al otorgar recompensa',
-        isSuccess: success,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ReferidoProvider>();
@@ -221,23 +190,45 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
     final filtered = provider.allReferidos.where((r) {
       // Global search
       if (_searchQuery.isNotEmpty) {
-        final q = _searchQuery;
-        final matchesGlobal =
-            r.id.toString() == q ||
-            r.emailReferido.toLowerCase().contains(q) ||
-            r.nombreReferente.toLowerCase().contains(q) ||
-            r.estadoLabel.toLowerCase().contains(q);
-        if (!matchesGlobal) return false;
+        final q = _searchQuery.toLowerCase().trim();
+        final nombreRef = r.nombreReferente.toLowerCase();
+        final emailRef = r.emailReferido.toLowerCase();
+        final estado = r.estadoLabel.toLowerCase();
+        final idStr = r.id.toString();
+
+        final matchesGlobal = idStr == q ||
+            nombreRef.contains(q) ||
+            emailRef.contains(q) ||
+            estado.contains(q);
+
+        if (!matchesGlobal) {
+          final tokens =
+              q.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+          final matchesTokens = tokens.isNotEmpty &&
+              tokens.every(
+                (t) =>
+                    nombreRef.contains(t) ||
+                    emailRef.contains(t) ||
+                    idStr.contains(t),
+              );
+          if (!matchesTokens) return false;
+        }
       }
       // Column filters
       if (_idFilter.isNotEmpty && !r.id.toString().contains(_idFilter)) {
         return false;
       }
-      if (_referenteFilter.isNotEmpty &&
-          !r.nombreReferente.toLowerCase().contains(
-            _referenteFilter.toLowerCase(),
-          )) {
-        return false;
+      if (_referenteFilter.isNotEmpty) {
+        final refQuery = _referenteFilter.toLowerCase().trim();
+        final nombreRef = r.nombreReferente.toLowerCase();
+        final matchesDirect = nombreRef.contains(refQuery);
+        if (!matchesDirect) {
+          final tokens =
+              refQuery.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+          final matchesTokens = tokens.isNotEmpty &&
+              tokens.every((t) => nombreRef.contains(t));
+          if (!matchesTokens) return false;
+        }
       }
       if (_emailFilter.isNotEmpty &&
           !r.emailReferido.toLowerCase().contains(_emailFilter.toLowerCase())) {
@@ -247,23 +238,16 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
           !r.estadoLabel.toLowerCase().contains(_estadoFilter.toLowerCase())) {
         return false;
       }
-      if (_recompensaFilter.isNotEmpty) {
-        final recompText = r.recompensaOtorgada ? 'sí' : 'no';
-        if (!recompText.contains(_recompensaFilter.toLowerCase())) return false;
-      }
       return true;
     }).toList();
 
     // Stats
     final total = provider.allReferidos.length;
-    final pendientes = provider.allReferidos
-        .where((r) => r.estado == 'pendiente')
+    final registrados = provider.allReferidos
+        .where((r) => r.estado == 'registrado')
         .length;
     final afiliados = provider.allReferidos
         .where((r) => r.estado == 'afiliado')
-        .length;
-    final recompensasPendientes = provider.allReferidos
-        .where((r) => r.estado == 'afiliado' && !r.recompensaOtorgada)
         .length;
 
     // Pagination
@@ -539,19 +523,14 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                           icon: Icons.people_alt_outlined,
                         ),
                         StatCard(
-                          label: 'Pendientes',
-                          value: pendientes.toString(),
-                          icon: Icons.hourglass_empty_rounded,
+                          label: 'Registrados',
+                          value: registrados.toString(),
+                          icon: Icons.person_add_alt_1_rounded,
                         ),
                         StatCard(
                           label: 'Afiliados',
                           value: afiliados.toString(),
                           icon: Icons.verified_rounded,
-                        ),
-                        StatCard(
-                          label: 'Recompensas por otorgar',
-                          value: recompensasPendientes.toString(),
-                          icon: Icons.card_giftcard_rounded,
                         ),
                       ];
 
@@ -682,9 +661,9 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                               ),
                                             ),
                                             Expanded(
-                                              flex: 2,
+                                              flex: 3,
                                               child: HeaderFilter(
-                                                title: 'Email Referido',
+                                                title: 'Usuario Referido',
                                                 onChanged: (v) =>
                                                     setState(() => _emailFilter = v),
                                               ),
@@ -697,15 +676,7 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
                                                     setState(() => _estadoFilter = v),
                                               ),
                                             ),
-                                            Expanded(
-                                              flex: 2,
-                                              child: HeaderFilter(
-                                                title: 'Recompensa',
-                                                onChanged: (v) =>
-                                                    setState(() => _recompensaFilter = v),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 110), // Actions column
+                                            const SizedBox(width: 48), // Delete action column
                                           ],
                                         ),
                                       ),
@@ -785,24 +756,10 @@ class _ReferidoAdminScreenState extends State<ReferidoAdminScreen> {
       themeColors: themeColors,
       estadoBadge: _buildEstadoBadge(r),
       actionsWidget: SizedBox(
-        width: 110,
+        width: 48,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (r.estado == 'registrado')
-              _actionIcon(
-                icon: Icons.verified_rounded,
-                color: AppColors.accent,
-                tooltip: 'Afiliar',
-                onPressed: () => _handleAfiliar(r),
-              ),
-            if (r.estado == 'afiliado' && !r.recompensaOtorgada)
-              _actionIcon(
-                icon: Icons.card_giftcard_rounded,
-                color: AppColors.warning,
-                tooltip: 'Otorgar recompensa',
-                onPressed: () => _handleRecompensa(r),
-              ),
             _actionIcon(
               icon: Icons.delete_outline_rounded,
               color: AppColors.error,
@@ -922,61 +879,37 @@ class _AdminReferidoRowState extends State<_AdminReferidoRow> {
               ),
             ),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    r.emailReferido,
+                    r.nombreReferidoUser.isNotEmpty
+                        ? r.nombreReferidoUser
+                        : (r.nombreReferido != null && r.nombreReferido!.isNotEmpty
+                            ? r.nombreReferido!
+                            : 'Usuario'),
                     style: GoogleFonts.inter(
                       color: themeColors.textPrimary,
                       fontSize: 13,
+                      fontWeight: FontWeight.w600,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (r.nombreReferido != null && r.nombreReferido!.isNotEmpty)
-                    Text(
-                      r.nombreReferido!,
-                      style: GoogleFonts.inter(
-                        color: themeColors.textSecondary,
-                        fontSize: 11,
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    r.emailReferido,
+                    style: GoogleFonts.inter(
+                      color: themeColors.textSecondary,
+                      fontSize: 11,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
             Expanded(flex: 2, child: widget.estadoBadge),
-            Expanded(
-              flex: 2,
-              child: r.recompensaOtorgada
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: AppColors.warning,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Sí',
-                          style: GoogleFonts.inter(
-                            color: AppColors.warning,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      'No',
-                      style: GoogleFonts.inter(
-                        color: themeColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-            ),
             widget.actionsWidget,
           ],
         ),

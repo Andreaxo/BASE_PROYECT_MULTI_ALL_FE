@@ -36,7 +36,7 @@ class Referido {
       nombreReferidoUser: (json['nombre_referido_user'] as String?) ?? '',
       emailReferido: (json['email_referido'] as String?) ?? '',
       nombreReferido: json['nombre_referido'] as String?,
-      estado: (json['estado'] as String?) ?? 'pendiente',
+      estado: (json['estado'] as String?) ?? 'registrado',
       fechaReferido: json['fecha_referido']?.toString() ?? '',
       fechaConversion: json['fecha_conversion']?.toString(),
       recompensaOtorgada: (json['recompensa_otorgada'] as bool?) ?? false,
@@ -46,8 +46,6 @@ class Referido {
   /// Returns a human-readable label for the estado.
   String get estadoLabel {
     switch (estado) {
-      case 'pendiente':
-        return 'Pendiente';
       case 'registrado':
         return 'Registrado';
       case 'afiliado':

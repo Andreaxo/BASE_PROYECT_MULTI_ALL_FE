@@ -5,11 +5,15 @@ import '../services/menu_service.dart';
 class MenuProvider extends ChangeNotifier {
   List<MenuModel> _menus = [];
   List<AllowedMenu> _myMenus = [];
+  bool _myMenusLoaded = false;
   bool _isLoading = false;
   String? _errorMessage;
 
   List<MenuModel> get menus => _menus;
   List<AllowedMenu> get myMenus => _myMenus;
+
+  /// True once the current user's allowed menus were fetched (success or failure).
+  bool get myMenusLoaded => _myMenusLoaded;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -36,10 +40,12 @@ class MenuProvider extends ChangeNotifier {
 
     try {
       _myMenus = await MenuApiService.getMyMenus();
+      _myMenusLoaded = true;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _myMenusLoaded = true;
       _isLoading = false;
       notifyListeners();
     }
@@ -110,6 +116,7 @@ class MenuProvider extends ChangeNotifier {
 
   void clearMyMenus() {
     _myMenus = [];
+    _myMenusLoaded = false;
     notifyListeners();
   }
 

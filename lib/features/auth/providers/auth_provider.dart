@@ -86,7 +86,7 @@ class AuthProvider extends ChangeNotifier {
                   id: c.id,
                   nit: c.nit,
                   name: c.name,
-                  isActive: true,
+                  isActive: c.isActive,
                   photoUrl: c.photoUrl,
                   suscripcionEstado: c.suscripcionEstado,
                   razonSocial: c.razonSocial,
@@ -155,7 +155,7 @@ class AuthProvider extends ChangeNotifier {
                 id: c.id,
                 nit: c.nit,
                 name: c.name,
-                isActive: true,
+                isActive: c.isActive,
                 photoUrl: c.photoUrl,
                 suscripcionEstado: c.suscripcionEstado,
                 razonSocial: c.razonSocial,
@@ -221,7 +221,8 @@ class AuthProvider extends ChangeNotifier {
     // User not found
     if (lower.contains('no encontrado') ||
         lower.contains('not found') ||
-        lower.contains('no existe ningún usuario')) {
+        lower.contains('no existe ningún usuario') ||
+        lower.contains('no se encontró ningún usuario')) {
       return 'No encontramos una cuenta asociada a este correo electrónico.';
     }
 
@@ -247,9 +248,13 @@ class AuthProvider extends ChangeNotifier {
       return 'El servidor tardó demasiado en responder. Por favor, intenta de nuevo en unos momentos.';
     }
 
-    // Clean API message
+    // Clean API message with capitalized first letter and ending period
     if (raw.isNotEmpty && !raw.contains('Instance of') && !raw.contains('Error:')) {
-      return raw;
+      final capitalized = raw[0].toUpperCase() + raw.substring(1);
+      if (!capitalized.endsWith('.') && !capitalized.endsWith('!') && !capitalized.endsWith('?')) {
+        return '$capitalized.';
+      }
+      return capitalized;
     }
 
     return 'Ocurrió un error al procesar tu solicitud. Por favor, intenta de nuevo.';
@@ -317,7 +322,7 @@ class AuthProvider extends ChangeNotifier {
                   id: c.id,
                   nit: c.nit,
                   name: c.name,
-                  isActive: true,
+                  isActive: c.isActive,
                   photoUrl: c.photoUrl,
                   suscripcionEstado: c.suscripcionEstado,
                   razonSocial: c.razonSocial,
@@ -368,7 +373,7 @@ class AuthProvider extends ChangeNotifier {
                   id: c.id,
                   nit: c.nit,
                   name: c.name,
-                  isActive: true,
+                  isActive: c.isActive,
                   photoUrl: c.photoUrl,
                   suscripcionEstado: c.suscripcionEstado,
                   razonSocial: c.razonSocial,
@@ -385,6 +390,8 @@ class AuthProvider extends ChangeNotifier {
             orElse: () => _activeCompany!,
           );
           _activeCompany = matchingComp;
+        } else if (_userCompanies.isNotEmpty) {
+          _activeCompany = _userCompanies.first;
         }
 
         // Save updated auth details locally

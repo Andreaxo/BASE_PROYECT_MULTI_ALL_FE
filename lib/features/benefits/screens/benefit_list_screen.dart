@@ -649,32 +649,63 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
             const SizedBox(height: 24),
 
             // ── Tarjetas informativas ───────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: InfoCard(
-                    title: 'Sobre los Beneficios',
-                    content:
-                        'Los beneficios son ventajas o incentivos que se ofrecen '
-                        'a través de cada empresa registrada. Pueden incluir descuentos, '
-                        'bonos, seguros u otros tipos de prestaciones adicionales.',
-                    icon: Icons.card_giftcard_rounded,
-                    iconColor: const Color(0xFF4ECDC4),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: InfoCard(
-                    title: 'Vinculación con Empresas',
-                    content:
-                        'Cada beneficio está estrictamente asociado a una empresa. '
-                        'El nombre o razón social de la empresa se muestra automáticamente '
-                        'a partir del identificador interno registrado.',
-                    icon: Icons.business_center_rounded,
-                    iconColor: const Color(0xFF6C63FF),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 650;
+                if (isNarrow) {
+                  return Column(
+                    children: [
+                      InfoCard(
+                        title: 'Sobre los Beneficios',
+                        content:
+                            'Los beneficios son ventajas o incentivos que se ofrecen '
+                            'a través de cada empresa registrada. Pueden incluir descuentos, '
+                            'bonos, seguros u otros tipos de prestaciones adicionales.',
+                        icon: Icons.card_giftcard_rounded,
+                        iconColor: const Color(0xFF4ECDC4),
+                      ),
+                      const SizedBox(height: 16),
+                      InfoCard(
+                        title: 'Vinculación con Empresas',
+                        content:
+                            'Cada beneficio está estrictamente asociado a una empresa. '
+                            'El nombre o razón social de la empresa se muestra automáticamente '
+                            'a partir del identificador interno registrado.',
+                        icon: Icons.business_center_rounded,
+                        iconColor: const Color(0xFF6C63FF),
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: InfoCard(
+                        title: 'Sobre los Beneficios',
+                        content:
+                            'Los beneficios son ventajas o incentivos que se ofrecen '
+                            'a través de cada empresa registrada. Pueden incluir descuentos, '
+                            'bonos, seguros u otros tipos de prestaciones adicionales.',
+                        icon: Icons.card_giftcard_rounded,
+                        iconColor: const Color(0xFF4ECDC4),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: InfoCard(
+                        title: 'Vinculación con Empresas',
+                        content:
+                            'Cada beneficio está estrictamente asociado a una empresa. '
+                            'El nombre o razón social de la empresa se muestra automáticamente '
+                            'a partir del identificador interno registrado.',
+                        icon: Icons.business_center_rounded,
+                        iconColor: const Color(0xFF6C63FF),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -748,11 +779,15 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                           ),
                           child: Row(
                             children: [
-                              Expanded(flex: 1, child: HeaderFilter(title: context.tr('id'), onChanged: (v) => setState(() { _idFilter = v; _currentPage = 1; }))),
+                              SizedBox(width: 65, child: HeaderFilter(title: context.tr('id'), onChanged: (v) => setState(() { _idFilter = v; _currentPage = 1; }))),
+                              const SizedBox(width: 8),
                               Expanded(flex: 3, child: HeaderFilter(title: context.tr('benefit'), onChanged: (v) => setState(() { _nameFilter = v; _currentPage = 1; }))),
+                              const SizedBox(width: 8),
                               Expanded(flex: 3, child: HeaderFilter(title: context.tr('company'), onChanged: (v) => setState(() { _companyFilter = v; _currentPage = 1; }))),
+                              const SizedBox(width: 8),
                               Expanded(flex: 2, child: HeaderFilter(title: context.tr('status'), onChanged: (v) => setState(() { _statusFilter = v; _currentPage = 1; }))),
-                              if (canEdit) SizedBox(width: 100, child: Align(alignment: Alignment.centerRight, child: Text(context.tr('actions')))),
+                              const SizedBox(width: 8),
+                              if (canEdit) SizedBox(width: 90, child: Align(alignment: Alignment.centerRight, child: Text(context.tr('actions')))),
                             ],
                           ),
                         ),
@@ -767,7 +802,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                           actionsWidget: _buildActionsCell(benefit, companies),
                           canEdit: canEdit,
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
@@ -1059,22 +1094,38 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
         const SizedBox(height: 24),
 
         // Pestañas (Tabs): Beneficios Disponibles / Mis Redenciones
-        Row(
-          children: [
-            _buildTabButton(
-              label: 'Beneficios Disponibles',
-              icon: Icons.card_giftcard_rounded,
-              index: 0,
-              themeColors: themeColors,
-            ),
-            const SizedBox(width: 12),
-            _buildTabButton(
-              label: 'Mis Redenciones (${redemptionProvider.myRedemptions.length})',
-              icon: Icons.confirmation_number_rounded,
-              index: 1,
-              themeColors: themeColors,
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 520;
+            final tab1Label = isNarrow ? 'Disponibles' : 'Beneficios Disponibles';
+            final tab2Label = isNarrow
+                ? 'Mis Redenciones (${redemptionProvider.myRedemptions.length})'
+                : 'Mis Redenciones (${redemptionProvider.myRedemptions.length})';
+
+            return Row(
+              children: [
+                Expanded(
+                  child: _buildTabButton(
+                    label: tab1Label,
+                    icon: Icons.card_giftcard_rounded,
+                    index: 0,
+                    themeColors: themeColors,
+                    isCompact: isNarrow,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildTabButton(
+                    label: tab2Label,
+                    icon: Icons.confirmation_number_rounded,
+                    index: 1,
+                    themeColors: themeColors,
+                    isCompact: isNarrow,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 20),
 
@@ -1138,6 +1189,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     required IconData icon,
     required int index,
     required AppThemeColors themeColors,
+    bool isCompact = false,
   }) {
     final isSelected = _memberTab == index;
     return InkWell(
@@ -1145,7 +1197,10 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
       borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 10 : 18,
+          vertical: 12,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.15)
@@ -1157,6 +1212,8 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
@@ -1164,12 +1221,16 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
               color: isSelected ? AppColors.accent : themeColors.textSecondary,
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: isSelected ? themeColors.textPrimary : themeColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 14,
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: isSelected ? themeColors.textPrimary : themeColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: isCompact ? 13 : 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -1179,58 +1240,65 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
   }
 
   Widget _buildWelcomingBanner(AppThemeColors themeColors, String userName) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isMobile ? 18 : 28),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Hola, $userName!',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Hola, $userName!',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: isMobile ? 22 : 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: isMobile ? 4 : 8),
+                    Text(
+                      'Redime tus beneficios exclusivos y muéstralos en los negocios aliados.',
+                      style: GoogleFonts.inter(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: isMobile ? 13 : 15,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Redime tus beneficios exclusivos y muéstralos en los negocios aliados.',
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 15,
-                    height: 1.4,
-                  ),
+              ),
+              if (!isMobile || constraints.maxWidth > 380) ...[
+                SizedBox(width: isMobile ? 14 : 24),
+                Icon(
+                  Icons.card_giftcard_rounded,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  size: isMobile ? 42 : 64,
                 ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(width: 24),
-          Icon(
-            Icons.card_giftcard_rounded,
-            color: Colors.white.withValues(alpha: 0.9),
-            size: 64,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1246,14 +1314,15 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 360,
-            mainAxisSpacing: 20,
-            crossAxisSpacing: 20,
-            mainAxisExtent: 250,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: isMobile ? 500 : 360,
+            mainAxisSpacing: isMobile ? 14 : 20,
+            crossAxisSpacing: isMobile ? 14 : 20,
+            mainAxisExtent: isMobile ? 260 : 250,
           ),
           itemCount: benefits.length,
           itemBuilder: (context, index) {
@@ -1503,7 +1572,6 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1571,13 +1639,16 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    SelectableText(
-                      redemption.codigoValidacion,
-                      style: GoogleFonts.spaceMono(
-                        color: themeColors.textPrimary,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 4,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: SelectableText(
+                        redemption.codigoValidacion,
+                        style: GoogleFonts.spaceMono(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
+                        ),
                       ),
                     ),
                   ],
@@ -1958,7 +2029,7 @@ class _BenefitListScreenState extends State<BenefitListScreen> {
                   ),
                   StatusBadge(
                     label: benefit.isDeshabilitadoFaltaPago
-                        ? 'Deshabilitado (Pago Pendiente)'
+                        ? 'Pago Pendiente'
                         : (benefit.isActive ? 'Activo' : 'Inactivo'),
                     isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
                     color: benefit.isDeshabilitadoFaltaPago
@@ -2055,8 +2126,8 @@ class _BenefitRowState extends State<_BenefitRow> {
         ),
         child: Row(
           children: [
-            Expanded(
-              flex: 1,
+            SizedBox(
+              width: 65,
               child: Text(
                 benefit.id.toString().padLeft(3, '0'),
                 style: GoogleFonts.inter(
@@ -2065,6 +2136,7 @@ class _BenefitRowState extends State<_BenefitRow> {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               flex: 3,
               child: Row(
@@ -2099,6 +2171,7 @@ class _BenefitRowState extends State<_BenefitRow> {
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               flex: 3,
               child: Row(
@@ -2129,13 +2202,14 @@ class _BenefitRowState extends State<_BenefitRow> {
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: StatusBadge(
                   label: benefit.isDeshabilitadoFaltaPago
-                      ? 'Deshabilitado (Pago Pendiente)'
+                      ? 'Pago Pendiente'
                       : (benefit.isActive ? 'Activo' : 'Inactivo'),
                   isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
                   color: benefit.isDeshabilitadoFaltaPago
@@ -2144,9 +2218,10 @@ class _BenefitRowState extends State<_BenefitRow> {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             if (widget.canEdit)
               SizedBox(
-                width: 100,
+                width: 90,
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: widget.actionsWidget,

@@ -10,7 +10,7 @@ class LegalConstants {
   static const String websiteUrl = 'https://conexiate.co';
   static const String appUrl = 'https://app.conexiate.co';
   static const String sicUrl = 'https://www.sic.gov.co';
-  static const String lastUpdated = 'Septiembre 2026';
+  static const String lastUpdated = 'Octubre 2026';
 
   // ──────────────────────────────────────────────────────────────────────────
   // 1. TÉRMINOS Y CONDICIONES DE USO
@@ -36,8 +36,10 @@ $brandName es una plataforma tecnológica multicliente que conecta a afiliados c
 - Un programa de referidos mediante códigos de fidelización.
 - Actividades promocionales y sorteos de incentivos exclusivos para miembros activos.
 
-### 3. Registro y Veracidad de la Información
+### 3. Registro, Caracterización Opcional y Veracidad de la Información
 Para acceder a los beneficios o registrar un negocio aliado, el Usuario debe proporcionar información veraz, exacta, actual y completa (nombre, número de identificación/cédula, correo electrónico y teléfono). Cada cuenta es personal e intransferible. El Usuario es el único custodio y responsable de la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta.
+
+Durante el proceso de vinculación o uso de la plataforma, Conexiate podrá formular preguntas de caracterización sociodemográfica y comercial (tales como tenencia de vivienda, vínculos familiares en el exterior, condición de emprendedor y descripción de actividades productivas). Se deja expresa constancia de que **dichas preguntas son de carácter estrictamente facultativo y voluntario**; el Usuario podrá optar libremente por responderlas o abstenerse de hacerlo, sin que ello limite, condicione o impida su registro, activación de cuenta o el pleno goce de los beneficios de su membresía. Dichos datos se tratarán exclusivamente para orientar y personalizar beneficios de su interés, conforme a la Política de Tratamiento de Datos Personales.
 
 ### 4. Reglas de las Membresías y Pagos
 - **Membresía de Afiliados:** Otorga derecho a redimir los beneficios de la red y participar en los programas de referidos y rifas promocionales.
@@ -78,12 +80,16 @@ Los presentes términos se rigen e interpretan bajo las leyes de la República d
 En cumplimiento de la **Ley Estatutaria 1581 de 2012**, el **Decreto Reglamentario 1377 de 2013** y demás normas concordantes de la República de Colombia, $companyName adopta la presente Política de Tratamiento de la Información para garantizar la confidencialidad, seguridad y el ejercicio de los derechos de los titulares sobre sus datos personales.
 
 ### 2. Principios del Tratamiento
-Aplicamos rigurosamente los principios de legalidad, finalidad, libertad, veracidad o calidad, transparencia, acceso y circulación restringida, seguridad y confidencialidad. Adoptamos el **Principio de Minimización de Datos**: únicamente recopilamos los datos estrictamente necesarios para prestar el servicio.
+Aplicamos rigurosamente los principios de legalidad, finalidad, libertad, veracidad o calidad, transparencia, acceso y circulación restringida, seguridad y confidencialidad. Adoptamos el **Principio de Minimización de Datos**: únicamente recopilamos los datos estrictamente necesarios para prestar el servicio o aquellos facilitados voluntariamente por el usuario para finalidades legítimas y explícitas.
 
 ### 3. Datos Personales que Recopilamos
 - **Datos de Identificación y Contacto:** Nombre completo, tipo y número de documento de identidad (Cédula de Ciudadanía, Extranjería o NIT), correo electrónico, número de teléfono celular y ciudad.
 - **Datos Transaccionales:** Montos de transacciones, referencias de pago emitidas por pasarela, estado de suscripción y fecha de vencimiento. *(Nota: Nunca almacenamos información de tarjetas financieras).*
 - **Datos de Uso de la Plataforma:** Historial de redención de beneficios, códigos de referidos generados y preferencias de interfaz.
+- **Datos de Caracterización y Perfilamiento Sociodemográfico (Facultativos):** Información suministrada voluntariamente por el titular relativa a tenencia de vivienda (propia, arriendo, familiar), vínculos familiares en el exterior, condición de emprendedor y descripción o sector de su emprendimiento comercial.
+
+### 3.1. Carácter Facultativo de los Datos de Caracterización
+De estricto acuerdo con el **artículo 12 del Decreto Reglamentario 1377 de 2013**, $companyName informa expresamente al Titular que las respuestas a las preguntas de caracterización y perfilamiento sociodemográfico y comercial son de **carácter estrictamente facultativo y voluntario**. El Titular es libre de responderlas o no. La abstención de responder no condicionará en modo alguno su registro en la plataforma, la prestación de los servicios contratados ni el acceso regular a la red de beneficios.
 
 ### 4. Finalidades del Tratamiento
 Los datos personales autorizados por el titular serán tratados con las siguientes finalidades:
@@ -94,11 +100,15 @@ Los datos personales autorizados por el titular serán tratados con las siguient
 5. Enviar notificaciones transaccionales operativas (confirmación de registro, recuperación de contraseña, alertas de vencimiento) a través de servicios de correo electrónico seguro (**Resend**).
 6. Procesar los pagos de forma segura y mitigar riesgos de fraude a través de la pasarela autorizada **Wompi (Bancolombia)**.
 7. Atender peticiones, quejas, reclamos y solicitudes de soporte técnico (PQRS).
+8. **Segmentación y Personalización de Beneficios (Datos Facultativos):** Tratar los datos de caracterización voluntaria (vivienda, familiares en el exterior y emprendimiento) con la exclusiva finalidad de recomendar, segmentar y personalizar la oferta de beneficios, convenios comerciales y promociones afines a las necesidades e intereses del usuario (por ejemplo: alianzas para adquisición/mejoramiento de vivienda, servicios y remesas para familiares en el exterior, o programas de visibilidad y apoyo a emprendedores).
+9. **Estudios Estadísticos y Prospección de Alianzas:** Realizar análisis estadísticos y métricas consolidadas o anonimizadas para evaluar intereses colectivos y diseñar nuevos convenios estratégicos de alto impacto para los afiliados.
 
 ### 5. Transferencia y Transmisión a Terceros
 $companyName no comercializa ni cede bases de datos a terceros con fines de lucro. Sus datos únicamente se transmiten bajo contratos de confidencialidad a proveedores tecnológicos esenciales:
 - **Pasarela de Pagos (Wompi - Bancolombia):** Para procesar transacciones en línea con altos estándares de seguridad bancaria.
 - **Servidor de Correos (Resend):** Para el envío de correos transaccionales estrictamente necesarios para la operación de la cuenta.
+
+*(Nota de Protección: Los datos de caracterización sociodemográfica y respuestas a preguntas voluntarias no son transferidos de manera individualizada a comercios aliados ni a entidades crediticias sin la previa, expresa e informada autorización del titular).*
 
 ### 6. Derechos de los Titulares (Derechos ARCO)
 El titular de los datos personales tiene derecho a:

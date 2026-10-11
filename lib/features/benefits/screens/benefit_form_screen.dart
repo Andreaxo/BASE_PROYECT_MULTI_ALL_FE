@@ -302,7 +302,10 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.sizeOf(context).width < 600 ? 14 : 24,
+            vertical: 16,
+          ),
           child: Form(
             key: _formKey,
             child: Center(
@@ -380,7 +383,9 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
 
                     // ── Tarjeta principal ──────────────────────────────
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(
+                        MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                      ),
                       decoration: BoxDecoration(
                         color: themeColors.cardBackground,
                         borderRadius: BorderRadius.circular(16),
@@ -478,24 +483,51 @@ class _BenefitFormScreenState extends State<BenefitFormScreen> {
                     // ── Botones de acción ──────────────────────────────
                     Divider(color: themeColors.borderColor),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlineButtonWidget(
-                          label: 'Cancelar',
-                          onPressed: () => Navigator.pop(context),
-                          width: 140,
-                        ),
-                        const SizedBox(width: 16),
-                        GradientButton(
-                          label:
-                              isEditing ? 'Guardar Cambios' : 'Crear Beneficio',
-                          icon: Icons.save_rounded,
-                          isLoading: benefitProvider.isLoading,
-                          onPressed: _handleSave,
-                          width: 200,
-                        ),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isCompact = constraints.maxWidth < 420;
+                        if (isCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              GradientButton(
+                                label: isEditing
+                                    ? 'Guardar Cambios'
+                                    : 'Crear Beneficio',
+                                icon: Icons.save_rounded,
+                                isLoading: benefitProvider.isLoading,
+                                onPressed: _handleSave,
+                              ),
+                              const SizedBox(height: 12),
+                              OutlineButtonWidget(
+                                label: 'Cancelar',
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlineButtonWidget(
+                              label: 'Cancelar',
+                              onPressed: () => Navigator.pop(context),
+                              width: 140,
+                            ),
+                            const SizedBox(width: 16),
+                            GradientButton(
+                              label: isEditing
+                                  ? 'Guardar Cambios'
+                                  : 'Crear Beneficio',
+                              icon: Icons.save_rounded,
+                              isLoading: benefitProvider.isLoading,
+                              onPressed: _handleSave,
+                              width: 200,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

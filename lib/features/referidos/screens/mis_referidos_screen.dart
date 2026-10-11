@@ -51,196 +51,8 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     });
   }
 
-  void _showInviteDialog() {
-    final authProvider = context.read<AuthProvider>();
-    final membresiaProvider = context.read<MembresiaProvider>();
-    if (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership) {
-      showDialog(
-        context: context,
-        builder: (ctx) {
-          final themeColors =
-              Theme.of(ctx).extension<AppThemeColors>() ??
-              AppTheme.darkThemeColors;
-          return AlertDialog(
-            backgroundColor: themeColors.cardBackground,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Row(
-              children: [
-                const Icon(Icons.lock_rounded, color: AppColors.primary, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  'Membresía Requerida',
-                  style: GoogleFonts.outfit(
-                    color: themeColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Para invitar referidos y generar recompensas por cada nuevo afiliado, necesitas contar con una membresía activa en Conexiate.',
-              style: GoogleFonts.inter(
-                color: themeColors.textSecondary,
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text('Cerrar', style: GoogleFonts.inter(color: themeColors.textSecondary)),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).pushNamed('/mi-membresia');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: Text('Activar Membresía', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
-
-    final emailCtrl = TextEditingController();
-    final nombreCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final themeColors =
-            Theme.of(ctx).extension<AppThemeColors>() ??
-            AppTheme.darkThemeColors;
-        return AlertDialog(
-          backgroundColor: themeColors.cardBackground,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            'Invitar a un amigo',
-            style: GoogleFonts.outfit(
-              color: themeColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: emailCtrl,
-                  style: GoogleFonts.inter(color: themeColors.textPrimary),
-                  decoration: InputDecoration(
-                    labelText: 'Correo electrónico *',
-                    labelStyle:
-                        GoogleFonts.inter(color: themeColors.textSecondary),
-                    prefixIcon: Icon(Icons.email_outlined,
-                        color: themeColors.textSecondary),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: themeColors.borderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'El correo es requerido';
-                    if (!v.contains('@')) return 'Ingrese un correo válido';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: nombreCtrl,
-                  style: GoogleFonts.inter(color: themeColors.textPrimary),
-                  decoration: InputDecoration(
-                    labelText: 'Nombre (opcional)',
-                    labelStyle:
-                        GoogleFonts.inter(color: themeColors.textSecondary),
-                    prefixIcon: Icon(Icons.person_outline,
-                        color: themeColors.textSecondary),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: themeColors.borderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancelar',
-                style: GoogleFonts.inter(color: themeColors.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                Navigator.pop(ctx);
-                final provider = context.read<ReferidoProvider>();
-                final success = await provider.createReferido(
-                  CreateReferidoRequest(
-                    emailReferido: emailCtrl.text.trim(),
-                    nombreReferido: nombreCtrl.text.trim().isEmpty
-                        ? null
-                        : nombreCtrl.text.trim(),
-                  ),
-                );
-                if (mounted) {
-                  CustomAlert.show(
-                    context,
-                    message: success
-                        ? 'Invitación enviada correctamente'
-                        : provider.errorMessage ?? 'Error al enviar invitación',
-                    isSuccess: success,
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Enviar invitación',
-                style: GoogleFonts.inter(color: Colors.white),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Color _getEstadoColor(String estado) {
     switch (estado) {
-      case 'pendiente':
-        return AppColors.warning;
       case 'registrado':
         return AppColors.primary;
       case 'afiliado':
@@ -251,11 +63,11 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
   }
 
   Widget _buildAvatar(Referido referido, AppThemeColors themeColors) {
-    final String displayName = referido.nombreReferido?.isNotEmpty == true
-        ? referido.nombreReferido!
-        : referido.nombreReferidoUser.isNotEmpty == true
-            ? referido.nombreReferidoUser
-            : 'Invitado';
+    final String displayName = referido.nombreReferidoUser.isNotEmpty == true
+        ? referido.nombreReferidoUser
+        : referido.nombreReferido?.isNotEmpty == true
+            ? referido.nombreReferido!
+            : 'Usuario';
     final String initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
 
     final List<Color> gradientColors;
@@ -301,20 +113,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
 
   Widget _buildEstadoBadge(Referido referido) {
     final color = _getEstadoColor(referido.estado);
-    IconData icon;
-    switch (referido.estado) {
-      case 'pendiente':
-        icon = Icons.schedule_rounded;
-        break;
-      case 'registrado':
-        icon = Icons.login_rounded;
-        break;
-      case 'afiliado':
-        icon = Icons.verified_rounded;
-        break;
-      default:
-        icon = Icons.info_outline_rounded;
-    }
+    final icon = referido.estado == 'afiliado'
+        ? Icons.verified_rounded
+        : Icons.person_outline_rounded;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -350,72 +151,6 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     );
   }
 
-  Widget _buildRecompensaBadge(Referido referido, AppThemeColors themeColors) {
-    if (referido.recompensaOtorgada) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFFA500).withValues(alpha: 0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.star_rounded, color: Colors.black, size: 13),
-            const SizedBox(width: 4),
-            Text(
-              'Otorgada',
-              style: GoogleFonts.inter(
-                color: Colors.black,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: themeColors.textSecondary.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: themeColors.borderColor,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.hourglass_empty_rounded, color: themeColors.textSecondary, size: 12),
-            const SizedBox(width: 5),
-            Text(
-              'Pendiente',
-              style: GoogleFonts.inter(
-                color: themeColors.textSecondary,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ReferidoProvider>();
@@ -429,16 +164,22 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
     // Filter
     final filtered = provider.misReferidos.where((r) {
       if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery;
-      return r.emailReferido.toLowerCase().contains(q) ||
-          (r.nombreReferido?.toLowerCase().contains(q) ?? false) ||
-          r.estadoLabel.toLowerCase().contains(q);
+      final q = _searchQuery.toLowerCase().trim();
+      final nombre = (r.nombreReferido ?? '').toLowerCase();
+      final email = r.emailReferido.toLowerCase();
+      final estado = r.estadoLabel.toLowerCase();
+
+      final matchesDirect =
+          email.contains(q) || nombre.contains(q) || estado.contains(q);
+      if (matchesDirect) return true;
+
+      final tokens = q.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
+      return tokens.isNotEmpty &&
+          tokens.every((t) => nombre.contains(t) || email.contains(t));
     }).toList();
 
     // Stats
     final total = provider.misReferidos.length;
-    final pendientes =
-        provider.misReferidos.where((r) => r.estado == 'pendiente').length;
     final registrados =
         provider.misReferidos.where((r) => r.estado == 'registrado').length;
     final afiliados =
@@ -483,57 +224,23 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                   const SizedBox(height: 12),
 
                   // ── Header Row ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Mis Referidos',
-                            style: GoogleFonts.outfit(
-                              color: themeColors.textPrimary,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Comparte tu código de invitación y gestiona tus referidos',
-                            style: GoogleFonts.inter(
-                              color: themeColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                      Text(
+                        'Mis Referidos',
+                        style: GoogleFonts.outfit(
+                          color: themeColors.textPrimary,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
-                        child: ElevatedButton.icon(
-                          onPressed: _showInviteDialog,
-                          icon: const Icon(Icons.person_add_alt_1_rounded,
-                              size: 20, color: Colors.white),
-                          label: Text(
-                            'Invitar Referido',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Comparte tu código de invitación y gestiona tus referidos',
+                        style: GoogleFonts.inter(
+                          color: themeColors.textSecondary,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -905,16 +612,10 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                       final isWide = constraints.maxWidth > 700;
                       final cards = [
                         _ReferralStatCard(
-                          label: 'Total Invitaciones',
+                          label: 'Total Referidos',
                           value: total.toString(),
                           icon: Icons.people_alt_outlined,
                           accentColor: const Color(0xFF6C63FF),
-                        ),
-                        _ReferralStatCard(
-                          label: 'Pendientes',
-                          value: pendientes.toString(),
-                          icon: Icons.hourglass_empty_rounded,
-                          accentColor: AppColors.warning,
                         ),
                         _ReferralStatCard(
                           label: 'Registrados',
@@ -945,8 +646,11 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                           spacing: 12,
                           runSpacing: 12,
                           children: cards
-                              .map((c) =>
-                                  SizedBox(width: constraints.maxWidth / 2 - 18, child: c))
+                              .map((c) => SizedBox(
+                                  width: constraints.maxWidth > 400
+                                      ? (constraints.maxWidth - 12) / 2
+                                      : constraints.maxWidth,
+                                  child: c))
                               .toList(),
                         );
                       }
@@ -955,73 +659,36 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ── Header: search + invite button ──
-                  LayoutBuilder(
-                    builder: (context, searchConstraints) {
-                      final isNarrow = searchConstraints.maxWidth < 500;
-                      final searchField = Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: themeColors.cardBackground,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: themeColors.borderColor),
+                  // ── Search bar ──
+                  Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: themeColors.cardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: themeColors.borderColor),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: GoogleFonts.inter(
+                        color: themeColors.textPrimary,
+                        fontSize: 14,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por email, nombre o estado...',
+                        hintStyle: GoogleFonts.inter(
+                          color: themeColors.textSecondary,
+                          fontSize: 14,
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          style: GoogleFonts.inter(
-                              color: themeColors.textPrimary, fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Buscar por email, nombre o estado...',
-                            hintStyle: GoogleFonts.inter(
-                                color: themeColors.textSecondary,
-                                fontSize: 14),
-                            prefixIcon: Icon(Icons.search_rounded,
-                                color: themeColors.textSecondary),
-                            border: InputBorder.none,
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                          ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: themeColors.textSecondary,
                         ),
-                      );
-
-                      final inviteButton = ElevatedButton.icon(
-                        onPressed: _showInviteDialog,
-                        icon: const Icon(Icons.person_add_alt_1_rounded,
-                            size: 18),
-                        label: Text(
-                          'Invitar',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      );
-
-                      if (isNarrow) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            searchField,
-                            const SizedBox(height: 10),
-                            inviteButton,
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          Expanded(child: searchField),
-                          const SizedBox(width: 12),
-                          inviteButton,
-                        ],
-                      );
-                    },
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -1062,8 +729,7 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                         children: [
                                           _headerCell('Usuario Referido', themeColors, flex: 4),
                                           _headerCell('Estado', themeColors, flex: 2),
-                                          _headerCell('Recompensa', themeColors, flex: 2),
-                                          _headerCell('Fecha de Invitación', themeColors, flex: 2),
+                                          _headerCell('Fecha de Registro', themeColors, flex: 2),
                                         ],
                                       ),
                                     ),
@@ -1074,9 +740,9 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
                                         child: Center(
                                           child: Text(
                                             (!authProvider.isAdminOrSuperAdmin && !membresiaProvider.hasActiveMembership)
-                                                ? 'Tu red de referidos se activará con tu membresía.\n¡Actívala hoy y comienza a invitar a tus conocidos!'
+                                                ? 'Tu red de referidos se activará con tu membresía.\n¡Actívala hoy y comparte tu código de referido!'
                                                 : (filtered.isEmpty && _searchQuery.isEmpty
-                                                    ? 'Aún no has invitado a nadie.\n¡Comparte tu código para empezar!'
+                                                    ? 'Aún no tienes referidos registrados.\n¡Comparte tu código para empezar!'
                                                     : 'No se encontraron resultados'),
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
@@ -1135,7 +801,6 @@ class _MisReferidosScreenState extends State<MisReferidosScreen> {
       themeColors: themeColors,
       avatar: _buildAvatar(r, themeColors),
       estadoBadge: _buildEstadoBadge(r),
-      recompensaBadge: _buildRecompensaBadge(r, themeColors),
       dateString: _formatDate(r.fechaReferido),
     );
   }
@@ -1157,7 +822,6 @@ class _ReferidoRow extends StatefulWidget {
   final AppThemeColors themeColors;
   final Widget avatar;
   final Widget estadoBadge;
-  final Widget recompensaBadge;
   final String dateString;
 
   const _ReferidoRow({
@@ -1165,7 +829,6 @@ class _ReferidoRow extends StatefulWidget {
     required this.themeColors,
     required this.avatar,
     required this.estadoBadge,
-    required this.recompensaBadge,
     required this.dateString,
   });
 
@@ -1219,11 +882,11 @@ class _ReferidoRowState extends State<_ReferidoRow> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          widget.referido.nombreReferido?.isNotEmpty == true
-                              ? widget.referido.nombreReferido!
-                              : widget.referido.nombreReferidoUser.isNotEmpty == true
-                                  ? widget.referido.nombreReferidoUser
-                                  : 'Invitado',
+                          widget.referido.nombreReferidoUser.isNotEmpty == true
+                              ? widget.referido.nombreReferidoUser
+                              : widget.referido.nombreReferido?.isNotEmpty == true
+                                  ? widget.referido.nombreReferido!
+                                  : 'Usuario',
                           style: GoogleFonts.outfit(
                             color: widget.themeColors.textPrimary,
                             fontSize: 14,
@@ -1263,13 +926,6 @@ class _ReferidoRowState extends State<_ReferidoRow> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: widget.estadoBadge,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: widget.recompensaBadge,
               ),
             ),
             Expanded(

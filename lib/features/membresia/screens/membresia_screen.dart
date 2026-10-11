@@ -215,10 +215,22 @@ class _MembresiaScreenState extends State<MembresiaScreen>
         authProvider.roleCode == 'negocio';
 
     final memb = provider.miMembresia;
-    // La membresía de prueba de 1 año aplica ÚNICAMENTE a negocios aliados (rol business_validator / negocio).
-    // Para el resto de usuarios (afiliados 'user_member', estándar 'user'), NUNCA aplica prueba gratuita.
-    final isPrueba = isValidator && (memb?.isPrueba ?? true);
-    final isActiva = isAdminOrSuperAdmin || (isValidator ? isPrueba : (memb?.isActiva ?? false));
+    final company = authProvider.activeCompany ??
+        (authProvider.userCompanies.isNotEmpty ? authProvider.userCompanies.first : null);
+
+    // Estado consolidado y sincronizado:
+    // Si memb ya cargó del backend, usamos su estado. Si no, usamos el estado de la empresa del validador.
+    final rawCompEstado = (company?.suscripcionEstado ?? 'prueba').toLowerCase();
+    final isCompanyDisabled = isValidator && (company != null && !company.isActive);
+    final estadoStr = isCompanyDisabled
+        ? 'inactiva'
+        : ((memb != null && memb.estado.isNotEmpty)
+            ? memb.estado.toLowerCase()
+            : (isValidator ? rawCompEstado : 'inactiva'));
+
+    final isPrueba = isValidator && (estadoStr == 'prueba');
+    final isActiva = isAdminOrSuperAdmin || (estadoStr == 'activa');
+    final isVencida = estadoStr == 'vencida' || estadoStr == 'vencido';
 
     // Compute effective trial dates (solo relevante para negocios aliados)
     DateTime startDate = DateTime.now();
@@ -254,9 +266,9 @@ class _MembresiaScreenState extends State<MembresiaScreen>
               color: AppColors.accent,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 24,
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.sizeOf(context).width < 600 ? 14 : 20,
+                  vertical: MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,6 +306,7 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                       memb,
                       isActiva,
                       isPrueba,
+                      isVencida,
                       isValidator,
                       isAdminOrSuperAdmin,
                       startDate,
@@ -337,6 +350,7 @@ class _MembresiaScreenState extends State<MembresiaScreen>
     MembresiaModel? memb,
     bool isActiva,
     bool isPrueba,
+    bool isVencida,
     bool isValidator,
     bool isAdminOrSuperAdmin,
     DateTime startDate,
@@ -367,7 +381,7 @@ class _MembresiaScreenState extends State<MembresiaScreen>
       badgeBg = const Color(0xFF10B981).withValues(alpha: 0.15);
       badgeText = 'MEMBRESÍA ACTIVA';
       badgeIcon = Icons.verified_rounded;
-    } else if (memb?.isVencida ?? false) {
+    } else if (isVencida) {
       badgeColor = const Color(0xFFEF4444);
       badgeBg = const Color(0xFFEF4444).withValues(alpha: 0.15);
       badgeText = 'MEMBRESÍA VENCIDA';
@@ -381,14 +395,16 @@ class _MembresiaScreenState extends State<MembresiaScreen>
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 18 : 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isActiva
+          colors: (isActiva || isPrueba)
               ? (isDark
                   ? [
                       const Color(0xFF064E3B).withValues(alpha: 0.6),
@@ -410,14 +426,14 @@ class _MembresiaScreenState extends State<MembresiaScreen>
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isActiva
+          color: (isActiva || isPrueba)
               ? const Color(0xFF10B981).withValues(alpha: 0.4)
               : AppColors.accent.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isActiva ? const Color(0xFF10B981) : AppColors.accent)
+            color: ((isActiva || isPrueba) ? const Color(0xFF10B981) : AppColors.accent)
                 .withValues(alpha: 0.15),
             blurRadius: 20,
             offset: const Offset(0, 8),
@@ -427,12 +443,11 @@ class _MembresiaScreenState extends State<MembresiaScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Badge & Price
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
+          // Top Row: Badge & Price (Responsive Layout)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isStacked = constraints.maxWidth < 490;
+              final badgeWidget = Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 6,
@@ -449,20 +464,26 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                   children: [
                     Icon(badgeIcon, color: badgeColor, size: 16),
                     const SizedBox(width: 6),
-                    Text(
-                      badgeText,
-                      style: GoogleFonts.outfit(
-                        color: badgeColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        letterSpacing: 0.8,
+                    Flexible(
+                      child: Text(
+                        badgeText,
+                        style: GoogleFonts.outfit(
+                          color: badgeColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 0.8,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              );
+
+              final priceWidget = Column(
+                crossAxisAlignment:
+                    isStacked ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                 children: [
                   Text(
                     isAdminOrSuperAdmin
@@ -488,8 +509,28 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                     ),
                   ),
                 ],
-              ),
-            ],
+              );
+
+              if (isStacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    badgeWidget,
+                    const SizedBox(height: 14),
+                    priceWidget,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  badgeWidget,
+                  priceWidget,
+                ],
+              );
+            },
           ),
 
           const SizedBox(height: 20),
@@ -552,12 +593,14 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Vigencia de Membresía de Prueba (1 Año)',
-                        style: GoogleFonts.outfit(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : themeColors.textPrimary,
+                      Expanded(
+                        child: Text(
+                          'Vigencia de Membresía de Prueba (1 Año)',
+                          style: GoogleFonts.outfit(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : themeColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -625,6 +668,7 @@ class _MembresiaScreenState extends State<MembresiaScreen>
           // Bottom Action Row
           if (isAdminOrSuperAdmin)
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 12,
@@ -637,7 +681,6 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
                     Icons.verified_user_rounded,
@@ -645,12 +688,14 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                     size: 22,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    'Super Administrador • Cuenta con Privilegios Totales',
-                    style: GoogleFonts.outfit(
-                      color: isDark ? Colors.white : themeColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  Expanded(
+                    child: Text(
+                      'Super Administrador • Cuenta con Privilegios Totales',
+                      style: GoogleFonts.outfit(
+                        color: isDark ? Colors.white : themeColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ],
@@ -658,6 +703,7 @@ class _MembresiaScreenState extends State<MembresiaScreen>
             )
           else if (isPrueba)
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
                 vertical: 14,
@@ -670,7 +716,6 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
                     Icons.check_circle_rounded,
@@ -678,31 +723,34 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                     size: 24,
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Membresía de Prueba 100% Activa y Gratuita',
-                        style: GoogleFonts.outfit(
-                          color: isDark ? Colors.white : themeColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Membresía de Prueba 100% Activa y Gratuita',
+                          style: GoogleFonts.outfit(
+                            color: isDark ? Colors.white : themeColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      Text(
-                        'No se requiere ningún pago. Válida del ${dateFormat.format(startDate)} al ${dateFormat.format(endDate)} ($diasRestantes días restantes).',
-                        style: GoogleFonts.inter(
-                          color: isDark ? Colors.white70 : themeColors.textSecondary,
-                          fontSize: 12.5,
+                        const SizedBox(height: 2),
+                        Text(
+                          'No se requiere ningún pago. Válida del ${dateFormat.format(startDate)} al ${dateFormat.format(endDate)} ($diasRestantes días restantes).',
+                          style: GoogleFonts.inter(
+                            color: isDark ? Colors.white70 : themeColors.textSecondary,
+                            fontSize: 12.5,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             )
-          else if (isActiva && (memb?.diasRestantes ?? 0) > 3)
+          else if (isActiva && (isValidator || (memb?.diasRestantes ?? 0) > 3))
             Wrap(
               spacing: 16,
               runSpacing: 12,
@@ -729,28 +777,30 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                         size: 22,
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Membresía al Día',
-                            style: GoogleFonts.outfit(
-                              color: isDark ? Colors.white : themeColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Membresía al Día',
+                              style: GoogleFonts.outfit(
+                                color: isDark ? Colors.white : themeColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                          Text(
-                            memb?.renovacionAutomatica == true
-                                ? 'Próximo cobro automático: ${memb?.fechaFin != null ? dateFormat.format(memb!.fechaFin!) : "Programado"}'
-                                : 'Activa hasta: ${memb?.fechaFin != null ? dateFormat.format(memb!.fechaFin!) : ""}',
-                            style: GoogleFonts.inter(
-                              color: isDark ? Colors.white70 : themeColors.textSecondary,
-                              fontSize: 12,
+                            Text(
+                              memb?.renovacionAutomatica == true
+                                  ? 'Próximo cobro automático: ${memb?.fechaFin != null ? dateFormat.format(memb!.fechaFin!) : "Programado"}'
+                                  : 'Activa hasta: ${memb?.fechaFin != null ? dateFormat.format(memb!.fechaFin!) : ""}',
+                              style: GoogleFonts.inter(
+                                color: isDark ? Colors.white70 : themeColors.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -888,61 +938,131 @@ class _MembresiaScreenState extends State<MembresiaScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: themeColors.borderColor),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (isAutoRenew ? AppColors.accent : Colors.grey)
-                  .withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              isAutoRenew
-                  ? Icons.autorenew_rounded
-                  : Icons.pause_circle_outline_rounded,
-              color: isAutoRenew ? AppColors.accent : Colors.grey,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 440;
+          if (isCompact && isAutoRenew) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Renovación Automática',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: themeColors.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (isAutoRenew ? AppColors.accent : Colors.grey)
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        isAutoRenew
+                            ? Icons.autorenew_rounded
+                            : Icons.pause_circle_outline_rounded,
+                        color: isAutoRenew ? AppColors.accent : Colors.grey,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Renovación Automática',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: themeColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Activa. Tu membresía se renovará automáticamente.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: themeColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  isAutoRenew
-                      ? 'Activa. Tu membresía se renovará automáticamente al finalizar el período.'
-                      : 'Desactivada. Tu membresía finalizará cuando venza la fecha actual.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: themeColors.textSecondary,
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _handleCancelRenewal,
+                    child: Text(
+                      'Desactivar',
+                      style: GoogleFonts.inter(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          if (isAutoRenew)
-            TextButton(
-              onPressed: _handleCancelRenewal,
-              child: Text(
-                'Desactivar',
-                style: GoogleFonts.inter(
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.w600,
+            );
+          }
+
+          return Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: (isAutoRenew ? AppColors.accent : Colors.grey)
+                      .withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  isAutoRenew
+                      ? Icons.autorenew_rounded
+                      : Icons.pause_circle_outline_rounded,
+                  color: isAutoRenew ? AppColors.accent : Colors.grey,
+                  size: 24,
                 ),
               ),
-            ),
-        ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Renovación Automática',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: themeColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isAutoRenew
+                          ? 'Activa. Tu membresía se renovará automáticamente al finalizar el período.'
+                          : 'Desactivada. Tu membresía finalizará cuando venza la fecha actual.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: themeColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isAutoRenew)
+                TextButton(
+                  onPressed: _handleCancelRenewal,
+                  child: Text(
+                    'Desactivar',
+                    style: GoogleFonts.inter(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1022,69 +1142,134 @@ class _MembresiaScreenState extends State<MembresiaScreen>
                 },
               ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 350,
-        mainAxisExtent: 130,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: benefits.length,
-      itemBuilder: (context, index) {
-        final b = benefits[index];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: themeColors.cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: themeColors.borderColor),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        if (isMobile) {
+          return Column(
+            children: benefits.map((b) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  color: themeColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: themeColors.borderColor),
                 ),
-                child: Icon(
-                  b['icon'] as IconData,
-                  color: AppColors.accent,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      b['title'] as String,
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: themeColors.textPrimary,
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        b['icon'] as IconData,
+                        color: AppColors.accent,
+                        size: 22,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      b['desc'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: themeColors.textSecondary,
-                        height: 1.3,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            b['title'] as String,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                              color: themeColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            b['desc'] as String,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              color: themeColors.textSecondary,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ),
-            ],
+              );
+            }).toList(),
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 350,
+            mainAxisExtent: 126,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
           ),
+          itemCount: benefits.length,
+          itemBuilder: (context, index) {
+            final b = benefits[index];
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: themeColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: themeColors.borderColor),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      b['icon'] as IconData,
+                      color: AppColors.accent,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          b['title'] as String,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: themeColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          b['desc'] as String,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: themeColors.textSecondary,
+                            height: 1.3,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -1634,36 +1819,42 @@ class _WompiPaymentModalDialogState extends State<_WompiPaymentModalDialog> {
                       fontSize: 12,
                     ),
                   ),
-                  InkWell(
-                    onTap: _copyReference,
-                    borderRadius: BorderRadius.circular(6),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            widget.resp.referencia,
-                            style: GoogleFonts.inter(
-                              color: themeColors.textPrimary,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 11,
-                              letterSpacing: 0.4,
+                  Flexible(
+                    child: InkWell(
+                      onTap: _copyReference,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.resp.referencia,
+                                style: GoogleFonts.inter(
+                                  color: themeColors.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                  letterSpacing: 0.4,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            _copied
-                                ? Icons.check_circle_rounded
-                                : Icons.copy_rounded,
-                            size: 14,
-                            color: _copied
-                                ? const Color(0xFF10B981)
-                                : themeColors.textSecondary,
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            Icon(
+                              _copied
+                                  ? Icons.check_circle_rounded
+                                  : Icons.copy_rounded,
+                              size: 14,
+                              color: _copied
+                                  ? const Color(0xFF10B981)
+                                  : themeColors.textSecondary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

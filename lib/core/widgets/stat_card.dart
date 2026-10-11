@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
@@ -19,7 +19,7 @@ class StatCard extends StatelessWidget {
     final themeColors = Theme.of(context).extension<AppThemeColors>() ?? AppTheme.darkThemeColors;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: themeColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
@@ -33,6 +33,8 @@ class StatCard extends StatelessWidget {
             children: [
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: themeColors.textSecondary,
                   fontSize: 12,
@@ -40,12 +42,17 @@ class StatCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                value,
-                style: GoogleFonts.outfit(
-                  color: themeColors.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: GoogleFonts.outfit(
+                    color: themeColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -56,7 +63,7 @@ class StatCard extends StatelessWidget {
             top: 0,
             child: Icon(
               icon,
-              size: 48,
+              size: 44,
               color: themeColors.textPrimary.withValues(alpha: 0.03),
             ),
           ),

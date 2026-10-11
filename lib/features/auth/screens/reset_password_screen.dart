@@ -34,12 +34,60 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(() => setState(() {}));
-    _confirmPasswordController.addListener(() => setState(() {}));
+    _passwordController.addListener(_onInputChanged);
+    _confirmPasswordController.addListener(_onInputChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _extractParameters();
     });
+  }
+
+  void _onInputChanged() {
+    if (_errorMessage != null) {
+      setState(() => _errorMessage = null);
+    } else {
+      setState(() {});
+    }
+  }
+
+  String _formatErrorMessage(dynamic error) {
+    if (error == null) {
+      return 'Ha ocurrido un error inesperado. Por favor intenta de nuevo.';
+    }
+    var msg = error.toString().trim();
+    if (msg.startsWith('Exception: ')) {
+      msg = msg.substring('Exception: '.length).trim();
+    }
+    if (msg.isEmpty) {
+      return 'Ha ocurrido un error inesperado. Por favor intenta de nuevo.';
+    }
+
+    final lower = msg.toLowerCase();
+    if (lower.contains('socketexception') ||
+        lower.contains('connection refused') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable')) {
+      return 'No fue posible conectar con el servidor. Por favor verifica tu conexión a internet.';
+    }
+    if (lower.contains('timeout') || lower.contains('timed out')) {
+      return 'La solicitud ha tardado demasiado tiempo. Por favor intenta de nuevo en unos momentos.';
+    }
+    if (lower.contains('token') ||
+        lower.contains('expirado') ||
+        lower.contains('inválido') ||
+        lower.contains('invalido')) {
+      return 'El enlace de recuperación ha expirado o no es válido. Por favor solicita uno nuevo.';
+    }
+
+    final firstChar = msg.substring(0, 1).toUpperCase();
+    final remainder = msg.length > 1 ? msg.substring(1) : '';
+    msg = '$firstChar$remainder';
+
+    if (!msg.endsWith('.') && !msg.endsWith('!') && !msg.endsWith('?')) {
+      msg = '$msg.';
+    }
+
+    return msg;
   }
 
   void _extractParameters() {
@@ -132,7 +180,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage = _formatErrorMessage(e);
         });
       }
     } finally {
@@ -226,23 +274,64 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           // Error Banner
           if (_errorMessage != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                color: isDark
+                    ? const Color(0xFF450A0A).withValues(alpha: 0.7)
+                    : const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF991B1B)
+                      : const Color(0xFFFCA5A5),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.25)
+                        : const Color(0xFFEF4444).withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 20),
+                  Icon(
+                    Icons.error_outline_rounded,
+                    color: isDark
+                        ? const Color(0xFFFCA5A5)
+                        : const Color(0xFFDC2626),
+                    size: 19,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _errorMessage!,
                       style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFFB91C1C),
+                        color: isDark
+                            ? const Color(0xFFFECACA)
+                            : const Color(0xFFB91C1C),
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () => setState(() => _errorMessage = null),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: isDark
+                            ? Colors.white54
+                            : const Color(0xFF991B1B),
                       ),
                     ),
                   ),
@@ -368,12 +457,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: (_isLoading || _token.isEmpty) ? null : _submit,
+              onPressed:
+                  (_isLoading || _token.isEmpty || !_isFormValid) ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFE2E8F0),
+                disabledForegroundColor: isDark
+                    ? Colors.white24
+                    : const Color(0xFF94A3B8),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 elevation: 0,
               ),

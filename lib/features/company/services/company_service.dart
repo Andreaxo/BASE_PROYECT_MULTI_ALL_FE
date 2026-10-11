@@ -61,14 +61,54 @@ class CompanyApiService {
     }
   }
 
-  static Future<void> delete(int id) async {
-    final response = await ApiService.delete(
-      '${ApiConfig.companiesEndpoint}/$id',
-    );
+  static Future<void> delete(int id, {bool force = false}) async {
+    final uri = force
+        ? '${ApiConfig.companiesEndpoint}/$id?force=true'
+        : '${ApiConfig.companiesEndpoint}/$id';
+    final response = await ApiService.delete(uri);
 
     if (response.statusCode != 200) {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      throw Exception(body['error'] ?? 'Failed to delete company');
+      throw Exception(body['error'] ?? body['message'] ?? 'Failed to delete company');
+    }
+  }
+
+  static Future<Map<String, dynamic>> checkActiveBenefits(int id) async {
+    try {
+      final response = await ApiService.get(
+        '${ApiConfig.companiesEndpoint}/$id/check-benefits',
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {'has_active_benefits': false, 'active_benefits_count': 0};
+  }
+
+  static Future<Map<String, dynamic>> solicitarReactivacion() async {
+    final response = await ApiService.post(
+      '${ApiConfig.companiesEndpoint}/solicitar-reactivacion',
+      {},
+    );
+
+    Map<String, dynamic> body = {};
+    if (response.body.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          body = decoded;
+        }
+      } catch (_) {
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          throw Exception('Error del servidor (${response.statusCode}): ${response.body.trim().isNotEmpty ? response.body : "Sin respuesta del servidor. Asegúrate de reiniciar el backend."}');
+        }
+      }
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return body;
+    } else {
+      throw Exception(body['error'] ?? body['message'] ?? 'Error al procesar la solicitud (código ${response.statusCode})');
     }
   }
 }

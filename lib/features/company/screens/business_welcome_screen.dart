@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/custom_alert.dart';
 import '../../../core/widgets/dashboard_shell.dart';
+import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/outline_button.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../benefits/providers/benefit_provider.dart';
 import '../../benefits/providers/redemption_provider.dart';
+import '../../company/services/company_service.dart';
+import '../../membresia/providers/membresia_provider.dart';
 
 /// Screen displayed to Business Validators when they log in.
 /// Provides a warm greeting, displays the company name and role explanation,
@@ -20,17 +26,32 @@ class BusinessWelcomeScreen extends StatefulWidget {
 }
 
 class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
+  bool _isCheckingStatus = true;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    _checkInitialStatus();
+  }
+
+  Future<void> _checkInitialStatus() async {
+    try {
       final auth = context.read<AuthProvider>();
-      if (auth.activeCompany == null) {
-        auth.refreshProfile();
-      }
+      await auth.refreshProfile();
+      if (!mounted) return;
+      await context.read<MembresiaProvider>().loadMiMembresia(silent: true);
+      if (!mounted) return;
       context.read<BenefitProvider>().loadMyCompanyBenefits();
       context.read<RedemptionProvider>().loadCompanyRedemptions();
-    });
+    } catch (_) {
+      // Ignorar errores de refresco en segundo plano
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingStatus = false;
+        });
+      }
+    }
   }
 
   @override
@@ -38,6 +59,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
     final authProvider = context.watch<AuthProvider>();
     final benefitProvider = context.watch<BenefitProvider>();
     final redemptionProvider = context.watch<RedemptionProvider>();
+    final membresiaProvider = context.watch<MembresiaProvider>();
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
@@ -62,9 +84,282 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
       companyName = 'Empresa Aliada';
     }
 
-    final suscripcionEstado = (company?.suscripcionEstado ?? 'prueba').toLowerCase();
+    final memb = membresiaProvider.miMembresia;
+    final rawCompEstado = (company?.suscripcionEstado ?? 'prueba').toLowerCase();
+    final isCompanyDisabled = (company != null && !company.isActive);
+
+    // Una empresa está inactiva si está explícitamente desactivada o su suscripción está en inactivo/a
+    final isCompanyInactive = isCompanyDisabled ||
+        rawCompEstado == 'inactiva' ||
+        rawCompEstado == 'inactivo';
+
+    final effectiveEstado = isCompanyInactive
+        ? 'inactiva'
+        : ((memb != null &&
+                memb.estado.isNotEmpty &&
+                memb.estado.toLowerCase() != 'inactiva' &&
+                memb.estado.toLowerCase() != 'inactivo')
+            ? memb.estado.toLowerCase()
+            : rawCompEstado);
+
+    // Si aún se está comprobando el estado con el backend y localmente parecía inactiva,
+    // evitamos mostrar bruscamente la pantalla de bloqueo durante ese segundo.
+    if (isCompanyInactive && _isCheckingStatus) {
+      return Scaffold(
+        backgroundColor: themeColors.gradientBg.first,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Comprobando estado del negocio...',
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isCompanyInactive) {
+      return Scaffold(
+        backgroundColor: themeColors.gradientBg.first,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, AppColors.accent],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.hub_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Conexiate',
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: themeColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: TextButton.icon(
+                onPressed: () => context.read<AuthProvider>().logout(),
+                icon: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 18),
+                label: Text(
+                  'Cerrar Sesión',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFEF4444),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 36.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 620),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: themeColors.cardBackground,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.35),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.domain_disabled_rounded,
+                        color: Color(0xFFEF4444),
+                        size: 44,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Perfil de Negocio Inactivo',
+                      style: GoogleFonts.outfit(
+                        color: themeColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Text(
+                        companyName,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFEF4444),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Tu cuenta de negocio aliado ha sido desactivada por el administrador del sistema. Por motivos de seguridad y control operativo, el acceso a las demás opciones del sistema, la publicación de beneficios y la validación de redenciones se encuentran completamente pausadas.',
+                      style: GoogleFonts.inter(
+                        color: themeColors.textSecondary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.contact_support_outlined,
+                            color: Color(0xFF3B82F6),
+                            size: 26,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '¿Cómo reactivar tu cuenta?',
+                                  style: GoogleFonts.inter(
+                                    color: themeColors.textPrimary,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Ponte en contacto con nuestro equipo de soporte o envía una alerta directa de desbloqueo al superadministrador.',
+                                  style: GoogleFonts.inter(
+                                    color: themeColors.textSecondary,
+                                    fontSize: 12.5,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isSmall = constraints.maxWidth < 420;
+                        final logoutBtn = OutlineButtonWidget(
+                          label: 'Cerrar Sesión',
+                          icon: Icons.logout_rounded,
+                          onPressed: () => context.read<AuthProvider>().logout(),
+                          width: isSmall ? double.infinity : 160,
+                        );
+                        final supportBtn = GradientButton(
+                          label: 'Contactar a Soporte',
+                          icon: Icons.support_agent_rounded,
+                          width: isSmall ? double.infinity : 220,
+                          onPressed: () => _showSupportModal(context, companyName, themeColors),
+                        );
+
+                        if (isSmall) {
+                          return Column(
+                            children: [
+                              supportBtn,
+                              const SizedBox(height: 12),
+                              logoutBtn,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            logoutBtn,
+                            const SizedBox(width: 14),
+                            supportBtn,
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final isSubscriptionActive =
-        suscripcionEstado == 'prueba' || suscripcionEstado == 'activa';
+        !isCompanyInactive &&
+        (effectiveEstado == 'prueba' || effectiveEstado == 'activa');
 
     final totalBenefits = benefitProvider.benefits.length;
     final activeBenefits =
@@ -173,7 +468,7 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
                           ],
                         ),
                       ),
-                      _buildSubscriptionPill(suscripcionEstado),
+                      _buildSubscriptionPill(effectiveEstado),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -418,8 +713,14 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
         label = 'Membresía de Prueba (1 Año)';
         icon = Icons.card_giftcard_rounded;
         break;
-      case 'vencida':
       case 'inactiva':
+      case 'inactivo':
+        bg = const Color(0xFFEF4444).withValues(alpha: 0.2);
+        fg = const Color(0xFFF87171);
+        label = 'Perfil Inactivo';
+        icon = Icons.domain_disabled_rounded;
+        break;
+      case 'vencida':
       default:
         bg = const Color(0xFFEF4444).withValues(alpha: 0.2);
         fg = const Color(0xFFF87171);
@@ -607,6 +908,346 @@ class _BusinessWelcomeScreenState extends State<BusinessWelcomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showSupportModal(BuildContext context, String companyName, AppThemeColors themeColors) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogCtx) {
+        bool isSending = false;
+        bool hasSentNotification = false;
+        String? errorMessage;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: themeColors.cardBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: themeColors.borderColor),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.support_agent_rounded,
+                              color: AppColors.primary,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Solicitud de Desbloqueo',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: themeColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  companyName,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: themeColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close_rounded, color: themeColors.textSecondary),
+                            onPressed: () => Navigator.of(dialogCtx).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Tu cuenta de negocio se encuentra actualmente pausada. Puedes solicitar la reactivación a través de cualquiera de las siguientes opciones:',
+                        style: GoogleFonts.inter(
+                          fontSize: 13.5,
+                          color: themeColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Opción 1: Notificación directa al Super Admin
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.notifications_active_rounded,
+                                  color: AppColors.accent,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Alerta directa al Superadministrador',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: themeColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Envía una notificación instantánea al panel del superadministrador solicitando la reactivación de tu negocio.',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                color: themeColors.textSecondary,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            if (hasSentNotification) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Color(0xFF10B981),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        '¡Solicitud enviada! El superadministrador ha recibido tu notificación de desbloqueo.',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF10B981),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              if (errorMessage != null) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: Text(
+                                    errorMessage!,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFFEF4444),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: isSending
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(Icons.send_rounded, size: 17),
+                                  label: Text(
+                                    isSending ? 'Enviando solicitud...' : 'Notificar al Administrador',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: isSending
+                                      ? null
+                                      : () async {
+                                          setModalState(() {
+                                            isSending = true;
+                                            errorMessage = null;
+                                          });
+                                          try {
+                                            await CompanyApiService.solicitarReactivacion();
+                                            setModalState(() {
+                                              isSending = false;
+                                              hasSentNotification = true;
+                                            });
+                                            if (context.mounted) {
+                                              CustomAlert.show(
+                                                context,
+                                                message: 'Notificación de reactivación enviada al superadministrador con éxito.',
+                                                isSuccess: true,
+                                              );
+                                            }
+                                          } catch (e) {
+                                            setModalState(() {
+                                              isSending = false;
+                                              errorMessage = e.toString().replaceFirst('Exception: ', '');
+                                            });
+                                          }
+                                        },
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Opción 2: Correo de soporte
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: themeColors.sidebarBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: themeColors.borderColor,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.email_outlined,
+                                  color: Color(0xFF3B82F6),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Correo oficial de soporte',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: themeColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Escribe detallando tu solicitud y datos de tu empresa a:',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                color: themeColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: themeColors.cardBackground,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: themeColors.borderColor),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: SelectableText(
+                                      'soporte@conexiate.co',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.accent,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_rounded, size: 18),
+                                    color: themeColors.textSecondary,
+                                    tooltip: 'Copiar correo',
+                                    onPressed: () {
+                                      Clipboard.setData(
+                                        const ClipboardData(text: 'soporte@conexiate.co'),
+                                      );
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Correo copiado al portapapeles: soporte@conexiate.co'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Botón Cerrar
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => Navigator.of(dialogCtx).pop(),
+                          child: Text(
+                            'Cerrar',
+                            style: GoogleFonts.inter(
+                              color: themeColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

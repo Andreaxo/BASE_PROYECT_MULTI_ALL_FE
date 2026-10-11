@@ -65,70 +65,167 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
     });
   }
 
-  void _showDeleteDialog(Company company) {
+  void _showDeleteDialog(Company company) async {
     final themeColors =
         Theme.of(context).extension<AppThemeColors>() ??
         AppTheme.darkThemeColors;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: themeColors.cardBackground,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Eliminar empresa',
-          style: GoogleFonts.outfit(
-            color: themeColors.textPrimary,
-            fontWeight: FontWeight.w600,
+
+    final provider = context.read<CompanyProvider>();
+    final check = await provider.checkActiveBenefits(company.id);
+    final hasActiveBenefits = check['has_active_benefits'] == true ||
+        ((check['active_benefits_count'] as num?)?.toInt() ?? 0) > 0;
+
+    if (!mounted) return;
+
+    if (hasActiveBenefits) {
+      // Alerta de validación doble-check cuando tiene beneficios activos y redenciones
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: themeColors.cardBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB300), size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '¿Eliminar empresa con beneficios?',
+                  style: GoogleFonts.outfit(
+                    color: themeColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas eliminar la empresa ${company.name}?',
-          style: GoogleFonts.inter(color: themeColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancelar',
-              style: GoogleFonts.inter(color: themeColors.textSecondary),
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Esta empresa (${company.name}) tiene beneficios activos y personas que quieren redimir.',
+                style: GoogleFonts.inter(
+                  color: themeColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '¿Seguro que quieres eliminar esta empresa? Si continúas, sus beneficios serán desactivados permanentemente y se eliminarán sus registros vinculados.',
+                style: GoogleFonts.inter(
+                  color: themeColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final provider = context.read<CompanyProvider>();
-              final success = await provider.deleteCompany(company.id);
-              if (mounted) {
-                if (success) {
-                  CustomAlert.show(
-                    context,
-                    message: 'Empresa eliminada correctamente.',
-                    isSuccess: true,
-                  );
-                } else {
-                  CustomAlert.show(
-                    context,
-                    message:
-                        provider.errorMessage ?? 'No fue posible eliminar la empresa.',
-                    isSuccess: false,
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B6B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.inter(color: themeColors.textSecondary),
               ),
             ),
-            child: Text(
-              'Eliminar',
-              style: GoogleFonts.inter(color: Colors.white),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final success = await provider.deleteCompany(company.id, force: true);
+                if (mounted) {
+                  if (success) {
+                    CustomAlert.show(
+                      context,
+                      message: 'Empresa y beneficios desvinculados correctamente.',
+                      isSuccess: true,
+                    );
+                  } else {
+                    CustomAlert.show(
+                      context,
+                      message: provider.errorMessage ?? 'No fue posible eliminar la empresa.',
+                      isSuccess: false,
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B6B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Sí, eliminar empresa',
+                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Si no tiene beneficios, confirmación directa estándar sin advertencia especial
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: themeColors.cardBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Eliminar empresa',
+            style: GoogleFonts.outfit(
+              color: themeColors.textPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        ],
-      ),
-    );
+          content: Text(
+            '¿Estás seguro de que deseas eliminar la empresa ${company.name}?',
+            style: GoogleFonts.inter(color: themeColors.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancelar',
+                style: GoogleFonts.inter(color: themeColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final success = await provider.deleteCompany(company.id, force: false);
+                if (mounted) {
+                  if (success) {
+                    CustomAlert.show(
+                      context,
+                      message: 'Empresa eliminada correctamente.',
+                      isSuccess: true,
+                    );
+                  } else {
+                    CustomAlert.show(
+                      context,
+                      message: provider.errorMessage ?? 'No fue posible eliminar la empresa.',
+                      isSuccess: false,
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B6B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                'Eliminar',
+                style: GoogleFonts.inter(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _navigateToForm({Company? company}) async {

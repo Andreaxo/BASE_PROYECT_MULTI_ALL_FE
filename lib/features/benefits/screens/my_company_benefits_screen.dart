@@ -151,54 +151,116 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 28),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 620;
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            'Beneficios de Tu Empresa',
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: themeColors.textPrimary,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 26),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Beneficios de Tu Empresa',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: themeColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Publica, modifica y gestiona las promociones para la red de usuarios.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12.5,
+                                        color: themeColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Publica, modifica y gestiona las promociones para la red de usuarios.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: themeColors.textSecondary,
-                            ),
+                          const SizedBox(height: 16),
+                          GradientButton(
+                            label: 'Nuevo Beneficio',
+                            icon: Icons.add_rounded,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BenefitFormScreen(),
+                                ),
+                              ).then((_) => _loadBenefits());
+                            },
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GradientButton(
-                      label: 'Nuevo Beneficio',
-                      icon: Icons.add_rounded,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const BenefitFormScreen(),
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                        ).then((_) => _loadBenefits());
-                      },
-                    ),
-                  ],
+                          child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 28),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Beneficios de Tu Empresa',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: themeColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Publica, modifica y gestiona las promociones para la red de usuarios.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: themeColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        GradientButton(
+                          label: 'Nuevo Beneficio',
+                          icon: Icons.add_rounded,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const BenefitFormScreen(),
+                              ),
+                            ).then((_) => _loadBenefits());
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -371,6 +433,93 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final isSmall = constraints.maxWidth < 550;
+                          final isVerySmall = constraints.maxWidth < 440;
+
+                          if (isVerySmall) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                                      ),
+                                      child: const Icon(Icons.card_giftcard_rounded, color: AppColors.primary, size: 20),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        benefit.name,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: themeColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                StatusBadge(
+                                  label: benefit.isDeshabilitadoFaltaPago
+                                      ? 'Pago Pendiente'
+                                      : (benefit.isActive ? 'Activo' : 'Inactivo'),
+                                  isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
+                                  color: benefit.isDeshabilitadoFaltaPago
+                                      ? const Color(0xFFF59E0B)
+                                      : null,
+                                ),
+                                if (benefit.description.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    benefit.description,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: themeColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.edit_rounded, size: 16, color: AppColors.accent),
+                                      label: Text('Editar', style: GoogleFonts.inter(fontSize: 12, color: AppColors.accent)),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(color: AppColors.accent.withValues(alpha: 0.4)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => BenefitFormScreen(benefit: benefit),
+                                          ),
+                                        ).then((_) => _loadBenefits());
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    OutlinedButton.icon(
+                                      icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+                                      label: Text('Eliminar', style: GoogleFonts.inter(fontSize: 12, color: Colors.redAccent)),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => _showDeleteDialog(benefit),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }
+
                           if (isSmall) {
                             // Compact mobile layout
                             return Column(
@@ -399,9 +548,10 @@ class _MyCompanyBenefitsScreenState extends State<MyCompanyBenefitsScreen> {
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
                                     StatusBadge(
                                       label: benefit.isDeshabilitadoFaltaPago
-                                          ? 'Deshabilitado (Pago Pendiente)'
+                                          ? 'Pago Pendiente'
                                           : (benefit.isActive ? 'Activo' : 'Inactivo'),
                                       isActive: benefit.isActive && !benefit.isDeshabilitadoFaltaPago,
                                       color: benefit.isDeshabilitadoFaltaPago

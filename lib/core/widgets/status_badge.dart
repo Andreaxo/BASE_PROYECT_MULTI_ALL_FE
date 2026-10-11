@@ -35,12 +35,16 @@ class StatusBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: dotColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                color: dotColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],

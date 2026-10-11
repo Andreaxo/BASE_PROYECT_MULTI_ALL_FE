@@ -226,44 +226,78 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
                   const SizedBox(height: 12),
 
                   // Header Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        context.tr('category_list_title'),
-                        style: GoogleFonts.outfit(
-                          color: themeColors.textPrimary,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (canCreate)
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ElevatedButton.icon(
-                            onPressed: () => _navigateToForm(),
-                            icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
-                            label: Text(
-                              context.tr('add_category'),
-                              style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                              shape: RoundedRectangleBorder(
+                  LayoutBuilder(
+                    builder: (context, headerConstraints) {
+                      final isMobile = headerConstraints.maxWidth < 650;
+                      final newButton = canCreate
+                          ? Container(
+                              width: isMobile ? double.infinity : null,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6C63FF), Color(0xFF4ECDC4)],
+                                ),
                                 borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ElevatedButton.icon(
+                                onPressed: () => _navigateToForm(),
+                                icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                                label: Text(
+                                  context.tr('add_category'),
+                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink();
+
+                      if (isMobile) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              context.tr('category_list_title'),
+                              style: GoogleFonts.outfit(
+                                color: themeColors.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (canCreate) ...[
+                              const SizedBox(height: 14),
+                              newButton,
+                            ],
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              context.tr('category_list_title'),
+                              style: GoogleFonts.outfit(
+                                color: themeColors.textPrimary,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                          if (canCreate) ...[
+                            const SizedBox(width: 16),
+                            newButton,
+                          ],
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 

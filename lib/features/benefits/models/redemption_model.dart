@@ -1,4 +1,4 @@
-/// Models for Benefit Redemption.
+// Models for Benefit Redemption.
 
 class BenefitRedemption {
   final int id;

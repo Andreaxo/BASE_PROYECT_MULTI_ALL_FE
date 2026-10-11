@@ -45,6 +45,20 @@ class _DashboardShellState extends State<DashboardShell> {
       if (authProvider.roleCode == 'superadmin') {
         context.read<NotificacionProvider>().startPolling();
       }
+      final isBusinessValidator = authProvider.roleCode == 'business_validator' || authProvider.roleCode == 'negocio';
+      final company = authProvider.activeCompany ??
+          (authProvider.userCompanies.isNotEmpty ? authProvider.userCompanies.first : null);
+      final isCompanyInactive = isBusinessValidator &&
+          (company != null &&
+              (!company.isActive ||
+               company.suscripcionEstado.toLowerCase() == 'inactivo' ||
+               company.suscripcionEstado.toLowerCase() == 'inactiva'));
+      if (isCompanyInactive) {
+        final currentRoute = ModalRoute.of(context)?.settings.name;
+        if (currentRoute != null && currentRoute != '/business-home' && currentRoute != '/negocio') {
+          Navigator.of(context).pushReplacementNamed('/business-home');
+        }
+      }
     });
   }
 
@@ -345,61 +359,85 @@ class _DashboardShellState extends State<DashboardShell> {
     }
 
     final isBusinessValidator = authProvider.roleCode == 'business_validator' || authProvider.roleCode == 'negocio';
+    final company = authProvider.activeCompany ??
+        (authProvider.userCompanies.isNotEmpty ? authProvider.userCompanies.first : null);
+    final isCompanyInactive = isBusinessValidator &&
+        (company != null &&
+            (!company.isActive ||
+             company.suscripcionEstado.toLowerCase() == 'inactivo' ||
+             company.suscripcionEstado.toLowerCase() == 'inactiva'));
+
+    if (isCompanyInactive) {
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute != null && currentRoute != '/business-home' && currentRoute != '/negocio') {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/business-home');
+          }
+        });
+        return Scaffold(
+          backgroundColor: themeColors.gradientBg.first,
+          body: const SizedBox.shrink(),
+        );
+      }
+    }
 
     if (authProvider.isLoggedIn && isBusinessValidator) {
       menus.clear();
-      menus.add(
-        AllowedMenu(
-          id: 997,
-          label: 'Inicio',
-          labelEn: 'Home',
-          labelFr: 'Accueil',
-          route: '/business-home',
-          icon: 'home_rounded',
-          sortOrder: 5,
-          permissions: const ['VIEW'],
-          submenus: const [],
-        ),
-      );
-      menus.add(
-        AllowedMenu(
-          id: 996,
-          label: 'Validar Redenciones',
-          labelEn: 'Validate Redemptions',
-          labelFr: 'Valider Redemptions',
-          route: '/redemptions',
-          icon: 'qr_code_scanner_rounded',
-          sortOrder: 10,
-          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
-          submenus: const [],
-        ),
-      );
-      menus.add(
-        AllowedMenu(
-          id: 994,
-          label: 'Gestionar Mis Beneficios',
-          labelEn: 'Manage My Benefits',
-          labelFr: 'Gérer Mes Avantages',
-          route: '/company-benefits',
-          icon: 'card_giftcard_rounded',
-          sortOrder: 11,
-          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
-          submenus: const [],
-        ),
-      );
-      menus.add(
-        AllowedMenu(
-          id: 993,
-          label: 'Mi Membresía',
-          labelEn: 'My Membership',
-          labelFr: 'Mon Adhésion',
-          route: '/membresia',
-          icon: 'workspace_premium_rounded',
-          sortOrder: 12,
-          permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
-          submenus: const [],
-        ),
-      );
+      if (!isCompanyInactive) {
+        menus.add(
+          AllowedMenu(
+            id: 997,
+            label: 'Inicio',
+            labelEn: 'Home',
+            labelFr: 'Accueil',
+            route: '/business-home',
+            icon: 'home_rounded',
+            sortOrder: 5,
+            permissions: const ['VIEW'],
+            submenus: const [],
+          ),
+        );
+        menus.add(
+          AllowedMenu(
+            id: 996,
+            label: 'Validar Redenciones',
+            labelEn: 'Validate Redemptions',
+            labelFr: 'Valider Redemptions',
+            route: '/redemptions',
+            icon: 'qr_code_scanner_rounded',
+            sortOrder: 10,
+            permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+            submenus: const [],
+          ),
+        );
+        menus.add(
+          AllowedMenu(
+            id: 994,
+            label: 'Gestionar Mis Beneficios',
+            labelEn: 'Manage My Benefits',
+            labelFr: 'Gérer Mes Avantages',
+            route: '/company-benefits',
+            icon: 'card_giftcard_rounded',
+            sortOrder: 11,
+            permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+            submenus: const [],
+          ),
+        );
+        menus.add(
+          AllowedMenu(
+            id: 993,
+            label: 'Mi Membresía',
+            labelEn: 'My Membership',
+            labelFr: 'Mon Adhésion',
+            route: '/membresia',
+            icon: 'workspace_premium_rounded',
+            sortOrder: 12,
+            permissions: const ['VIEW', 'CREATE', 'EDIT', 'DELETE'],
+            submenus: const [],
+          ),
+        );
+      }
     }
 
     if (authProvider.isLoggedIn &&

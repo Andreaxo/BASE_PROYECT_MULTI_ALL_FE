@@ -50,7 +50,8 @@ class CustomPaginationFooter extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 650;
+          final isNarrowPhone = constraints.maxWidth < 490;
+          final isCompact = constraints.maxWidth < 680;
 
           final rangeWidget = Row(
             mainAxisSize: MainAxisSize.min,
@@ -76,7 +77,7 @@ class CustomPaginationFooter extends StatelessWidget {
             ],
           );
 
-          final controlsWidget = Row(
+          final rowsPerPageWidget = Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
@@ -126,8 +127,12 @@ class CustomPaginationFooter extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+            ],
+          );
 
+          final navButtonsWidget = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               // First page button
               _buildNavButton(
                 icon: Icons.first_page_rounded,
@@ -188,13 +193,35 @@ class CustomPaginationFooter extends StatelessWidget {
             ],
           );
 
+          if (isNarrowPhone) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                rangeWidget,
+                const SizedBox(height: 10),
+                rowsPerPageWidget,
+                const SizedBox(height: 10),
+                navButtonsWidget,
+              ],
+            );
+          }
+
           if (isCompact) {
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Center(child: rangeWidget),
+                rangeWidget,
                 const SizedBox(height: 10),
-                Center(child: controlsWidget),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    rowsPerPageWidget,
+                    navButtonsWidget,
+                  ],
+                ),
               ],
             );
           }
@@ -203,7 +230,14 @@ class CustomPaginationFooter extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               rangeWidget,
-              controlsWidget,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  rowsPerPageWidget,
+                  const SizedBox(width: 14),
+                  navButtonsWidget,
+                ],
+              ),
             ],
           );
         },

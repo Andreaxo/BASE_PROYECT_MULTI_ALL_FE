@@ -96,10 +96,13 @@ class _LoginScreenState extends State<LoginScreen>
       });
     }
 
-    _regPasswordCtrl.addListener(() => setState(() {}));
-    _regConfirmPasswordCtrl.addListener(() => setState(() {}));
-    _emailController.addListener(_clearAuthErrorOnType);
-    _passwordController.addListener(_clearAuthErrorOnType);
+    _emailController.addListener(_onLoginFormChanged);
+    _passwordController.addListener(_onLoginFormChanged);
+    _firstNameCtrl.addListener(_onRegisterFormChanged);
+    _lastNameCtrl.addListener(_onRegisterFormChanged);
+    _regEmailCtrl.addListener(_onRegisterFormChanged);
+    _regPasswordCtrl.addListener(_onRegisterFormChanged);
+    _regConfirmPasswordCtrl.addListener(_onRegisterFormChanged);
 
     _animController = AnimationController(
       vsync: this,
@@ -116,6 +119,15 @@ class _LoginScreenState extends State<LoginScreen>
     _animController.forward();
   }
 
+  void _onLoginFormChanged() {
+    _clearAuthErrorOnType();
+    setState(() {});
+  }
+
+  void _onRegisterFormChanged() {
+    setState(() {});
+  }
+
   void _clearAuthErrorOnType() {
     final auth = context.read<AuthProvider>();
     if (auth.errorMessage != null) {
@@ -125,8 +137,13 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
-    _emailController.removeListener(_clearAuthErrorOnType);
-    _passwordController.removeListener(_clearAuthErrorOnType);
+    _emailController.removeListener(_onLoginFormChanged);
+    _passwordController.removeListener(_onLoginFormChanged);
+    _firstNameCtrl.removeListener(_onRegisterFormChanged);
+    _lastNameCtrl.removeListener(_onRegisterFormChanged);
+    _regEmailCtrl.removeListener(_onRegisterFormChanged);
+    _regPasswordCtrl.removeListener(_onRegisterFormChanged);
+    _regConfirmPasswordCtrl.removeListener(_onRegisterFormChanged);
     _animController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -141,6 +158,36 @@ class _LoginScreenState extends State<LoginScreen>
     _descripcionEmprendimientoCtrl.dispose();
     _companyDebounceTimer?.cancel();
     super.dispose();
+  }
+
+  // Email format validator
+  bool _isValidEmail(String email) {
+    final trimmed = email.trim();
+    if (trimmed.isEmpty) return false;
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(trimmed);
+  }
+
+  // Reactive Form validity getters
+  bool get _isLoginFormValid =>
+      _isValidEmail(_emailController.text) &&
+      _passwordController.text.isNotEmpty;
+
+  bool get _isStep1Valid =>
+      _firstNameCtrl.text.trim().isNotEmpty &&
+      _lastNameCtrl.text.trim().isNotEmpty &&
+      _isValidEmail(_regEmailCtrl.text) &&
+      _isRegPasswordValid;
+
+  bool get _isStep2Valid {
+    if (!_termsAccepted) return false;
+    if (_referralType == 'company' &&
+        _companyCodeCtrl.text.trim().isNotEmpty &&
+        (_validatedCompanyName == null || _isValidatingCompany)) {
+      return false;
+    }
+    return true;
   }
 
   // Password criteria getters
@@ -236,14 +283,7 @@ class _LoginScreenState extends State<LoginScreen>
       context.read<MenuProvider>().clearMyMenus();
       context.read<ReferidoProvider>().resetSilent();
       context.read<RifaProvider>().resetSilent();
-      final role = authProvider.roleCode;
-      if (role == 'business_validator' || role == 'negocio') {
-        Navigator.of(context).pushReplacementNamed('/business-home');
-      } else if (role == 'user' || role == 'user_member') {
-        Navigator.of(context).pushReplacementNamed('/referidos');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/users');
-      }
+      await _navigateAfterAuth(authProvider);
     } else if (!success && mounted) {
       if (authProvider.isAccountLocked) {
         _showAccountLockedModal(context, authProvider.lockMinutes);
@@ -427,7 +467,7 @@ class _LoginScreenState extends State<LoginScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Verifica que tu contraseña cumpla todos los requisitos de seguridad',
+            'Por favor verifica que tu contraseña cumpla con todos los requisitos de seguridad.',
           ),
           backgroundColor: Color(0xFFDC2626),
           duration: Duration(seconds: 3),
@@ -471,7 +511,7 @@ class _LoginScreenState extends State<LoginScreen>
         _companyCodeCtrl.text.trim().isNotEmpty &&
         _validatedCompanyName == null) {
       setState(() {
-        _companyValidationError = 'Debes ingresar un código de empresa válido';
+        _companyValidationError = 'Debes ingresar un código de empresa válido.';
       });
       return;
     }
@@ -499,14 +539,38 @@ class _LoginScreenState extends State<LoginScreen>
     if (success && mounted) {
       context.read<ReferidoProvider>().resetSilent();
       context.read<RifaProvider>().resetSilent();
-      final role = authProvider.roleCode;
-      if (role == 'business_validator' || role == 'negocio') {
-        Navigator.of(context).pushReplacementNamed('/business-home');
-      } else if (role == 'user' || role == 'user_member') {
-        Navigator.of(context).pushReplacementNamed('/referidos');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/users');
-      }
+      await _navigateAfterAuth(authProvider);
+    }
+  }
+
+  Future<void> _navigateAfterAuth(AuthProvider authProvider) async {
+    final role = authProvider.roleCode;
+    if (role == 'business_validator' || role == 'negocio') {
+      Navigator.of(context).pushReplacementNamed('/business-home');
+      return;
+    }
+    if (role == 'user' || role == 'user_member') {
+      Navigator.of(context).pushReplacementNamed('/referidos');
+      return;
+    }
+    if (authProvider.isAdminOrSuperAdmin) {
+      Navigator.of(context).pushReplacementNamed('/users');
+      return;
+    }
+
+    // Role created from access control (e.g. role with only benefits or specific privileges)
+    final menuProvider = context.read<MenuProvider>();
+    await menuProvider.loadMyMenus();
+    if (!mounted) return;
+
+    if (menuProvider.findAllowedMenu('/users') != null) {
+      Navigator.of(context).pushReplacementNamed('/users');
+    } else if (menuProvider.findAllowedMenu('/benefit') != null) {
+      Navigator.of(context).pushReplacementNamed('/benefit');
+    } else if (menuProvider.myMenus.isNotEmpty) {
+      Navigator.of(context).pushReplacementNamed(menuProvider.myMenus.first.route);
+    } else {
+      Navigator.of(context).pushReplacementNamed('/profile');
     }
   }
 
@@ -515,7 +579,7 @@ class _LoginScreenState extends State<LoginScreen>
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 920;
     final themeProvider = context.watch<ThemeProvider>();
-    final languageProvider = context.watch<LanguageProvider>();
+    context.watch<LanguageProvider>();
 
     return Scaffold(
       body: Container(
@@ -1086,15 +1150,22 @@ class _LoginScreenState extends State<LoginScreen>
           // Submit Login Button
           Consumer<AuthProvider>(
             builder: (context, auth, _) {
+              final isLoginEnabled =
+                  !auth.isLoading && !auth.isAccountLocked && _isLoginFormValid;
+
               return SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: auth.isLoading ? null : _handleLogin,
+                  onPressed: isLoginEnabled ? _handleLogin : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.55),
+                    disabledBackgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : const Color(0xFFE2E8F0),
+                    disabledForegroundColor: isDark
+                        ? Colors.white24
+                        : const Color(0xFF94A3B8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -1411,7 +1482,7 @@ class _LoginScreenState extends State<LoginScreen>
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Ingresa tu nombre'
+                      ? 'Por favor ingresa tu nombre.'
                       : null,
                 ),
               ),
@@ -1425,7 +1496,7 @@ class _LoginScreenState extends State<LoginScreen>
                   textCapitalization: TextCapitalization.words,
                   textInputAction: TextInputAction.next,
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Ingresa tu apellido'
+                      ? 'Por favor ingresa tu apellido.'
                       : null,
                 ),
               ),
@@ -1474,7 +1545,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             validator: (v) {
               if (v == null || v.isEmpty) return context.tr('password_required');
-              if (v.length < 10) return 'Mínimo 10 caracteres';
+              if (v.length < 10) return 'La contraseña debe tener al menos 10 caracteres.';
               return null;
             },
           ),
@@ -1501,9 +1572,9 @@ class _LoginScreenState extends State<LoginScreen>
                   () => _obscureRegConfirmPassword = !_obscureRegConfirmPassword),
             ),
             validator: (v) {
-              if (v == null || v.isEmpty) return 'Confirma tu contraseña';
+              if (v == null || v.isEmpty) return 'Por favor confirma tu contraseña.';
               if (v != _regPasswordCtrl.text) {
-                return 'Las contraseñas no coinciden';
+                return 'Las contraseñas no coinciden.';
               }
               return null;
             },
@@ -1518,10 +1589,16 @@ class _LoginScreenState extends State<LoginScreen>
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: _goToStep2,
+              onPressed: _isStep1Valid ? _goToStep2 : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFE2E8F0),
+                disabledForegroundColor: isDark
+                    ? Colors.white24
+                    : const Color(0xFF94A3B8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1830,10 +1907,18 @@ class _LoginScreenState extends State<LoginScreen>
                   child: SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: auth.isLoading ? null : _handleRegister,
+                      onPressed: (!auth.isLoading && _isStep2Valid)
+                          ? _handleRegister
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFE2E8F0),
+                        disabledForegroundColor: isDark
+                            ? Colors.white24
+                            : const Color(0xFF94A3B8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -1932,17 +2017,54 @@ class _LoginScreenState extends State<LoginScreen>
                 color: AppColors.accent,
               ),
               const SizedBox(width: 8),
-              Text(
-                'Cuéntanos un poco sobre ti',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+              Expanded(
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      'Cuéntanos un poco sobre ti',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      ),
+                    ),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Opcional',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? Colors.white70 : const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
+          Text(
+            'Preguntas voluntarias que nos permiten personalizar tus convenios y beneficios comerciales.',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 1.35,
+              color: isDark ? Colors.white54 : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 14),
 
           // Pregunta 1: Familiares en el exterior
           Text(

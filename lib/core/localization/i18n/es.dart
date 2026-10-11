@@ -11,9 +11,9 @@ const Map<String, String> esKeys = {
   'password_hint': 'Ingresa tu contraseña',
   'login_button': 'Iniciar Sesión',
   'login_loading': 'Verificando tus datos...',
-  'email_required': 'Por favor ingresa tu correo electrónico',
-  'invalid_email': 'Ingresa un correo electrónico válido (ej: usuario@correo.com)',
-  'password_required': 'Por favor ingresa tu contraseña',
+  'email_required': 'Por favor ingresa tu correo electrónico.',
+  'invalid_email': 'Ingresa un correo electrónico válido (ej: usuario@correo.com).',
+  'password_required': 'Por favor ingresa tu contraseña.',
   'logout': 'Cerrar sesión',
   'have_code': '¿Tienes un código? ',
   'register_with_referral': 'Regístrate con código de referido',
@@ -28,7 +28,7 @@ const Map<String, String> esKeys = {
   'referral_code_hint': 'Ej: REF-ABC123',
   'company_code_hint': 'Ej: EMP-XYZ789',
   'validating_company': 'Validando empresa...',
-  'invalid_company_code': 'Código de empresa no válido',
+  'invalid_company_code': 'El código de empresa no es válido.',
   'company_verified': 'Empresa verificada',
 
   // Actions & General Buttons
@@ -72,11 +72,11 @@ const Map<String, String> esKeys = {
   // Form Labels & Validations
   'first_name': 'Nombre',
   'last_name': 'Apellido',
-  'first_name_required': 'El nombre es requerido',
-  'last_name_required': 'El apellido es requerido',
-  'role_required': 'El rol es requerido',
-  'company_required': 'La empresa es requerida',
-  'name_required': 'El nombre es requerido',
+  'first_name_required': 'El nombre es obligatorio.',
+  'last_name_required': 'El apellido es obligatorio.',
+  'role_required': 'Debes seleccionar un rol.',
+  'company_required': 'Debes seleccionar una empresa.',
+  'name_required': 'El nombre es obligatorio.',
 
   // Specific Dialogs / Titles
   'add_user': 'Agregar Usuario',
@@ -111,7 +111,7 @@ const Map<String, String> esKeys = {
   'previous_page': 'Página anterior',
   'next_page': 'Página siguiente',
   'last_page': 'Última página',
-  'error_occurred': 'Ocurrió un error',
+  'error_occurred': 'Ha ocurrido un error inesperado.',
   'password_keep_empty': 'Contraseña (dejar vacío para no cambiar)',
   'password_min_length': 'Mínimo 6 caracteres',
   'assigned_role': 'Rol asignado',
@@ -130,7 +130,7 @@ const Map<String, String> esKeys = {
   'change_password': 'Cambiar Contraseña',
   'new_password': 'Nueva Contraseña',
   'enter_new_password': 'Ingrese la nueva contraseña',
-  'password_changed_success': 'Contraseña cambiada con éxito',
+  'password_changed_success': '¡Contraseña cambiada con éxito!',
 
   // Category & Article Internal Content
   'category_list_title': 'Categorías de Inventario',
@@ -139,7 +139,7 @@ const Map<String, String> esKeys = {
   'search_category_hint': 'Buscar categoría por nombre o ID...',
   'category_name_label': 'Nombre de la Categoría',
   'category_name_hint': 'Ej: Limpieza, Bebidas, Lácteos',
-  'category_name_required': 'El nombre es requerido',
+  'category_name_required': 'El nombre de la categoría es obligatorio.',
   'category_active_label': 'Categoría Activa',
   'no_categories_found': 'No se encontraron categorías',
   'no_categories_description_search': 'Prueba modificando los filtros de búsqueda',
@@ -159,10 +159,10 @@ const Map<String, String> esKeys = {
   'search_article_hint': 'Buscar artículo por nombre, categoría o ID...',
   'article_name_label': 'Nombre del Artículo',
   'article_name_hint': 'Ej: Detergente Líquido, Coca-Cola 1.5L',
-  'article_name_required': 'El nombre es requerido',
+  'article_name_required': 'El nombre del artículo es obligatorio.',
   'related_category_label': 'Categoría Relacionada',
   'select_category_hint': 'Selecciona una Categoría',
-  'please_select_category': 'Por favor selecciona una categoría',
+  'please_select_category': 'Por favor selecciona una categoría.',
   'no_articles_found': 'No se encontraron artículos',
   'no_articles_description_search': 'Prueba modificando los filtros de búsqueda',
   'no_articles_description': 'Empieza por crear un nuevo artículo de inventario.',
@@ -312,8 +312,8 @@ const Map<String, String> esKeys = {
   'validate_coupon': 'Validar Cupón',
   'coupon_valid': 'Cupón Válido',
   'coupon_redeemed_success': '¡Cupón redimido exitosamente!',
-  'coupon_already_used': 'Este cupón ya ha sido utilizado',
-  'coupon_not_found': 'Cupón no encontrado',
+  'coupon_already_used': 'Este cupón ya ha sido utilizado.',
+  'coupon_not_found': 'No se encontró ningún cupón con ese código.',
   'redemption_history': 'Historial de Redenciones',
 
   // Shell & Navigation
@@ -330,7 +330,7 @@ const Map<String, String> esKeys = {
   'dark_mode': 'Modo Oscuro',
 
   // Export & notifications
-  'export_excel_success': 'Reporte Excel (.xlsx) exportado a Descargas',
+  'export_excel_success': 'Reporte Excel (.xlsx) exportado a Descargas con éxito.',
 
   // Statistics
   'statistics': 'Estadísticas',
